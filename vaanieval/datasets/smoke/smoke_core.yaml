@@ -1,0 +1,20 @@
+scenarios:
+  - id: smoke-auth-header
+    category: retrieval
+    user_message: "How do I authenticate requests to ElevenLabs API?"
+    expected_facts:
+      - "api"
+      - "key"
+    forbidden_claims:
+      - "use anonymous auth"
+    completion_rule: must_answer
+    max_turns: 6
+
+  - id: smoke-tts-basics
+    category: retrieval
+    user_message: "How do I call text-to-speech in ElevenLabs?"
+    expected_facts:
+      - "text"
+      - "speech"
+    completion_rule: must_answer
+    max_turns: 6

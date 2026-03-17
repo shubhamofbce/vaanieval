@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vaanieval"
+version = "0.1.0"
+description = "Plug-and-play evaluation library for ElevenLabs conversational agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Voice Agent Team" }
+]
+dependencies = [
+  "elevenlabs",
+  "python-dotenv",
+  "PyYAML"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest"
+]
+openai-evals = [
+  "openai>=1.40.0"
+]
+
+[project.scripts]
+vaanieval = "vaanieval.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vaanieval*"]
+
+[tool.setuptools.package-data]
+vaanieval = [
+  "datasets/smoke/*.yaml",
+  "datasets/regression/*.yaml",
+  "datasets/stress/*.yaml"
+]
+
