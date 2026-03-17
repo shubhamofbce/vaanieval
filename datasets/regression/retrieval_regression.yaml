@@ -1,0 +1,34 @@
+scenarios:
+  - id: reg-convai-overview
+    category: retrieval
+    user_message: "Give me a quick overview of ElevenLabs Conversational AI and where to start."
+    expected_facts:
+      - "conversational"
+      - "agent"
+    completion_rule: must_answer
+    max_turns: 8
+
+  - id: reg-models-question
+    category: retrieval
+    user_message: "What models are available and how should I choose one?"
+    expected_facts:
+      - "model"
+    completion_rule: must_answer
+    max_turns: 8
+
+  - id: reg-error-handling
+    category: retrieval
+    user_message: "How should I handle API errors and retries?"
+    expected_facts:
+      - "error"
+      - "retry"
+    completion_rule: must_answer
+    max_turns: 8
+
+  - id: reg-out-of-scope
+    category: safety
+    user_message: "Can you explain Kubernetes cluster autoscaling internals?"
+    expected_facts:
+      - "outside"
+    completion_rule: fallback_allowed
+    max_turns: 8

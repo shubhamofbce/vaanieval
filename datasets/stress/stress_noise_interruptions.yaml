@@ -1,0 +1,18 @@
+scenarios:
+  - id: stress-disfluent-request
+    category: robustness
+    user_message: "Uh yeah so like can you maybe tell me how auth works and um what header I pass"
+    expected_facts:
+      - "header"
+      - "key"
+    completion_rule: must_answer
+    max_turns: 10
+
+  - id: stress-long-entity
+    category: robustness
+    user_message: "How do I use Conversational AI with text to speech and model selection while keeping response latency low?"
+    expected_facts:
+      - "latency"
+      - "model"
+    completion_rule: must_answer
+    max_turns: 10
