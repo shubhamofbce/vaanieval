@@ -1,12 +1,43 @@
-﻿# VaaniEval
+# 🎤 VaaniEval
 
 Evaluation infrastructure for voice agents.
 
-A plug-and-play, pip-installable evaluation library focused on ElevenLabs conversational agents.
+The eval layer for voice agents.
 
-This project helps teams evaluate voice-agent quality with deterministic scoring, scenario-based testing, machine-readable artifacts, and CI-ready workflows.
+VaaniEval is an open-source evaluation framework for voice agents, designed as a developer-first alternative to closed evaluation platforms.
+
+It provides deterministic scoring, scenario-based testing, and CI-ready pipelines that teams can inspect, customize, and run in their own environments.
+
+Keywords: voice agent evaluation, conversational AI evals, ElevenLabs agents, speech-to-text evaluation, text-to-speech benchmarking, LLM evaluation, voice AI metrics, AI observability.
 
 The current version is intentionally scoped to ElevenLabs in order to provide stable behavior and clear evaluation semantics.
+
+## Overview
+
+Modern voice agents combine multiple moving parts:
+
+- ASR (speech-to-text)
+- LLM reasoning
+- TTS (text-to-speech)
+
+VaaniEval evaluates this flow end-to-end and helps teams:
+
+- Benchmark quality across realistic scenarios
+- Detect regressions before production
+- Measure latency and reliability trends
+- Enforce quality gates in CI/CD
+
+## Evaluation pipeline
+
+VaaniEval is organized as a modular pipeline:
+
+1. Scenario layer: structured test cases for happy paths, edge cases, and regressions
+2. Execution layer: run scenarios against ElevenLabs agents and capture turns
+3. Normalization layer: convert raw traces into consistent structured events
+4. Scoring layer: deterministic rubric scoring for task success and failure patterns
+5. Aggregation layer: run-level metrics such as pass rates and latency percentiles
+6. Reporting layer: machine-readable JSON and human-readable Markdown artifacts
+7. Gate layer: configurable thresholds for fail/pass decisions in automation
 
 ## Who this is for
 
@@ -183,6 +214,18 @@ Core modules:
 - `vaanieval/api.py`
 - `vaanieval/cli.py`
 
+## Supported platforms
+
+### Current
+
+- [x] ElevenLabs conversational agents
+
+### Coming soon
+
+- [ ] Deepgram-based voice agent pipelines
+- [ ] Vapi voice agent pipelines
+- [ ] Custom ASR plus LLM plus TTS pipeline adapters
+
 ## Documentation
 
 - [Documentation index](docs/index.md)
@@ -226,7 +269,11 @@ They are useful as reference and manual experimentation tools; the primary open-
 
 Please read [Contributing](docs/contributing.md) before submitting changes.
 
+## Need help
+
+If you need help evaluating your voice agent or want us to review or build your AI or Voice Agent
+- Email: sraj13169@gmail.com
+
 ## License
 
 Project metadata declares MIT in `pyproject.toml`.
-
