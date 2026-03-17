@@ -1,0 +1,6 @@
+*.egg-info
+.eval-reports
+__pycache__/
+*.pyc
+.venv/
+.env
