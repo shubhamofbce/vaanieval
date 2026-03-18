@@ -1,4 +1,4 @@
-# 🎤 VaaniEval
+﻿# VaaniEval
 
 Evaluation infrastructure for voice agents.
 
@@ -88,6 +88,12 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+For contributor workflows with linting, typing, and test tooling:
+
+```bash
+pip install -e .[dev]
+```
+
 Set credentials:
 
 ```env
@@ -96,6 +102,8 @@ ELEVENLABS_AGENT_ID=agent_xxxxxxxxxxxxxxxxx
 # Optional for external OpenAI scoring:
 OPENAI_API_KEY=sk_xxxxxxxxxxxxxxxxxxxxx
 ```
+
+Use `.env.example` as your template and keep real keys only in local `.env`.
 
 Run eval:
 
@@ -218,13 +226,13 @@ Core modules:
 
 ### Current
 
-- [x] ElevenLabs conversational agents
+[x] ElevenLabs conversational agents
 
 ### Coming soon
 
-- [ ] Deepgram-based voice agent pipelines
-- [ ] Vapi voice agent pipelines
-- [ ] Custom ASR plus LLM plus TTS pipeline adapters
+[] Deepgram-based voice agent pipelines
+[] Vapi voice agent pipelines
+[] Custom ASR plus LLM plus TTS pipeline adapters
 
 ## Documentation
 
@@ -246,8 +254,29 @@ GitHub Actions workflow:
 
 It runs:
 
-- unit tests on pull requests and main
+- ruff lint and format checks
+- mypy type checking
+- pytest on Python 3.10, 3.11, and 3.12
+- dependency and static security scans
 - optional live smoke eval when ElevenLabs secrets are available
+
+## Development checks
+
+Run before opening a pull request:
+
+```bash
+python -m ruff check .
+python -m ruff format --check .
+python -m mypy vaanieval tests
+python -m pytest
+```
+
+Optionally install git hooks:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
 
 ## Compatibility notes
 
@@ -276,4 +305,4 @@ If you need help evaluating your voice agent or want us to review or build your 
 
 ## License
 
-Project metadata declares MIT in `pyproject.toml`.
+Licensed under MIT. See `LICENSE`.
