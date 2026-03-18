@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from statistics import median
 
@@ -114,4 +114,3 @@ def _aggregate_external(scores: list[ScenarioScore]) -> tuple[dict[str, dict[str
             summary[provider][f"avg_{metric_name}"] = round(sum(values) / len(values), 4)
 
     return summary, provider_error_count
-

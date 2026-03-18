@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import json
@@ -99,4 +99,3 @@ def _parse_scorer_csv(value: str | None) -> list[str] | None:
 
 if __name__ == "__main__":
     main()
-

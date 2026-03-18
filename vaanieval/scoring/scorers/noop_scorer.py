@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Any
 
@@ -21,4 +21,3 @@ class NoopScorer(ExternalScorer):
             "task_success_score": 1.0 if deterministic_score.task_success else 0.0,
             "rationale": "No-op scorer mirrors deterministic score.",
         }
-

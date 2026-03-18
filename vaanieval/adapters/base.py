@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
@@ -9,4 +9,3 @@ class BaseAdapter(ABC):
     @abstractmethod
     def run_scenario(self, scenario: EvalScenario) -> ScenarioExecution:
         raise NotImplementedError
-

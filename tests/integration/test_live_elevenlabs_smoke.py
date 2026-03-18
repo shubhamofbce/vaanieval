@@ -1,4 +1,4 @@
-﻿import os
+import os
 import unittest
 
 from vaanieval.api import run_smoke
@@ -16,4 +16,3 @@ class TestLiveElevenLabsSmoke(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import os
@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
 import yaml
+from dotenv import load_dotenv
 
 
 @dataclass
@@ -43,9 +43,7 @@ class EvalConfig:
             hallucination_rate_threshold=float(
                 os.getenv("VAANIEVAL_HALLUCINATION_THRESHOLD", "0.05")
             ),
-            latency_p95_threshold_ms=float(
-                os.getenv("VAANIEVAL_LATENCY_P95_THRESHOLD_MS", "1200")
-            ),
+            latency_p95_threshold_ms=float(os.getenv("VAANIEVAL_LATENCY_P95_THRESHOLD_MS", "1200")),
             enabled_external_scorers=scorer_list,
             openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             openai_model=os.getenv("VAANIEVAL_OPENAI_MODEL", "gpt-4o-mini"),
@@ -114,9 +112,17 @@ def _read_config_file(path: str) -> dict[str, Any]:
         raise FileNotFoundError(f"Config file not found: {path}")
     text = file_path.read_text(encoding="utf-8")
     if file_path.suffix.lower() in {".yaml", ".yml"}:
-        return yaml.safe_load(text) or {}
+        parsed = yaml.safe_load(text)
+        if parsed is None:
+            return {}
+        if not isinstance(parsed, dict):
+            raise ValueError("Config root must be a JSON/YAML object")
+        return parsed
     if file_path.suffix.lower() == ".json":
-        return json.loads(text)
+        parsed = json.loads(text)
+        if not isinstance(parsed, dict):
+            raise ValueError("Config root must be a JSON object")
+        return parsed
     raise ValueError("Unsupported config format. Use .yaml, .yml, or .json")
 
 
@@ -126,4 +132,3 @@ def _parse_scorer_list(value: Any) -> list[str]:
     if isinstance(value, str):
         return [part.strip() for part in value.split(",") if part.strip()]
     return []
-

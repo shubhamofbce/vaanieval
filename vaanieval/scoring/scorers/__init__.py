@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Any
 
@@ -43,4 +43,3 @@ def _load_custom_scorer(path_spec: str, config: EvalConfig) -> ExternalScorer:
 
 
 __all__ = ["ExternalScorer", "get_external_scorers", "NoopScorer", "OpenAIEvalsScorer"]
-

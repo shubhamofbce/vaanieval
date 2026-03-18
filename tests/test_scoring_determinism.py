@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 
 from vaanieval.config import EvalConfig
 from vaanieval.models import ScenarioScore
@@ -46,4 +46,3 @@ class TestScoringDeterminism(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

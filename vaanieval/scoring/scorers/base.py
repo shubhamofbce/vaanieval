@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -20,4 +20,3 @@ class ExternalScorer(ABC):
     ) -> dict[str, Any]:
         """Return a provider score payload for one scenario."""
         raise NotImplementedError
-

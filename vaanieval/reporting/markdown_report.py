@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -68,4 +68,3 @@ def write_markdown_report(result: EvalRunResult, output_dir: str) -> Path:
 
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
-

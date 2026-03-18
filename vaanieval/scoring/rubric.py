@@ -1,7 +1,6 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from vaanieval.models import EvalScenario, ScenarioExecution, ScenarioScore
-
 
 FALLBACK_MARKERS = (
     "could you clarify",
@@ -36,7 +35,9 @@ def score_scenario(exec_result: ScenarioExecution, scenario: EvalScenario) -> Sc
             notes=[f"adapter_error: {exec_result.adapter_error}"],
         )
 
-    agent_messages = [t.message.strip() for t in exec_result.turns if t.role == "agent" and t.message]
+    agent_messages = [
+        t.message.strip() for t in exec_result.turns if t.role == "agent" and t.message
+    ]
     full_agent_text = "\n".join(agent_messages).lower()
 
     expected_ok = _all_expected_present(full_agent_text, scenario.expected_facts)
@@ -129,4 +130,3 @@ def _is_unresolved(agent_messages: list[str]) -> bool:
         return True
     text = "\n".join(agent_messages).lower()
     return any(marker in text for marker in UNRESOLVED_MARKERS)
-

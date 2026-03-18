@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import time
 from typing import Any
@@ -67,7 +67,9 @@ class ElevenLabsSimulationAdapter(BaseAdapter):
             message = str(getattr(turn, "message", "") or "")
             interrupted = bool(getattr(turn, "interrupted", False) or False)
             time_in_call_secs = int(getattr(turn, "time_in_call_secs", 0) or 0)
-            latency_ms, raw_metrics = _extract_latency(getattr(turn, "conversation_turn_metrics", None))
+            latency_ms, raw_metrics = _extract_latency(
+                getattr(turn, "conversation_turn_metrics", None)
+            )
             parsed.append(
                 TurnEvent(
                     role=role,
@@ -109,10 +111,15 @@ def _model_to_dict(model: Any) -> dict[str, Any]:
     if model is None:
         return {}
     if hasattr(model, "model_dump"):
-        return model.model_dump()
+        dumped = model.model_dump()
+        if isinstance(dumped, dict):
+            return dumped
+        return {"value": dumped}
     if hasattr(model, "dict"):
-        return model.dict()
+        dumped = model.dict()
+        if isinstance(dumped, dict):
+            return dumped
+        return {"value": dumped}
     if isinstance(model, dict):
         return model
     return {"value": str(model)}
-

@@ -1,7 +1,7 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
-import json
 import importlib
+import json
 from typing import Any
 
 from vaanieval.config import EvalConfig
@@ -141,7 +141,10 @@ def _extract_first_json_object(text: str) -> dict[str, Any]:
     end = text.rfind("}")
     if start == -1 or end == -1 or end <= start:
         raise ValueError("No JSON object found in scorer response")
-    return json.loads(text[start : end + 1])
+    parsed = json.loads(text[start : end + 1])
+    if not isinstance(parsed, dict):
+        raise ValueError("OpenAI scorer returned non-object response")
+    return parsed
 
 
 def _as_unit_float(value: Any) -> float:
@@ -160,4 +163,3 @@ def _as_str_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(v) for v in value]
-

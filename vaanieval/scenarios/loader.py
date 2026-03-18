@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
@@ -31,7 +31,9 @@ def load_scenarios(path: str) -> list[EvalScenario]:
             continue
         errors = validate_scenario_payload(payload)
         if errors:
-            all_errors.append(f"scenario[{idx}] {payload.get('id', '<no-id>')}: {'; '.join(errors)}")
+            all_errors.append(
+                f"scenario[{idx}] {payload.get('id', '<no-id>')}: {'; '.join(errors)}"
+            )
             continue
 
         scenarios.append(
@@ -58,4 +60,3 @@ def _to_str_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(v) for v in value]
-

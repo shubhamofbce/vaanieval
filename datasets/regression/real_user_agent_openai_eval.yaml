@@ -1,0 +1,135 @@
+scenarios:
+  - id: real-auth-header-debug
+    category: troubleshooting
+    user_message: "My ElevenLabs API calls return 401. Show me exactly what auth header I should send and common mistakes."
+    expected_facts:
+      - "xi-api-key"
+      - "api key"
+      - "401"
+      - "header"
+    forbidden_claims:
+      - "anonymous auth"
+      - "oauth token required"
+    completion_rule: must_answer
+    max_turns: 8
+
+  - id: real-tts-minimal-request
+    category: retrieval
+    user_message: "Give me a minimal Python example for text-to-speech, including model and voice usage."
+    expected_facts:
+      - "python"
+      - "text-to-speech"
+      - "voice"
+      - "model"
+    forbidden_claims:
+      - "deprecated endpoint only"
+    completion_rule: must_answer
+    max_turns: 8
+
+  # - id: real-streaming-latency-optimization
+  #   category: performance
+  #   user_message: "I need low-latency streaming speech output for a real-time app. What concrete steps should I apply?"
+  #   expected_facts:
+  #     - "stream"
+  #     - "latency"
+  #     - "chunk"
+  #     - "real-time"
+  #   forbidden_claims:
+  #     - "latency is always zero"
+  #   completion_rule: must_answer
+  #   max_turns: 10
+
+  # - id: real-stt-websocket-architecture
+  #   category: architecture
+  #   user_message: "Should I use HTTP or WebSocket for live speech-to-text transcription with partial results? Explain tradeoffs."
+  #   expected_facts:
+  #     - "websocket"
+  #     - "http"
+  #     - "partial"
+  #     - "tradeoff"
+  #   forbidden_claims:
+  #     - "websocket and http are identical"
+  #   completion_rule: must_answer
+  #   max_turns: 10
+
+  # - id: real-conversational-ai-agent-setup
+  #   category: implementation
+  #   user_message: "How do I create a conversational AI agent with a custom system prompt and knowledge base docs?"
+  #   expected_facts:
+  #     - "conversational ai"
+  #     - "system prompt"
+  #     - "knowledge base"
+  #     - "agent"
+  #   forbidden_claims:
+  #     - "knowledge base is unsupported"
+  #   completion_rule: must_answer
+  #   max_turns: 10
+
+  # - id: real-rate-limit-retry-policy
+  #   category: reliability
+  #   user_message: "What retry strategy should I use for 429 errors when I batch-generate audio at scale?"
+  #   expected_facts:
+  #     - "429"
+  #     - "retry"
+  #     - "backoff"
+  #     - "rate limit"
+  #   forbidden_claims:
+  #     - "retry forever without delay"
+  #   completion_rule: must_answer
+  #   max_turns: 8
+
+  # - id: real-voice-cloning-compliance
+  #   category: safety
+  #   user_message: "What legal and consent safeguards should I implement before voice cloning in production?"
+  #   expected_facts:
+  #     - "consent"
+  #     - "policy"
+  #     - "compliance"
+  #     - "safety"
+  #   forbidden_claims:
+  #     - "no consent needed"
+  #   completion_rule: must_answer
+  #   max_turns: 8
+  #   safety_flags:
+  #     - "compliance"
+  #     - "consent-required"
+
+  # - id: real-error-handling-production
+  #   category: troubleshooting
+  #   user_message: "Users report intermittent failures in TTS generation. Suggest a production-grade error handling checklist."
+  #   expected_facts:
+  #     - "timeout"
+  #     - "retry"
+  #     - "logging"
+  #     - "fallback"
+  #   forbidden_claims:
+  #     - "ignore all errors"
+  #   completion_rule: must_answer
+  #   max_turns: 8
+
+  # - id: real-sdks-language-choice
+  #   category: planning
+  #   user_message: "We support web and mobile. When should we pick Python, JavaScript, Swift, or Kotlin SDKs for ElevenLabs integration?"
+  #   expected_facts:
+  #     - "javascript"
+  #     - "swift"
+  #     - "kotlin"
+  #     - "python"
+  #     - "sdk"
+  #   forbidden_claims:
+  #     - "only one sdk exists"
+  #   completion_rule: must_answer
+  #   max_turns: 9
+
+  # - id: real-migration-plan-existing-bot
+  #   category: migration
+  #   user_message: "I already have a chatbot. Give me a phased migration plan to add ElevenLabs voice capabilities without downtime."
+  #   expected_facts:
+  #     - "phased"
+  #     - "rollout"
+  #     - "fallback"
+  #     - "monitoring"
+  #   forbidden_claims:
+  #     - "big-bang only"
+  #   completion_rule: must_answer
+  #   max_turns: 10

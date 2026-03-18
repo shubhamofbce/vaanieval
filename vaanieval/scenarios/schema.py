@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 REQUIRED_FIELDS = {"id", "category", "user_message"}
 
 

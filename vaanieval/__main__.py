@@ -1,5 +1,4 @@
-﻿from vaanieval.cli import main
+from vaanieval.cli import main
 
 if __name__ == "__main__":
     main()
-
