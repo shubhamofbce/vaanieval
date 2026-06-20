@@ -25,6 +25,11 @@ Goal:
 
 - ingest real production conversations from ElevenLabs
 
+Current implementation decision:
+
+- playback uses provider-hosted audio URL/stream first
+- app-managed object storage is deferred to a later phase
+
 Scope:
 
 - connect ElevenLabs account/API key
@@ -158,7 +163,7 @@ This is the smallest version that still feels like a real production eval produc
 ## Open questions for next iteration
 
 - how should multi-tenant workspace permissions work?
-- should audio be stored in app-managed object storage by default?
+- when should we switch from provider-hosted media to app-managed object storage by default?
 - how should we handle missing audio but available transcripts?
 - should human reviewer overrides change official scores or stay separate?
 - how should domain-specific packs be versioned?

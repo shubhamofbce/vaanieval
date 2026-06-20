@@ -9,6 +9,7 @@ The plan is intentionally split into a few small files so it stays easy to read 
 - [Overview](README.md)
 - [Score Taxonomy](score-taxonomy.md)
 - [Roadmap](roadmap.md)
+- [Audio Scalability Plan](audio-scalability-plan.md)
 
 ## V2 Direction
 
