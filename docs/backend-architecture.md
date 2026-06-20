@@ -1,10 +1,10 @@
 # Backend Architecture (V2)
 
-VaaniEval V2 backend is a layered FastAPI system designed for production conversation ingestion, evaluation, and review.
+VaaniEval V2 backend is a layered FastAPI system designed for production conversation ingestion, evaluation, and review across multiple voice providers.
 
 ## Architecture Goals
 
-- Provider-first ingestion with normalized internal models
+- Provider-first ingestion with normalized internal models and adapter-based integrations for ElevenLabs and Vapi
 - Reliable async processing using a DB-backed queue
 - Clear evaluation run lifecycle and metric evidence
 - Workspace-scoped security and credential boundaries
@@ -17,7 +17,7 @@ flowchart LR
     B --> C[(SQLite/Postgres DB)]
     B --> D[Job Queue Table]
     D --> E[Worker Process]
-    E --> F[Provider APIs]
+    E --> F[Provider APIs\n(ElevenLabs / Vapi)]
     E --> C
     B --> G[Media Stream Endpoint]
     G --> H[Audio Playback UI]
@@ -35,7 +35,7 @@ flowchart LR
 Key route groups:
 
 - Auth: magic-link login/session routes
-- Provider: account connect/test/agent discovery
+- Provider: account connect/test/agent discovery across ElevenLabs and Vapi
 - Imports: historical sync job creation and progress
 - Conversations: list/detail retrieval and review payloads
 - Media: audio metadata + stream endpoint
@@ -59,7 +59,7 @@ flowchart TD
 Core persisted domains:
 
 - Identity and tenancy (workspace/user/membership)
-- Provider connectivity and agent metadata
+- Provider connectivity and agent metadata for ElevenLabs and Vapi
 - Conversation transcript, metadata and media pointers
 - Evaluation runs and per-metric scores
 - Queue jobs, attempts, and dead-letter handling
@@ -101,6 +101,8 @@ Behavior highlights:
 5. Scores persist to run-linked metric rows.
 6. Run status transitions to `completed` or `failed`.
 
+Provider-specific behavior is isolated behind provider adapters in `backend/app/providers/`, so adding a new voice provider should usually mean implementing a new adapter and wiring it through the factory.
+
 ## Security and config
 
 - Workspace scoping is enforced via auth/session context.
@@ -113,6 +115,7 @@ Primary env values:
 - `SECRET_KEY`
 - `CREDENTIAL_ENCRYPTION_KEY`
 - `ELEVENLABS_API_BASE`
+- `VAPI_API_BASE`
 - `OPENAI_API_BASE`
 
 ## Operational notes

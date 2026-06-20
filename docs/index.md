@@ -1,5 +1,7 @@
 # Documentation Index
 
+VaaniEval now ships with adapter-based support for both ElevenLabs and Vapi, so provider-specific behavior stays isolated while the rest of the platform stays stable.
+
 ## V2 Core
 
 - [Development Guide](development.md)

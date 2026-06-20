@@ -28,36 +28,19 @@ VaaniEval gives you:
 ## Screenshots
 
 <details>
-<summary>Command center and provider setup</summary>
+<summary>Screenshots</summary>
 
-### Command Center
+### Conversations Overview
 
-![Onboarding Dashboard](docs/assets/screenshots/onboarding-dashboard.png)
+![Conversations Overview](docs/assets/screenshots/conversations-overview.png)
 
-### Provider and Model Configuration
-
-![Provider Settings](docs/assets/screenshots/provider-settings.png)
-
-</details>
-
-<details>
-<summary>Conversation review workspace</summary>
-
-### Conversations Workspace
-
-![Conversations Workspace](docs/assets/screenshots/conversations-workspace.png)
-
-### Conversation Detail + Scorecard
+### Conversation Detail
 
 ![Conversation Detail](docs/assets/screenshots/conversation-detail.png)
 
-### Agent Management
+### Provider Settings
 
-![Agents Page](docs/assets/screenshots/agents-page.png)
-
-### Historical Import Setup
-
-![Import Setup](docs/assets/screenshots/import-new.png)
+![Provider Settings](docs/assets/screenshots/provider-settings.png)
 
 </details>
 
