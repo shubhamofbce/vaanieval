@@ -20,6 +20,7 @@ dependencies = [
 
 [tool.vercel]
 entrypoint = "api/index.py"
+build = "npm --prefix frontend install && npm --prefix frontend run build"
 
 [project.optional-dependencies]
 dev = [
