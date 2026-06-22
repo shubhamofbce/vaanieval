@@ -1,4 +1,5 @@
 import hashlib
+from datetime import timezone
 
 from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy import select
@@ -25,7 +26,12 @@ def get_current_user(
     session_row = db.scalar(select(AuthSession).where(AuthSession.session_token_hash == token_hash))
     now = utc_now()
 
-    if not session_row or session_row.revoked_at is not None or session_row.expires_at < now:
+    if not session_row or session_row.revoked_at is not None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is invalid")
+    expires_at = session_row.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < now:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is invalid")
 
     user = db.scalar(select(User).where(User.id == session_row.user_id))

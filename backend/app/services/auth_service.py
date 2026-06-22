@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -59,7 +60,12 @@ def verify_magic_link(db: Session, token: str) -> VerifiedSession | None:
 
     token_row = db.scalar(select(MagicLinkToken).where(MagicLinkToken.token_hash == token_hash))
     now = utc_now()
-    if not token_row or token_row.consumed_at is not None or token_row.expires_at < now:
+    if not token_row or token_row.consumed_at is not None:
+        return None
+    expires_at = token_row.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < now:
         return None
 
     user = db.scalar(select(User).where(User.id == token_row.user_id))

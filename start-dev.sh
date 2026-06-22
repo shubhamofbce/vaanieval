@@ -32,13 +32,19 @@ log "Preparing frontend environment..."
 cd "$FRONTEND_PATH"
 npm install
 
+log "Clearing ports 8000 and 5173..."
+fkill_port() { lsof -ti tcp:"$1" 2>/dev/null | xargs kill -9 2>/dev/null || true; }
+fkill_port 8000
+fkill_port 5173
+sleep 1
+
 log "Starting backend API, worker, and frontend dev server..."
 cd "$ROOT_DIR"
 
 (
   cd "$BACKEND_PATH"
   source .venv/bin/activate
-  python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+  python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level info --access-log
 ) &
 API_PID=$!
 
