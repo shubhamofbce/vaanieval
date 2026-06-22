@@ -2,7 +2,6 @@
 
 import sys
 import os
-import traceback
 
 # Add both sys.path entries: backend for app.* imports, project root for future flexibility
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,12 +15,8 @@ try:
     from app.main import app
 except Exception as e:
     # Create a fallback app that shows the error
-    error_msg = f"Failed to import app: {str(e)}\n\n{traceback.format_exc()}"
-    print(error_msg, file=sys.stderr)
-    
-    # Export a fallback ASGI app that returns the error
     async def app(scope, receive, send):
-        error_body = error_msg.encode()
+        error_msg = f"Import Error: {str(e)}".encode()
         await send({
             'type': 'http.response.start',
             'status': 500,
@@ -29,5 +24,5 @@ except Exception as e:
         })
         await send({
             'type': 'http.response.body',
-            'body': error_body,
+            'body': error_msg,
         })
