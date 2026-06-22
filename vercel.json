@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "crons": [
+    {
+      "path": "/api/v1/worker/drain",
+      "schedule": "* * * * *"
+    }
+  ],
   "builds": [
     {
       "src": "api/index.py",

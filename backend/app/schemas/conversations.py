@@ -9,6 +9,7 @@ class ConversationListItem(BaseModel):
     provider_name: str
     provider_conversation_id: str
     provider_agent_id: str | None
+    provider_agent_name: str | None
     language: str | None
     outcome: str | None
     started_at: datetime | None
@@ -29,6 +30,7 @@ class ConversationDetailResponse(BaseModel):
     id: str
     provider_conversation_id: str
     provider_agent_id: str | None
+    provider_agent_name: str | None
     language: str | None
     outcome: str | None
     turns: list[ConversationTurnItem]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import hashlib
 import secrets
 
@@ -13,9 +13,13 @@ def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def expires_in_minutes(minutes: int) -> datetime:
-    return datetime.utcnow() + timedelta(minutes=minutes)
+    return utc_now() + timedelta(minutes=minutes)
 
 
 def expires_in_hours(hours: int) -> datetime:
-    return datetime.utcnow() + timedelta(hours=hours)
+    return utc_now() + timedelta(hours=hours)

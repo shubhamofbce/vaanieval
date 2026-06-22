@@ -32,6 +32,7 @@ def verify_link(
         samesite="lax",
         secure=False,
     )
+
     return AuthResponse(
         user_id=verified.user.id,
         email=verified.user.email,

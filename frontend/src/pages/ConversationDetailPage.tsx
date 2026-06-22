@@ -50,6 +50,14 @@ function formatConversationTitle(unixSeconds: number | null) {
   return `Conversation on ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
 }
 
+function getConversationDisplayName(conversation: ConversationDetailResponse | null, assistantName: string | null) {
+  if (!conversation) {
+    return 'Conversation review'
+  }
+
+  return conversation.provider_agent_name || assistantName || conversation.provider_agent_id || 'Conversation review'
+}
+
 function formatCallDate(unixSeconds: number | null) {
   if (!unixSeconds) {
     return 'Unknown'
@@ -478,7 +486,7 @@ export function ConversationDetailPage() {
           <header className="panel detail-hero-panel">
             <div className="detail-hero-copy">
               <span className="detail-kicker">Conversation detail</span>
-              <h1>{formatConversationTitle(insights?.started_at_unix ?? null)}</h1>
+              <h1>{getConversationDisplayName(conversation, insights?.assistant_name ?? null)}</h1>
               <p className="muted">
                 Provider: {evaluationRun?.provider_name || 'Unknown'} · Agent: {insights?.assistant_name || 'Voice assistant'} · Duration: {formatClock(effectiveDuration)} · ID: {conversation.id}
               </p>
