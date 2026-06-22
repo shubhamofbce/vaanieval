@@ -1,16 +1,16 @@
 """ASGI handler for Vercel serverless functions."""
 
-import sys
-import os
-
-# Add both paths to support different import styles
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-backend_dir = os.path.join(project_root, 'backend')
-
-# Add paths in order: backend first (for app.* imports), then project root (for backend.* imports)
-sys.path.insert(0, backend_dir)
-sys.path.insert(0, project_root)
-
-from app.main import app
-
-__all__ = ["app"]
+# Minimal test - just export a simple ASGI app
+def app(scope):
+    async def asgi(receive, send):
+        if scope['type'] == 'http':
+            await send({
+                'type': 'http.response.start',
+                'status': 200,
+                'headers': [[b'content-type', b'text/plain']],
+            })
+            await send({
+                'type': 'http.response.body',
+                'body': b'Hello from Vercel!',
+            })
+    return asgi
