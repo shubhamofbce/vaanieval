@@ -18,6 +18,9 @@ dependencies = [
   "PyYAML"
 ]
 
+[tool.vercel]
+entrypoint = "api/index.py"
+
 [project.optional-dependencies]
 dev = [
   "bandit",
