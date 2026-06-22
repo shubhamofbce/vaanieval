@@ -1,16 +1,35 @@
 from contextlib import asynccontextmanager
+import logging
 import os
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.api import api_router
 from app.core.config import get_settings
 
+logger = logging.getLogger(__name__)
+
+
+def _run_migrations() -> None:
+    try:
+        alembic_cfg = Config(os.path.join(os.path.dirname(__file__), "..", "alembic.ini"))
+        alembic_cfg.set_main_option(
+            "script_location",
+            os.path.join(os.path.dirname(__file__), "..", "alembic"),
+        )
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Database migrations applied successfully.")
+    except Exception:
+        logger.exception("Failed to run database migrations.")
+        raise
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Tables are managed through Alembic migrations.
+    _run_migrations()
     yield
 
 

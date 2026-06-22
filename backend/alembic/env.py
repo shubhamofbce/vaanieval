@@ -27,7 +27,15 @@ from app.models import (  # noqa: F401
 
 config = context.config
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+
+def _resolve_url(raw_url: str) -> str:
+    if raw_url.startswith("postgresql://"):
+        return raw_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    if raw_url.startswith("postgres://"):
+        return raw_url.replace("postgres://", "postgresql+psycopg://", 1)
+    return raw_url
+
+config.set_main_option("sqlalchemy.url", _resolve_url(settings.database_url))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
