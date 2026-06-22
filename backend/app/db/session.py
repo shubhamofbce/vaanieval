@@ -16,6 +16,14 @@ def _resolve_database_url(raw_url: str) -> str:
         backend_root = Path(__file__).resolve().parents[2]
         absolute_path = (backend_root / relative_path).resolve()
         return f"sqlite:///{absolute_path.as_posix()}"
+
+    # Ensure PostgreSQL uses psycopg3 (installed as `psycopg[binary]`).
+    if raw_url.startswith("postgresql://"):
+        return raw_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+    if raw_url.startswith("postgres://"):
+        return raw_url.replace("postgres://", "postgresql+psycopg://", 1)
+
     return raw_url
 
 engine = create_engine(_resolve_database_url(settings.database_url), future=True)
