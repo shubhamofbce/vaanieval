@@ -34,10 +34,6 @@ dependencies = [
   "langchain-anthropic==0.3.17"
 ]
 
-[tool.vercel]
-entrypoint = "backend.api.index:app"
-build = "cd frontend && npm install && npm run build"
-
 [project.optional-dependencies]
 dev = [
   "bandit",
