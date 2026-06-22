@@ -15,12 +15,28 @@ authors = [
 dependencies = [
   "elevenlabs",
   "python-dotenv",
-  "PyYAML"
+  "PyYAML",
+  "fastapi==0.116.1",
+  "uvicorn[standard]==0.35.0",
+  "sqlalchemy==2.0.43",
+  "psycopg[binary]==3.2.13",
+  "alembic==1.16.5",
+  "pydantic==2.11.9",
+  "pydantic-settings==2.11.0",
+  "python-jose[cryptography]==3.3.0",
+  "passlib[bcrypt]==1.7.4",
+  "httpx==0.28.1",
+  "python-multipart==0.0.20",
+  "email-validator==2.2.0",
+  "openai==1.93.0",
+  "langchain==0.3.27",
+  "langchain-openai==0.3.28",
+  "langchain-anthropic==0.3.17"
 ]
 
 [tool.vercel]
-entrypoint = "api/index.py"
-build = "npm --prefix frontend install && npm --prefix frontend run build"
+entrypoint = "backend.api.index:app"
+build = "cd frontend && npm install && npm run build"
 
 [project.optional-dependencies]
 dev = [
