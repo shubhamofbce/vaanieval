@@ -9,10 +9,8 @@ export function AppLayout() {
     { to: '/onboarding', icon: 'house', label: 'Dashboard' },
     { to: '/conversations', icon: 'comments', label: 'Conversations' },
     { to: '/settings/agents', icon: 'users', label: 'Agents' },
-    { to: '/onboarding#evaluations', icon: 'chart-line', label: 'Evaluations' },
     { to: '/imports/new', icon: 'file-import', label: 'Imports' },
     { to: '/settings/provider', icon: 'plug', label: 'Providers' },
-    { to: '/onboarding#settings', icon: 'sliders', label: 'Settings' },
   ]
 
   async function handleLogout() {

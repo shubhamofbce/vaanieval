@@ -1,4 +1,3 @@
-from datetime import datetime
 import hashlib
 
 from fastapi import Cookie, Depends, HTTPException, status
@@ -8,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.auth import AuthSession
 from app.models.user import Membership, User
+from app.services.security import utc_now
 
 
 def _hash_token(token: str) -> str:
@@ -23,7 +23,7 @@ def get_current_user(
 
     token_hash = _hash_token(session_token)
     session_row = db.scalar(select(AuthSession).where(AuthSession.session_token_hash == token_hash))
-    now = datetime.utcnow()
+    now = utc_now()
 
     if not session_row or session_row.revoked_at is not None or session_row.expires_at < now:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is invalid")

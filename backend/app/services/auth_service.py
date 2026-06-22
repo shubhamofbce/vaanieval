@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,7 +8,13 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.models.auth import AuthSession, MagicLinkToken
 from app.models.user import Membership, User, Workspace
-from app.services.security import create_random_token, expires_in_hours, expires_in_minutes, hash_token
+from app.services.security import (
+    create_random_token,
+    expires_in_hours,
+    expires_in_minutes,
+    hash_token,
+    utc_now,
+)
 
 
 @dataclass
@@ -53,7 +58,7 @@ def verify_magic_link(db: Session, token: str) -> VerifiedSession | None:
     token_hash = hash_token(token)
 
     token_row = db.scalar(select(MagicLinkToken).where(MagicLinkToken.token_hash == token_hash))
-    now = datetime.utcnow()
+    now = utc_now()
     if not token_row or token_row.consumed_at is not None or token_row.expires_at < now:
         return None
 
@@ -89,5 +94,5 @@ def revoke_session(db: Session, raw_session_token: str) -> None:
     if not session_row:
         return
 
-    session_row.revoked_at = datetime.utcnow()
+    session_row.revoked_at = utc_now()
     db.commit()

@@ -52,6 +52,7 @@ export type ConversationListItem = {
   provider_name: string
   provider_conversation_id: string
   provider_agent_id: string | null
+  provider_agent_name: string | null
   language: string | null
   outcome: string | null
   started_at: string | null
@@ -72,6 +73,7 @@ export type ConversationDetailResponse = {
   id: string
   provider_conversation_id: string
   provider_agent_id: string | null
+  provider_agent_name: string | null
   language: string | null
   outcome: string | null
   turns: ConversationTurnItem[]

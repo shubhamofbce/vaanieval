@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_workspace_id
 from app.db.session import get_db
 from app.models.conversation import Conversation, ConversationTurn
-from app.models.provider import ProviderAccount
+from app.models.provider import ProviderAccount, ProviderAgent
 from app.providers.factory import get_provider_adapter
 from app.schemas.conversations import (
     ConversationDetailResponse,
@@ -16,6 +16,23 @@ from app.schemas.conversations import (
 from app.services.credentials import decrypt_secret
 
 router = APIRouter()
+
+
+def _get_provider_agent_name(
+    db: Session,
+    *,
+    provider_account_id: str,
+    provider_agent_id: str | None,
+) -> str | None:
+    if not provider_agent_id:
+        return None
+
+    return db.scalar(
+        select(ProviderAgent.name).where(
+            ProviderAgent.provider_account_id == provider_account_id,
+            ProviderAgent.provider_agent_id == provider_agent_id,
+        )
+    )
 
 
 @router.get("", response_model=list[ConversationListItem])
@@ -33,16 +50,27 @@ def list_conversations(
         .limit(limit)
     ).all()
 
+    account_ids = {row.provider_account_id for row in rows}
+    accounts = db.scalars(select(ProviderAccount).where(ProviderAccount.id.in_(account_ids))).all()
+    provider_name_by_account_id = {account.id: account.provider_name for account in accounts}
+
+    agents = db.scalars(
+        select(ProviderAgent).where(ProviderAgent.provider_account_id.in_(account_ids))
+    ).all()
+    provider_agent_name_by_key = {
+        (agent.provider_account_id, agent.provider_agent_id): agent.name for agent in agents
+    }
+
     return [
         ConversationListItem(
             id=row.id,
             provider_account_id=row.provider_account_id,
-            provider_name=(
-                db.scalar(select(ProviderAccount.provider_name).where(ProviderAccount.id == row.provider_account_id))
-                or "unknown"
-            ),
+            provider_name=provider_name_by_account_id.get(row.provider_account_id, "unknown"),
             provider_conversation_id=row.provider_conversation_id,
             provider_agent_id=row.provider_agent_id,
+            provider_agent_name=provider_agent_name_by_key.get(
+                (row.provider_account_id, row.provider_agent_id or "")
+            ),
             language=row.language,
             outcome=row.outcome,
             started_at=row.started_at,
@@ -78,6 +106,11 @@ def get_conversation_detail(
         id=row.id,
         provider_conversation_id=row.provider_conversation_id,
         provider_agent_id=row.provider_agent_id,
+        provider_agent_name=_get_provider_agent_name(
+            db,
+            provider_account_id=row.provider_account_id,
+            provider_agent_id=row.provider_agent_id,
+        ),
         language=row.language,
         outcome=row.outcome,
         turns=[

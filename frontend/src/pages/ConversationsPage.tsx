@@ -27,6 +27,7 @@ function formatProviderName(providerName: string) {
 }
 
 const SPEED_OPTIONS = [1, 1.2, 1.5, 2]
+const CONVERSATIONS_PAGE_SIZE = 10
 const METRIC_LABELS: Record<string, string> = {
   task_completion_score: 'Task Completion',
   intent_understanding_score: 'Intent Understanding',
@@ -42,6 +43,10 @@ function formatConversationTitle(createdAt: string) {
     return 'Conversation'
   }
   return `Conversation on ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+}
+
+function getConversationDisplayName(row: ConversationListItem) {
+  return row.provider_agent_name || row.provider_agent_id || formatConversationTitle(getConversationDisplayDate(row))
 }
 
 function getConversationDisplayDate(row: ConversationListItem) {
@@ -142,6 +147,7 @@ export function ConversationsPage() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [detailTab, setDetailTab] = useState<DetailTab>('score')
+  const [currentPage, setCurrentPage] = useState(1)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const subtitleListRef = useRef<HTMLUListElement | null>(null)
   const lastActiveTurnRef = useRef(-1)
@@ -653,11 +659,39 @@ export function ConversationsPage() {
     })
   }, [filteredRows, scoreFilter, listEvaluationSummary])
 
+  const totalPages = Math.max(1, Math.ceil(scoreFilteredRows.length / CONVERSATIONS_PAGE_SIZE))
+
+  const visiblePageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+
+    const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1])
+    return Array.from(pages).filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b)
+  }, [currentPage, totalPages])
+
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * CONVERSATIONS_PAGE_SIZE
+    return scoreFilteredRows.slice(start, start + CONVERSATIONS_PAGE_SIZE)
+  }, [currentPage, scoreFilteredRows])
+
   useEffect(() => {
     if (!scoreFilteredRows.some((row) => row.id === selectedId)) {
       setSelectedId(scoreFilteredRows[0]?.id || '')
     }
   }, [scoreFilteredRows, selectedId])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  useEffect(() => {
+    if (paginatedRows.length > 0 && !paginatedRows.some((row) => row.id === selectedId)) {
+      setSelectedId(paginatedRows[0].id)
+    }
+  }, [paginatedRows, selectedId])
 
   const selectedIndex = useMemo(() => {
     return scoreFilteredRows.findIndex((row) => row.id === selectedId)
@@ -670,6 +704,7 @@ export function ConversationsPage() {
   return (
     <section className="page conversations-workspace workspace-page">
       <PageHeader
+        className="conversations-header"
         icon="comments"
         title="Conversations"
         subtitle={
@@ -746,7 +781,7 @@ export function ConversationsPage() {
       <div className="conversations-grid workspace-grid">
         <aside className="panel conversations-list-panel workspace-list-panel">
           <div className="workspace-list-header">
-            <strong>{rows.length} conversations</strong>
+            <strong>{scoreFilteredRows.length} conversations</strong>
             <select value="newest" onChange={() => undefined}>
               <option value="newest">Newest first</option>
             </select>
@@ -758,7 +793,7 @@ export function ConversationsPage() {
             <p className="muted">No conversations match your filters.</p>
           ) : (
             <ul className="conversations-list" role="listbox" aria-label="Conversations">
-              {scoreFilteredRows.map((row) => {
+              {paginatedRows.map((row) => {
                 const selected = row.id === selectedId
                 const evalSummary = listEvaluationSummary[row.id]
                 const isEvalLoading = listEvaluationLoading[row.id] ?? false
@@ -780,7 +815,7 @@ export function ConversationsPage() {
                       onClick={() => setSelectedId(row.id)}
                     >
                       <span className="conversation-card-title-row">
-                        <span className="conversation-id">Call • {new Date(getConversationDisplayDate(row)).toLocaleDateString()}</span>
+                        <span className="conversation-id">{getConversationDisplayName(row)}</span>
                         <span className="conversation-provider-badge">{formatProviderName(row.provider_name)}</span>
                       </span>
                       <span className="conversation-subtitle">Agent: {row.provider_agent_id ?? 'Unknown'}</span>
@@ -814,28 +849,47 @@ export function ConversationsPage() {
             </ul>
           )}
 
+          {totalPages > 1 ? (
             <div className="workspace-pagination">
-              <button type="button" className="secondary" disabled>
+              <button
+                type="button"
+                className="secondary"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
                 Previous
               </button>
               <div className="workspace-page-numbers">
-                {[1, 2, 3, 4, 5].map((page) => (
-                  <button key={page} type="button" className={page === 1 ? 'page-number active' : 'page-number'}>
-                    {page}
-                  </button>
-                ))}
-                <span className="page-ellipsis">…</span>
-                <button type="button" className="page-number">
-                  32
-                </button>
+                {visiblePageNumbers.map((page, index) => {
+                  const previousPage = visiblePageNumbers[index - 1]
+                  const showEllipsis = previousPage != null && page - previousPage > 1
+                  return (
+                    <span key={page}>
+                      {showEllipsis ? <span className="page-ellipsis">…</span> : null}
+                      <button
+                        type="button"
+                        className={page === currentPage ? 'page-number active' : 'page-number'}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </button>
+                    </span>
+                  )
+                })}
               </div>
-              <button type="button" className="secondary" disabled>
+              <button
+                type="button"
+                className="secondary"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              >
                 Next
               </button>
             </div>
+          ) : null}
         </aside>
 
-          <section className="panel conversations-detail-panel workspace-center-panel">
+        <section className="panel conversations-detail-panel workspace-center-panel">
           {!selectedRow ? (
             <p className="muted">Select a conversation to preview details.</p>
           ) : detailLoading ? (
@@ -844,7 +898,7 @@ export function ConversationsPage() {
             <>
                 <div className="workspace-detail-header">
                 <div>
-                  <h2>{selectedRow ? formatConversationTitle(getConversationDisplayDate(selectedRow)) : 'Conversation review'}</h2>
+                  <h2>{selectedRow ? getConversationDisplayName(selectedRow) : 'Conversation review'}</h2>
                   <p className="muted">
                       Provider: {formatProviderName(selectedRow.provider_name)} · Agent: {insights?.assistant_name || selectedRow.provider_agent_id || 'Voice assistant'} · Duration: {formatClock(effectiveDuration)} · ID: {detail.id}
                   </p>
@@ -856,34 +910,6 @@ export function ConversationsPage() {
                     </Link>
                   </div>
               </div>
-
-                <section className={`panel evaluation-hero-card ${scoreSummaryBackground}`}>
-                  <div className="evaluation-hero-left">
-                    <small>Overall Evaluation Score</small>
-                    <p>{evaluationSummaryScore == null ? '--' : `${evaluationSummaryScore}/100`}</p>
-                    <span className="muted">Average across the four evaluation metrics.</span>
-                  </div>
-                  <div className="evaluation-hero-right">
-                    <div className="sparkline">
-                      {[14, 18, 16, 20, 18, 12, 10, 16, 14, 12, 18, 16].map((height, index) => (
-                        <span key={index} style={{ height: `${height}px` }} />
-                      ))}
-                    </div>
-                    <span className="evaluation-delta">↓ 12 vs previous evaluation</span>
-                  </div>
-                </section>
-
-                <section className="metric-grid">
-                  {evaluationMetrics.map((metric) => (
-                    <article key={metric.key} className="metric-card">
-                      <small>{metric.label}</small>
-                      <strong>{metric.score == null ? '--/100' : `${metric.score}/100`}</strong>
-                      <div className="metric-progress-track">
-                        <span className={`metric-progress-bar ${getScoreTone(metric.score)}`} style={{ width: `${metric.score ?? 0}%` }} />
-                      </div>
-                    </article>
-                  ))}
-                </section>
 
                 <div className="workspace-tabs" role="tablist" aria-label="Conversation review tabs">
                   <button type="button" className={detailTab === 'score' ? 'workspace-tab active' : 'workspace-tab'} onClick={() => setDetailTab('score')}>
@@ -905,8 +931,36 @@ export function ConversationsPage() {
                 </div>
 
                 {detailTab === 'score' ? (
-                  <div className="score-breakdown-panel">
-                    <table className="evaluation-table workspace-evaluation-table">
+                  <>
+                    <section className={`panel evaluation-hero-card ${scoreSummaryBackground}`}>
+                      <div className="evaluation-hero-left">
+                        <small>Overall Evaluation Score</small>
+                        <p>{evaluationSummaryScore == null ? '--' : `${evaluationSummaryScore}/100`}</p>
+                        <span className="muted">Average across the four evaluation metrics.</span>
+                      </div>
+                      <div className="evaluation-hero-right">
+                        <div className="sparkline">
+                          {[14, 18, 16, 20, 18, 12, 10, 16, 14, 12, 18, 16].map((height, index) => (
+                            <span key={index} style={{ height: `${height}px` }} />
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="metric-grid">
+                      {evaluationMetrics.map((metric) => (
+                        <article key={metric.key} className="metric-card">
+                          <small>{metric.label}</small>
+                          <strong>{metric.score == null ? '--/100' : `${metric.score}/100`}</strong>
+                          <div className="metric-progress-track">
+                            <span className={`metric-progress-bar ${getScoreTone(metric.score)}`} style={{ width: `${metric.score ?? 0}%` }} />
+                          </div>
+                        </article>
+                      ))}
+                    </section>
+
+                    <div className="score-breakdown-panel">
+                      <table className="evaluation-table workspace-evaluation-table">
                       <thead>
                         <tr>
                           <th>Metric</th>
@@ -927,8 +981,9 @@ export function ConversationsPage() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
-                  </div>
+                      </table>
+                    </div>
+                  </>
                 ) : null}
 
                 {detailTab === 'player' ? (
@@ -1199,109 +1254,6 @@ export function ConversationsPage() {
             <p className="muted">Unable to load conversation preview.</p>
           )}
         </section>
-
-        <aside className="panel conversations-side-panel workspace-side-panel">
-          <div className="workspace-sticky-panel">
-            <div className="workspace-sticky-section">
-              <h3>Call Player</h3>
-              {audio ? (
-                <>
-                  <div className="player-shell player-shell-compact">
-                    <div className="player-waveform" aria-hidden="true">
-                      {waveformBars.map((bar) => (
-                        <span
-                          key={bar.id}
-                          className={`player-wave-bar ${bar.isPlayed ? 'is-played' : ''}`}
-                          style={{ height: `${Math.max(8, Math.round(bar.height * 48))}px` }}
-                        />
-                      ))}
-                    </div>
-                    <div className="player-timeline-group">
-                      <input
-                        type="range"
-                        min={0}
-                        max={effectiveDuration > 0 ? effectiveDuration : 1}
-                        step={0.1}
-                        value={Math.min(currentTime, effectiveDuration > 0 ? effectiveDuration : 1)}
-                        onChange={(event) => {
-                          const nextValue = Number(event.target.value)
-                          setCurrentTime(nextValue)
-                          if (audioRef.current) {
-                            audioRef.current.currentTime = nextValue
-                          }
-                        }}
-                      />
-                      <div className="player-time-row">
-                        <span>{formatClock(currentTime)}</span>
-                        <span>{formatClock(effectiveDuration)}</span>
-                      </div>
-                    </div>
-                    <div className="player-controls-row">
-                      <div className="player-primary-controls">
-                        <button type="button" onClick={() => void togglePlayback()} className="player-play-button">
-                          <span className="control-with-icon">
-                            <FontAwesomeIcon icon={isPlaying ? 'pause' : 'play'} />
-                          </span>
-                        </button>
-                        <button type="button" className="player-icon-button" onClick={() => shiftPlayback(-10)}>
-                          <FontAwesomeIcon icon="backward" />
-                        </button>
-                        <button type="button" className="player-icon-button" onClick={() => shiftPlayback(10)}>
-                          <FontAwesomeIcon icon="forward" />
-                        </button>
-                      </div>
-                      <div className="player-rate-row" role="group" aria-label="Playback speed">
-                        {SPEED_OPTIONS.map((speed) => (
-                          <button
-                            key={speed}
-                            type="button"
-                            className={`player-rate-chip ${playbackRate === speed ? 'active' : ''}`}
-                            onClick={() => setPlaybackRate(speed)}
-                          >
-                            {speed}x
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p className="muted">Audio not available for this conversation.</p>
-              )}
-            </div>
-
-            <div className="workspace-sticky-section transcript-preview-section">
-              <div className="transcript-header-row">
-                <h3>Transcript Preview</h3>
-                <Link to={`/conversations/${detail?.id ?? selectedRow?.id ?? ''}`} className="muted">
-                  View full transcript
-                </Link>
-              </div>
-              {detail?.turns?.length ? (
-                <ul className="transcript-preview-list">
-                  {turnsForPlayback.slice(0, 5).map((turn) => (
-                    <li key={turn.id} className={turn.role === 'agent' ? 'agent' : 'user'}>
-                      <div className="transcript-preview-meta">
-                        <strong>{turn.role === 'agent' ? 'Agent' : 'User'}</strong>
-                        <span>{formatClock(turn.startSec)}</span>
-                      </div>
-                      <p>{turn.text}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="muted">No transcript available.</p>
-              )}
-            </div>
-
-            <div className="workspace-sticky-section">
-              <h3>Quick Notes</h3>
-              <p className="muted">
-                Understand why a conversation scored poorly, then jump straight into playback or transcript review.
-              </p>
-            </div>
-          </div>
-        </aside>
       </div>
 
       {error && <p className="error">{error}</p>}
