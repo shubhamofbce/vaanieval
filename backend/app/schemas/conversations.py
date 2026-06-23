@@ -28,6 +28,7 @@ class ConversationTurnItem(BaseModel):
 
 class ConversationDetailResponse(BaseModel):
     id: str
+    provider_name: str
     provider_conversation_id: str
     provider_agent_id: str | None
     provider_agent_name: str | None

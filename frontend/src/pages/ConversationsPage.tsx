@@ -26,6 +26,29 @@ function formatProviderName(providerName: string) {
       : providerName
 }
 
+function looksLikeOpaqueId(value: string | null | undefined) {
+  if (!value) {
+    return false
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return false
+  }
+  return /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(trimmed)
+}
+
+function pickAgentDisplayName(...candidates: Array<string | null | undefined>) {
+  for (const candidate of candidates) {
+    if (!candidate || !candidate.trim()) {
+      continue
+    }
+    if (!looksLikeOpaqueId(candidate)) {
+      return candidate
+    }
+  }
+  return 'Voice assistant'
+}
+
 const SPEED_OPTIONS = [1, 1.2, 1.5, 2]
 const CONVERSATIONS_PAGE_SIZE = 10
 const METRIC_LABELS: Record<string, string> = {
@@ -46,7 +69,7 @@ function formatConversationTitle(createdAt: string) {
 }
 
 function getConversationDisplayName(row: ConversationListItem) {
-  return row.provider_agent_name || row.provider_agent_id || formatConversationTitle(getConversationDisplayDate(row))
+  return row.provider_agent_name || formatConversationTitle(getConversationDisplayDate(row))
 }
 
 function getConversationDisplayDate(row: ConversationListItem) {
@@ -115,6 +138,7 @@ export function ConversationsPage() {
   const [detail, setDetail] = useState<ConversationDetailResponse | null>(null)
   const [audio, setAudio] = useState<AudioAssetResponse | null>(null)
   const [insights, setInsights] = useState<ConversationInsightResponse | null>(null)
+  const [insightsError, setInsightsError] = useState('')
   const [evaluationRun, setEvaluationRun] = useState<ConversationEvaluationRunResponse | null>(null)
   const [listEvaluations, setListEvaluations] = useState<Record<string, ConversationEvaluationRunResponse | null>>({})
   const [listEvaluationLoading, setListEvaluationLoading] = useState<Record<string, boolean>>({})
@@ -308,6 +332,7 @@ export function ConversationsPage() {
       setDetail(null)
       setAudio(null)
       setInsights(null)
+      setInsightsError('')
       setEvaluationRun(null)
       setCurrentTime(0)
       setDuration(0)
@@ -321,11 +346,17 @@ export function ConversationsPage() {
       setDetailLoading(true)
       try {
         setInsightsLoading(true)
+        setInsightsError('')
         const [conversationData, audioData] = await Promise.all([
           getConversation(selectedId),
           getAudioMetadata(selectedId).catch(() => null),
         ])
-        const insightsData = await getConversationInsights(selectedId).catch(() => null)
+        const insightsData = await getConversationInsights(selectedId).catch((err: unknown) => {
+          if (!cancelled) {
+            setInsightsError(err instanceof Error ? err.message : 'Failed to load provider insights')
+          }
+          return null
+        })
         const latestEvaluation = await getLatestConversationEvaluation(selectedId).catch(() => null)
         if (!cancelled) {
           setDetail(conversationData)
@@ -338,6 +369,7 @@ export function ConversationsPage() {
           setDetail(null)
           setAudio(null)
           setInsights(null)
+          setInsightsError('')
           setEvaluationRun(null)
           setError(err instanceof Error ? err.message : 'Failed to load selected conversation')
         }
@@ -818,7 +850,7 @@ export function ConversationsPage() {
                         <span className="conversation-id">{getConversationDisplayName(row)}</span>
                         <span className="conversation-provider-badge">{formatProviderName(row.provider_name)}</span>
                       </span>
-                      <span className="conversation-subtitle">Agent: {row.provider_agent_id ?? 'Unknown'}</span>
+                      <span className="conversation-subtitle">Agent: {pickAgentDisplayName(row.provider_agent_name)}</span>
                       <span className="conversation-meta">
                         <FontAwesomeIcon icon="clock" /> {formatConversationDate(getConversationDisplayDate(row))}
                       </span>
@@ -900,7 +932,7 @@ export function ConversationsPage() {
                 <div>
                   <h2>{selectedRow ? getConversationDisplayName(selectedRow) : 'Conversation review'}</h2>
                   <p className="muted">
-                      Provider: {formatProviderName(selectedRow.provider_name)} · Agent: {insights?.assistant_name || selectedRow.provider_agent_id || 'Voice assistant'} · Duration: {formatClock(effectiveDuration)} · ID: {detail.id}
+                      Provider: {formatProviderName(selectedRow.provider_name)} · Agent: {pickAgentDisplayName(insights?.assistant_name, selectedRow.provider_agent_name)} · Duration: {formatClock(effectiveDuration)}
                   </p>
                 </div>
                   <div className="workspace-detail-actions">
@@ -1144,7 +1176,7 @@ export function ConversationsPage() {
                   </article>
                   <article className="metadata-card">
                     <small>Agent</small>
-                    <strong>{selectedRow.provider_agent_id || 'Unknown'}</strong>
+                    <strong>{pickAgentDisplayName(insights?.assistant_name, selectedRow.provider_agent_name)}</strong>
                   </article>
                   <article className="metadata-card">
                     <small>Language</small>
@@ -1176,7 +1208,11 @@ export function ConversationsPage() {
                         return
                       }
                       setInsightsLoading(true)
-                      const updated = await getConversationInsights(selectedId, true).catch(() => null)
+                      setInsightsError('')
+                      const updated = await getConversationInsights(selectedId, true).catch((err: unknown) => {
+                        setInsightsError(err instanceof Error ? err.message : 'Failed to refresh provider insights')
+                        return null
+                      })
                       if (updated) {
                         setInsights(updated)
                       }
@@ -1188,7 +1224,9 @@ export function ConversationsPage() {
                   </button>
                 </div>
 
-                {insights ? (
+                {insightsError ? (
+                  <p className="error">{insightsError}</p>
+                ) : insights ? (
                   <>
                     <div className="conversation-kpis">
                       <article>

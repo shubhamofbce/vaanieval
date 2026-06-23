@@ -50,12 +50,35 @@ function formatConversationTitle(unixSeconds: number | null) {
   return `Conversation on ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
 }
 
+function looksLikeOpaqueId(value: string | null | undefined) {
+  if (!value) {
+    return false
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return false
+  }
+  return /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(trimmed)
+}
+
+function pickAgentDisplayName(...candidates: Array<string | null | undefined>) {
+  for (const candidate of candidates) {
+    if (!candidate || !candidate.trim()) {
+      continue
+    }
+    if (!looksLikeOpaqueId(candidate)) {
+      return candidate
+    }
+  }
+  return 'Voice assistant'
+}
+
 function getConversationDisplayName(conversation: ConversationDetailResponse | null, assistantName: string | null) {
   if (!conversation) {
     return 'Conversation review'
   }
 
-  return conversation.provider_agent_name || assistantName || conversation.provider_agent_id || 'Conversation review'
+  return conversation.provider_agent_name || pickAgentDisplayName(assistantName) || 'Conversation review'
 }
 
 function formatCallDate(unixSeconds: number | null) {
@@ -87,6 +110,7 @@ export function ConversationDetailPage() {
   const [conversation, setConversation] = useState<ConversationDetailResponse | null>(null)
   const [audio, setAudio] = useState<AudioAssetResponse | null>(null)
   const [insights, setInsights] = useState<ConversationInsightResponse | null>(null)
+  const [insightsError, setInsightsError] = useState('')
   const [evaluationRun, setEvaluationRun] = useState<ConversationEvaluationRunResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [insightsLoading, setInsightsLoading] = useState(false)
@@ -141,10 +165,16 @@ export function ConversationDetailPage() {
     const load = async () => {
       setLoading(true)
       try {
+        setInsightsError('')
         const [data, metadata, insightsData] = await Promise.all([
           getConversation(conversationId),
           getAudioMetadata(conversationId).catch(() => null),
-          getConversationInsights(conversationId).catch(() => null),
+          getConversationInsights(conversationId).catch((err: unknown) => {
+            if (!cancelled) {
+              setInsightsError(err instanceof Error ? err.message : 'Failed to load provider insights')
+            }
+            return null
+          }),
         ])
         const latestEvaluation = await getLatestConversationEvaluation(conversationId).catch(() => null)
         if (!cancelled) {
@@ -160,6 +190,7 @@ export function ConversationDetailPage() {
           setConversation(null)
           setAudio(null)
           setInsights(null)
+          setInsightsError('')
           setEvaluationRun(null)
         }
       } finally {
@@ -488,7 +519,7 @@ export function ConversationDetailPage() {
               <span className="detail-kicker">Conversation detail</span>
               <h1>{getConversationDisplayName(conversation, insights?.assistant_name ?? null)}</h1>
               <p className="muted">
-                Provider: {evaluationRun?.provider_name || 'Unknown'} · Agent: {insights?.assistant_name || 'Voice assistant'} · Duration: {formatClock(effectiveDuration)} · ID: {conversation.id}
+                Provider: {conversation.provider_name || evaluationRun?.provider_name || 'Unknown'} · Agent: {pickAgentDisplayName(insights?.assistant_name, conversation.provider_agent_name)} · Duration: {formatClock(effectiveDuration)}
               </p>
             </div>
             <div className="detail-hero-actions">
@@ -577,7 +608,7 @@ export function ConversationDetailPage() {
                 <div className="conversation-insights-header">
                   <div>
                     <h3>Provider score and insights</h3>
-                    <p className="muted">Source: ElevenLabs provider data (not VaaniEval scoring).</p>
+                    <p className="muted">Source: provider data and evaluation runs.</p>
                   </div>
                   <button
                     type="button"
@@ -588,7 +619,11 @@ export function ConversationDetailPage() {
                         return
                       }
                       setInsightsLoading(true)
-                      const updated = await getConversationInsights(conversationId, true).catch(() => null)
+                      setInsightsError('')
+                      const updated = await getConversationInsights(conversationId, true).catch((err: unknown) => {
+                        setInsightsError(err instanceof Error ? err.message : 'Failed to refresh provider insights')
+                        return null
+                      })
                       if (updated) {
                         setInsights(updated)
                       }
@@ -599,7 +634,9 @@ export function ConversationDetailPage() {
                   </button>
                 </div>
 
-                {insights ? (
+                {insightsError ? (
+                  <p className="error">{insightsError}</p>
+                ) : insights ? (
                   <>
                     <div className="conversation-kpis">
                       <article>
@@ -811,11 +848,11 @@ export function ConversationDetailPage() {
                     </article>
                     <article>
                       <small>Provider</small>
-                      <strong>{insights?.environment || 'Unknown'}</strong>
+                      <strong>{conversation.provider_name || evaluationRun?.provider_name || 'Unknown'}</strong>
                     </article>
                     <article>
                       <small>Agent</small>
-                      <strong>{insights?.assistant_name || 'Voice assistant'}</strong>
+                      <strong>{pickAgentDisplayName(insights?.assistant_name, conversation.provider_agent_name)}</strong>
                     </article>
                     <article>
                       <small>Duration</small>

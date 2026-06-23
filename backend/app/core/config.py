@@ -1,6 +1,7 @@
 from functools import lru_cache
 import base64
 import hashlib
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -34,7 +35,11 @@ class Settings(BaseSettings):
         digest = hashlib.sha256(self.secret_key.encode("utf-8")).digest()
         return base64.urlsafe_b64encode(digest).decode("utf-8")
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(str(Path(__file__).resolve().parents[3] / ".env"), str(Path(__file__).resolve().parents[2] / ".env")),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
 @lru_cache

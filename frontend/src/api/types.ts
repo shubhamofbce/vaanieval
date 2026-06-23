@@ -71,6 +71,7 @@ export type ConversationTurnItem = {
 
 export type ConversationDetailResponse = {
   id: string
+  provider_name: string
   provider_conversation_id: string
   provider_agent_id: string | null
   provider_agent_name: string | null

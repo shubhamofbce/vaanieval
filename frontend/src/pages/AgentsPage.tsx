@@ -1,11 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { listAgents, setDefaultAgent } from '../api/endpoints'
+import { createImport, getImportProgress, listAgents, setDefaultAgent } from '../api/endpoints'
 import type { ProviderAgentResponse } from '../api/types'
 import { EmptyState } from '../components/EmptyState'
 import { PageHeader } from '../components/PageHeader'
 import { StatusPill } from '../components/StatusPill'
+
+const IMPORT_DAYS_OPTIONS = [7, 30, 60]
+
+type AgentImportState = {
+  status: 'idle' | 'starting' | 'queued' | 'running' | 'completed' | 'failed'
+  jobId?: string
+  message?: string
+}
 
 export function AgentsPage() {
   const navigate = useNavigate()
@@ -14,6 +22,9 @@ export function AgentsPage() {
   const [nameFilter, setNameFilter] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [importDaysByAgentId, setImportDaysByAgentId] = useState<Record<string, number>>({})
+  const [importStateByAgentId, setImportStateByAgentId] = useState<Record<string, AgentImportState>>({})
+  const importTimersRef = useRef<Record<string, number>>({})
 
   const providerOptions = useMemo(() => {
     return Array.from(new Set(agents.map((agent) => agent.provider_name))).sort()
@@ -90,6 +101,97 @@ export function AgentsPage() {
       setError(err instanceof Error ? err.message : 'Failed to set default agent')
     }
   }
+
+  function clearImportTimer(agentId: string) {
+    const timerId = importTimersRef.current[agentId]
+    if (timerId) {
+      window.clearTimeout(timerId)
+      delete importTimersRef.current[agentId]
+    }
+  }
+
+  function scheduleImportPoll(agentId: string, jobId: string) {
+    clearImportTimer(agentId)
+
+    const poll = async () => {
+      const progress = await getImportProgress(jobId).catch(() => null)
+      if (!progress) {
+        setImportStateByAgentId((current) => ({
+          ...current,
+          [agentId]: { status: 'failed', jobId, message: 'Failed to load import progress' },
+        }))
+        clearImportTimer(agentId)
+        return
+      }
+
+      const nextStatus = progress.status === 'queued' || progress.status === 'running' ? progress.status : progress.status
+      setImportStateByAgentId((current) => ({
+        ...current,
+        [agentId]: {
+          status: nextStatus as AgentImportState['status'],
+          jobId,
+          message:
+            nextStatus === 'completed'
+              ? `Imported ${progress.imported_count} conversations.`
+              : nextStatus === 'failed'
+                ? `Import failed after ${progress.failed_count} errors.`
+                : undefined,
+        },
+      }))
+
+      if (progress.status === 'queued' || progress.status === 'running') {
+        importTimersRef.current[agentId] = window.setTimeout(() => {
+          void poll()
+        }, 3000)
+      } else {
+        clearImportTimer(agentId)
+      }
+    }
+
+    void poll()
+  }
+
+  async function handleImportConversations(agent: ProviderAgentResponse) {
+    const days = importDaysByAgentId[agent.id] ?? 7
+    const now = new Date()
+    const endDate = now.toISOString().slice(0, 10)
+    const startDate = new Date(now)
+    startDate.setDate(startDate.getDate() - days)
+
+    setError('')
+    setImportStateByAgentId((current) => ({
+      ...current,
+      [agent.id]: { status: 'starting' },
+    }))
+
+    try {
+      const created = await createImport({
+        provider_account_id: agent.provider_account_id,
+        agent_id: agent.provider_agent_id,
+        start_date: startDate.toISOString().slice(0, 10),
+        end_date: endDate,
+      })
+
+      setImportStateByAgentId((current) => ({
+        ...current,
+        [agent.id]: { status: 'queued', jobId: created.id },
+      }))
+      scheduleImportPoll(agent.id, created.id)
+    } catch (err) {
+      setImportStateByAgentId((current) => ({
+        ...current,
+        [agent.id]: { status: 'failed', message: err instanceof Error ? err.message : 'Failed to create import job' },
+      }))
+      setError(err instanceof Error ? err.message : 'Failed to create import job')
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      Object.values(importTimersRef.current).forEach((timerId) => window.clearTimeout(timerId))
+      importTimersRef.current = {}
+    }
+  }, [])
 
   return (
     <section className="page agents-page">
@@ -208,6 +310,63 @@ export function AgentsPage() {
                 </div>
 
                 <div className="inline">
+                  <div className="agents-import-inline">
+                    <label className="sr-only" htmlFor={`import-days-${agent.id}`}>
+                      Import days for {agent.name}
+                    </label>
+                    <select
+                      id={`import-days-${agent.id}`}
+                      value={importDaysByAgentId[agent.id] ?? 7}
+                      onChange={(event) =>
+                        setImportDaysByAgentId((current) => ({
+                          ...current,
+                          [agent.id]: Number(event.target.value),
+                        }))
+                      }
+                      disabled={loading || importStateByAgentId[agent.id]?.status === 'starting' || importStateByAgentId[agent.id]?.status === 'queued' || importStateByAgentId[agent.id]?.status === 'running'}
+                    >
+                      {IMPORT_DAYS_OPTIONS.map((days) => (
+                        <option key={days} value={days}>
+                          Last {days} days
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => void handleImportConversations(agent)}
+                      disabled={
+                        loading ||
+                        importStateByAgentId[agent.id]?.status === 'starting' ||
+                        importStateByAgentId[agent.id]?.status === 'queued' ||
+                        importStateByAgentId[agent.id]?.status === 'running'
+                      }
+                    >
+                      <span className="control-with-icon">
+                        <FontAwesomeIcon
+                          icon={
+                            importStateByAgentId[agent.id]?.status === 'starting' ||
+                            importStateByAgentId[agent.id]?.status === 'queued' ||
+                            importStateByAgentId[agent.id]?.status === 'running'
+                              ? 'spinner'
+                              : 'file-import'
+                          }
+                          spin={
+                            importStateByAgentId[agent.id]?.status === 'starting' ||
+                            importStateByAgentId[agent.id]?.status === 'queued' ||
+                            importStateByAgentId[agent.id]?.status === 'running'
+                          }
+                        />
+                        <span>
+                          {importStateByAgentId[agent.id]?.status === 'starting' ||
+                          importStateByAgentId[agent.id]?.status === 'queued' ||
+                          importStateByAgentId[agent.id]?.status === 'running'
+                            ? 'Importing conversations...'
+                            : 'Import conversations'}
+                        </span>
+                      </span>
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() =>
@@ -233,6 +392,9 @@ export function AgentsPage() {
                     </span>
                   </button>
                 </div>
+                {importStateByAgentId[agent.id]?.message ? (
+                  <p className="muted agent-import-status">{importStateByAgentId[agent.id]?.message}</p>
+                ) : null}
               </article>
             ))}
           </div>

@@ -100,20 +100,22 @@ class VapiProviderAdapter(ProviderAdapter):
 
         warnings: list[str] = []
         ended_message = detail.get("endedMessage")
-        if isinstance(ended_message, str) and ended_message.strip():
-            warnings.append(ended_message)
+        ended_message_text = _coerce_text(ended_message)
+        if ended_message_text:
+            warnings.append(ended_message_text)
 
         started_at = _parse_datetime_to_unix(detail.get("startedAt"))
         duration_seconds = _compute_duration_seconds(detail.get("startedAt"), detail.get("endedAt"))
         assistant = detail.get("assistant") if isinstance(detail.get("assistant"), dict) else {}
+        assistant_name = _coerce_text(assistant.get("name"))
 
         return {
             "conversation_id": conversation_id,
-            "assistant_name": assistant.get("name") if isinstance(assistant.get("name"), str) else provider_agent_id,
+            "assistant_name": assistant_name,
             "call_status": detail.get("status") if isinstance(detail.get("status"), str) else None,
             "call_result": analysis.get("successEvaluation") if isinstance(analysis.get("successEvaluation"), str) else outcome,
             "summary_title": None,
-            "summary_text": (analysis.get("summary") if isinstance(analysis.get("summary"), str) else artifact.get("transcript")),
+            "summary_text": _extract_summary_text(analysis=analysis, artifact=artifact, messages=messages),
             "duration_seconds": duration_seconds,
             "started_at_unix": started_at,
             "end_reason": detail.get("endedReason") if isinstance(detail.get("endedReason"), str) else None,
@@ -121,6 +123,54 @@ class VapiProviderAdapter(ProviderAdapter):
             "warnings": warnings,
             "quality_signals": quality_signals,
         }
+
+
+def _extract_summary_text(*, analysis: dict[str, Any], artifact: dict[str, Any], messages: Any) -> str | None:
+    summary = _coerce_text(analysis.get("summary"))
+    if summary:
+        return summary
+
+    transcript = artifact.get("transcript")
+    transcript_text = _coerce_text(transcript)
+    if transcript_text:
+        return transcript_text
+
+    if isinstance(transcript, list):
+        parts = [_coerce_text(item) for item in transcript]
+        joined = "\n".join(part for part in parts if part)
+        if joined:
+            return joined
+
+    if isinstance(messages, list):
+        message_parts = [_coerce_text(item) for item in messages]
+        joined = "\n".join(part for part in message_parts if part)
+        if joined:
+            return joined
+
+    return None
+
+
+def _coerce_text(value: Any) -> str | None:
+    if isinstance(value, str):
+        text = value.strip()
+        return text or None
+
+    if isinstance(value, (int, float, bool)):
+        return str(value)
+
+    if isinstance(value, dict):
+        for key in ("summary", "text", "message", "content", "transcript", "result"):
+            nested = _coerce_text(value.get(key))
+            if nested:
+                return nested
+        return None
+
+    if isinstance(value, list):
+        parts = [_coerce_text(item) for item in value]
+        joined = " ".join(part for part in parts if part)
+        return joined or None
+
+    return None
 
 
 def _parse_datetime(value: object) -> datetime | None:

@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -16,6 +18,77 @@ from app.schemas.conversations import (
 from app.services.credentials import decrypt_secret
 
 router = APIRouter()
+
+
+def _build_local_fallback_insight_payload(
+    db: Session,
+    *,
+    row: Conversation,
+    provider_name: str,
+    error_message: str,
+) -> dict[str, object]:
+    turns = db.scalars(
+        select(ConversationTurn)
+        .where(ConversationTurn.conversation_id == row.id)
+        .order_by(ConversationTurn.turn_order.asc())
+    ).all()
+
+    usable_turns = [turn for turn in turns if turn.text and turn.text.strip()]
+    first_turn = usable_turns[0].text.strip() if usable_turns else None
+    last_turn = usable_turns[-1].text.strip() if usable_turns else None
+    summary_lines = [part for part in (first_turn, last_turn) if part]
+
+    started_at_unix = None
+    if row.started_at is not None:
+        started = row.started_at
+        if started.tzinfo is None:
+            started = started.replace(tzinfo=timezone.utc)
+        started_at_unix = int(started.timestamp())
+
+    duration_seconds = None
+    if row.started_at is not None and row.ended_at is not None:
+        duration_seconds = max(0, int((row.ended_at - row.started_at).total_seconds()))
+
+    agent_name = _get_provider_agent_name(
+        db,
+        provider_account_id=row.provider_account_id,
+        provider_agent_id=row.provider_agent_id,
+    )
+
+    warnings = [
+        f"Live provider insights are temporarily unavailable ({_summarize_provider_error(error_message)}). Showing stored conversation data."
+    ]
+
+    return {
+        "conversation_id": row.id,
+        "assistant_name": agent_name,
+        "call_status": row.outcome or "unknown",
+        "call_result": row.outcome,
+        "summary_title": "Conversation snapshot",
+        "summary_text": "\n".join(summary_lines) if summary_lines else None,
+        "duration_seconds": duration_seconds,
+        "started_at_unix": started_at_unix,
+        "end_reason": None,
+        "environment": provider_name,
+        "warnings": warnings,
+        "quality_signals": [
+            {"label": "Provider", "value": provider_name},
+            {"label": "Turns captured", "value": str(len(usable_turns))},
+            {"label": "Outcome", "value": row.outcome or "Unknown"},
+            {"label": "Live provider fetch", "value": "Unavailable"},
+        ],
+    }
+
+
+def _summarize_provider_error(error_message: str) -> str:
+    normalized = (error_message or "").lower()
+    if "unauthorized" in normalized or "401" in normalized:
+        return "provider account authorization failed"
+    if "decrypt" in normalized or "credential" in normalized:
+        return "stored provider credential could not be read"
+    if "timeout" in normalized:
+        return "provider request timed out"
+    return "provider request failed"
 
 
 def _get_provider_agent_name(
@@ -104,6 +177,10 @@ def get_conversation_detail(
 
     return ConversationDetailResponse(
         id=row.id,
+        provider_name=(
+            db.scalar(select(ProviderAccount.provider_name).where(ProviderAccount.id == row.provider_account_id))
+            or "unknown"
+        ),
         provider_conversation_id=row.provider_conversation_id,
         provider_agent_id=row.provider_agent_id,
         provider_agent_name=_get_provider_agent_name(
@@ -164,4 +241,10 @@ def get_conversation_insights(
         )
         return ConversationInsightResponse(**payload)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to fetch provider insights") from exc
+        fallback_payload = _build_local_fallback_insight_payload(
+            db,
+            row=row,
+            provider_name=account.provider_name,
+            error_message=str(exc) or "provider request failed",
+        )
+        return ConversationInsightResponse(**fallback_payload)
