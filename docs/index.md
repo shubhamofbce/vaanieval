@@ -6,6 +6,9 @@ VaaniEval now ships with adapter-based support for both ElevenLabs and Vapi, so 
 
 - [Development Guide](development.md)
 - [Backend Architecture](backend-architecture.md)
+- [Feature Playbooks For Agents](features/README.md)
+- [Backend Feature Playbooks](features/backend/README.md)
+- [Frontend Feature Playbooks](features/frontend/README.md)
 - [V2 Plan](v2-plan/README.md)
 - [V2 Roadmap](v2-plan/roadmap.md)
 - [V2 Score Taxonomy](v2-plan/score-taxonomy.md)

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "wavesurfer.js": "^7.12.8"
+  }
+}

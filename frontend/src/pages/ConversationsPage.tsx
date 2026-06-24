@@ -50,6 +50,7 @@ function pickAgentDisplayName(...candidates: Array<string | null | undefined>) {
 }
 
 const SPEED_OPTIONS = [1, 1.2, 1.5, 2]
+const SUBTITLE_SYNC_LEAD_SECONDS = 0.2
 const CONVERSATIONS_PAGE_SIZE = 10
 const METRIC_LABELS: Record<string, string> = {
   task_completion_score: 'Task Completion',
@@ -444,14 +445,14 @@ export function ConversationsPage() {
       return -1
     }
 
-    const insideRange = turnsForPlayback.findIndex((turn) => currentTime >= turn.startSec && currentTime < turn.endSec)
-    if (insideRange >= 0) {
-      return insideRange
+    const syncedTime = currentTime + SUBTITLE_SYNC_LEAD_SECONDS
+    if (syncedTime < turnsForPlayback[0].startSec) {
+      return -1
     }
 
-    const latestStarted = [...turnsForPlayback]
+    const latestStarted = turnsForPlayback
       .map((turn, index) => ({ index, startSec: turn.startSec }))
-      .filter((turn) => turn.startSec <= currentTime)
+      .filter((turn) => turn.startSec <= syncedTime)
       .at(-1)
 
     return latestStarted?.index ?? 0

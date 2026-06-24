@@ -147,3 +147,85 @@ export type ConversationEvaluationRunResponse = {
   updated_at: string
   metrics: ConversationMetricScoreResponse[]
 }
+
+export type DashboardMetricSummary = {
+  metric_key: string
+  label: string
+  average_score: number | null
+  average_confidence: number | null
+  evaluated_conversations: number
+}
+
+export type DashboardSummary = {
+  conversations: number
+  successful_conversations: number
+  evaluated_conversations: number
+  evaluation_coverage_rate: number | null
+  success_rate: number | null
+  average_overall_score: number | null
+  average_call_duration_seconds: number | null
+  p95_call_duration_seconds: number | null
+}
+
+export type DashboardComparisonValue = {
+  current: number | null
+  previous: number | null
+  delta: number | null
+}
+
+export type DashboardComparison = {
+  conversations: DashboardComparisonValue
+  successful_conversations: DashboardComparisonValue
+  evaluated_conversations: DashboardComparisonValue
+  evaluation_coverage_rate: DashboardComparisonValue
+  success_rate: DashboardComparisonValue
+  average_overall_score: DashboardComparisonValue
+  average_call_duration_seconds: DashboardComparisonValue
+  p95_call_duration_seconds: DashboardComparisonValue
+}
+
+export type DashboardTrendPoint = {
+  date: string
+  conversations: number
+  successful_conversations: number
+  evaluated_conversations: number
+  success_rate: number | null
+  evaluation_coverage_rate: number | null
+  average_overall_score: number | null
+  average_call_duration_seconds: number | null
+  p95_call_duration_seconds: number | null
+  average_task_completion_score: number | null
+  average_intent_understanding_score: number | null
+  average_required_info_capture_score: number | null
+  average_ai_detectability_score: number | null
+}
+
+export type DashboardOutcomeBucket = {
+  outcome: string
+  count: number
+}
+
+export type DashboardAgentSummary = {
+  agent_id: string | null
+  agent_name: string
+  conversations: number
+  successful_conversations: number
+  evaluated_conversations: number
+  success_rate: number | null
+  average_overall_score: number | null
+  average_call_duration_seconds: number | null
+  average_task_completion_score: number | null
+}
+
+export type DashboardOverviewResponse = {
+  start_date: string
+  end_date: string
+  previous_start_date: string
+  previous_end_date: string
+  summary: DashboardSummary
+  comparison: DashboardComparison
+  metric_summaries: DashboardMetricSummary[]
+  outcome_breakdown: DashboardOutcomeBucket[]
+  trend: DashboardTrendPoint[]
+  agent_breakdown: DashboardAgentSummary[]
+}

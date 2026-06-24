@@ -6,7 +6,7 @@ export function AppLayout() {
   const navigate = useNavigate()
 
   const navItems = [
-    { to: '/onboarding', icon: 'house', label: 'Dashboard' },
+    { to: '/dashboard', icon: 'house', label: 'Dashboard' },
     { to: '/conversations', icon: 'comments', label: 'Conversations' },
     { to: '/settings/agents', icon: 'users', label: 'Agents' },
     { to: '/imports/new', icon: 'file-import', label: 'Imports' },
@@ -25,7 +25,7 @@ export function AppLayout() {
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <Link to="/onboarding" className="sidebar-brand">
+        <Link to="/dashboard" className="sidebar-brand">
           VaaniEval
         </Link>
 

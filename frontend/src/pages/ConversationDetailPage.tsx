@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import WaveSurfer from 'wavesurfer.js'
 import { API_BASE } from '../api/client'
 import {
   getAudioMetadata,
@@ -22,6 +23,7 @@ import type {
 } from '../api/types'
 
 const SPEED_OPTIONS = [1, 1.2, 1.5, 2]
+const SUBTITLE_SYNC_LEAD_SECONDS = 0.2
 const METRIC_LABELS: Record<string, string> = {
   task_completion_score: 'Task Completion',
   intent_understanding_score: 'Intent Understanding',
@@ -37,17 +39,6 @@ function formatClock(valueInSeconds: number) {
   const minutes = Math.floor(rounded / 60)
   const seconds = rounded % 60
   return `${minutes}:${String(seconds).padStart(2, '0')}`
-}
-
-function formatConversationTitle(unixSeconds: number | null) {
-  if (!unixSeconds) {
-    return 'Conversation review'
-  }
-  const date = new Date(unixSeconds * 1000)
-  if (Number.isNaN(date.getTime())) {
-    return 'Conversation review'
-  }
-  return `Conversation on ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
 }
 
 function looksLikeOpaqueId(value: string | null | undefined) {
@@ -120,7 +111,8 @@ export function ConversationDetailPage() {
   const [duration, setDuration] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const waveformRef = useRef<HTMLDivElement | null>(null)
+  const waveSurferRef = useRef<WaveSurfer | null>(null)
   const subtitleListRef = useRef<HTMLUListElement | null>(null)
   const lastActiveTurnRef = useRef(-1)
 
@@ -321,6 +313,10 @@ export function ConversationDetailPage() {
     return (audio?.duration_ms ?? 0) / 1000
   }, [audio?.duration_ms, duration, insights?.duration_seconds])
 
+  useEffect(() => {
+    waveSurferRef.current?.setPlaybackRate(playbackRate, true)
+  }, [playbackRate])
+
   const turnsForPlayback = useMemo(() => {
     if (!conversation) {
       return []
@@ -349,50 +345,105 @@ export function ConversationDetailPage() {
     })
   }, [conversation])
 
+  const waveformPeaks = useMemo(() => {
+    const totalDuration = effectiveDuration > 0 ? effectiveDuration : 1
+    const pointCount = Math.max(64, Math.min(256, Math.round(totalDuration * 24)))
+    const peaks = Array.from({ length: pointCount }, () => 0.05)
+
+    turnsForPlayback.forEach((turn) => {
+      const startIndex = Math.max(0, Math.floor((turn.startSec / totalDuration) * pointCount))
+      const endIndex = Math.min(pointCount - 1, Math.ceil((turn.endSec / totalDuration) * pointCount))
+      const rolePeak = turn.role === 'agent' ? 0.82 : 0.68
+      const densityPeak = Math.min(0.92, rolePeak + Math.min(0.18, turn.text.length / 280))
+
+      for (let index = startIndex; index <= endIndex; index += 1) {
+        const localBias = (index - startIndex) / Math.max(1, endIndex - startIndex)
+        const shapedValue = Math.max(0.08, densityPeak - Math.abs(localBias - 0.5) * 0.18)
+        peaks[index] = Math.max(peaks[index], shapedValue)
+      }
+    })
+
+    return [peaks]
+  }, [effectiveDuration, turnsForPlayback])
+
+  useEffect(() => {
+    const container = waveformRef.current
+    if (!container || !streamUrl) {
+      return
+    }
+
+    const waveSurfer = WaveSurfer.create({
+      container,
+      url: streamUrl,
+      peaks: waveformPeaks,
+      duration: effectiveDuration > 0 ? effectiveDuration : undefined,
+      waveColor: '#c9d3e3',
+      progressColor: '#23447a',
+      cursorColor: '#1d3863',
+      barWidth: 2,
+      barGap: 2,
+      barRadius: 999,
+      height: 64,
+      normalize: true,
+      fillParent: true,
+      interact: true,
+      dragToSeek: true,
+    })
+
+    waveSurferRef.current = waveSurfer
+
+    const unsubscribeTimeUpdate = waveSurfer.on('timeupdate', (nextTime) => {
+      setCurrentTime(nextTime)
+    })
+    const unsubscribeReady = waveSurfer.on('ready', (nextDuration) => {
+      setDuration(nextDuration)
+      setCurrentTime(0)
+      setIsPlaying(false)
+    })
+    const unsubscribePlay = waveSurfer.on('play', () => {
+      setIsPlaying(true)
+    })
+    const unsubscribePause = waveSurfer.on('pause', () => {
+      setIsPlaying(false)
+    })
+    const unsubscribeFinish = waveSurfer.on('finish', () => {
+      setIsPlaying(false)
+    })
+
+    return () => {
+      unsubscribeTimeUpdate()
+      unsubscribeReady()
+      unsubscribePlay()
+      unsubscribePause()
+      unsubscribeFinish()
+      waveSurfer.destroy()
+      if (waveSurferRef.current === waveSurfer) {
+        waveSurferRef.current = null
+      }
+    }
+  }, [effectiveDuration, streamUrl, waveformPeaks])
+
   const spokenTurnsForPlayback = useMemo(
-    () => turnsForPlayback.map((turn, index) => ({ ...turn, displayIndex: index })).filter((turn) => turn.role !== 'system'),
+    () => turnsForPlayback.filter((turn) => turn.role !== 'system'),
     [turnsForPlayback],
   )
 
   const activeTurnIndex = useMemo(() => {
-    if (turnsForPlayback.length === 0) {
+    if (spokenTurnsForPlayback.length === 0) {
       return -1
     }
-    const insideRange = turnsForPlayback.findIndex((turn) => currentTime >= turn.startSec && currentTime < turn.endSec)
-    if (insideRange >= 0) {
-      return insideRange
+    const syncedTime = currentTime + SUBTITLE_SYNC_LEAD_SECONDS
+    if (syncedTime < spokenTurnsForPlayback[0].startSec) {
+      return -1
     }
-    const latestStarted = [...turnsForPlayback]
+    const latestStarted = spokenTurnsForPlayback
       .map((turn, index) => ({ index, startSec: turn.startSec }))
-      .filter((turn) => turn.startSec <= currentTime)
+      .filter((turn) => turn.startSec <= syncedTime)
       .at(-1)
     return latestStarted?.index ?? 0
-  }, [currentTime, turnsForPlayback])
+  }, [currentTime, spokenTurnsForPlayback])
 
-  const activeTurn = activeTurnIndex >= 0 ? turnsForPlayback[activeTurnIndex] : null
-  const visibleActiveTurn = activeTurn?.role === 'system' ? spokenTurnsForPlayback[0] ?? activeTurn : activeTurn
-
-  const waveformBars = useMemo(() => {
-    const barCount = 96
-    const bars = Array.from({ length: barCount }, () => 0.08)
-    const total = effectiveDuration > 0 ? effectiveDuration : 1
-
-    turnsForPlayback.forEach((turn) => {
-      const startIndex = Math.max(0, Math.floor((turn.startSec / total) * barCount))
-      const endIndex = Math.min(barCount - 1, Math.ceil((turn.endSec / total) * barCount))
-      for (let index = startIndex; index <= endIndex; index += 1) {
-        const densityBoost = Math.min(0.16, (turn.text.length / 220) * 0.16)
-        const roleBoost = turn.role === 'agent' ? 0.16 : 0.1
-        bars[index] = Math.max(bars[index], 0.2 + densityBoost + roleBoost)
-      }
-    })
-
-    return bars.map((value, index) => ({
-      id: index,
-      height: Math.min(1, value),
-      isPlayed: (index / barCount) * total <= currentTime,
-    }))
-  }, [currentTime, effectiveDuration, turnsForPlayback])
+  const visibleActiveTurn = activeTurnIndex >= 0 ? spokenTurnsForPlayback[activeTurnIndex] : null
 
   useEffect(() => {
     if (activeTurnIndex < 0 || lastActiveTurnRef.current === activeTurnIndex) {
@@ -406,34 +457,23 @@ export function ConversationDetailPage() {
     }
   }, [activeTurnIndex])
 
-  useEffect(() => {
-    const audioElement = audioRef.current
-    if (!audioElement) {
-      return
-    }
-    audioElement.playbackRate = playbackRate
-  }, [playbackRate])
-
   const togglePlayback = async () => {
-    if (!audioRef.current) {
+    const waveSurfer = waveSurferRef.current
+    if (!waveSurfer) {
       return
     }
 
-    if (audioRef.current.paused) {
-      await audioRef.current.play().catch(() => undefined)
-      return
-    }
-
-    audioRef.current.pause()
+    await waveSurfer.playPause().catch(() => undefined)
   }
 
   const shiftPlayback = (seconds: number) => {
-    if (!audioRef.current) {
+    const waveSurfer = waveSurferRef.current
+    if (!waveSurfer) {
       return
     }
-    const total = effectiveDuration > 0 ? effectiveDuration : audioRef.current.duration || 0
-    const next = Math.min(Math.max(audioRef.current.currentTime + seconds, 0), total || Number.MAX_SAFE_INTEGER)
-    audioRef.current.currentTime = next
+    const total = effectiveDuration > 0 ? effectiveDuration : waveSurfer.getDuration() || 0
+    const next = Math.min(Math.max(waveSurfer.getCurrentTime() + seconds, 0), total || Number.MAX_SAFE_INTEGER)
+    waveSurfer.setTime(next)
     setCurrentTime(next)
   }
 
@@ -492,18 +532,15 @@ export function ConversationDetailPage() {
   }
 
   const seekToSecond = async (second: number) => {
-    if (!audioRef.current) {
+    const waveSurfer = waveSurferRef.current
+    if (!waveSurfer) {
       return
     }
 
-    const total = effectiveDuration > 0 ? effectiveDuration : audioRef.current.duration || Number.MAX_SAFE_INTEGER
+    const total = effectiveDuration > 0 ? effectiveDuration : waveSurfer.getDuration() || Number.MAX_SAFE_INTEGER
     const safeSecond = Math.min(Math.max(second, 0), total)
-    audioRef.current.currentTime = safeSecond
+    waveSurfer.setTime(safeSecond)
     setCurrentTime(safeSecond)
-
-    if (audioRef.current.paused) {
-      await audioRef.current.play().catch(() => undefined)
-    }
   }
 
   return (
@@ -706,34 +743,11 @@ export function ConversationDetailPage() {
                   {audio ? (
                     <>
                       <p className="muted">Listen and follow along with live subtitles.</p>
-                      <audio
-                        ref={audioRef}
-                        preload="metadata"
-                        crossOrigin="use-credentials"
-                        src={streamUrl}
-                        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-                        onLoadedMetadata={(event) => {
-                          const nextDuration = Number.isFinite(event.currentTarget.duration)
-                            ? event.currentTarget.duration
-                            : (audio.duration_ms ?? 0) / 1000
-                          setDuration(nextDuration)
-                        }}
-                        onPlay={() => setIsPlaying(true)}
-                        onPause={() => setIsPlaying(false)}
-                        onEnded={() => setIsPlaying(false)}
-                      >
-                        <track kind="captions" />
-                      </audio>
-
                       <div className="player-shell player-shell-compact">
-                        <div className="player-waveform" aria-hidden="true">
-                          {waveformBars.map((bar) => (
-                            <span
-                              key={bar.id}
-                              className={`player-wave-bar ${bar.isPlayed ? 'is-played' : ''}`}
-                              style={{ height: `${Math.max(8, Math.round(bar.height * 48))}px` }}
-                            />
-                          ))}
+                        <div className="player-waveform" ref={waveformRef} aria-label="Audio waveform" />
+                        <div className="player-waveform-legend" aria-hidden="true">
+                          <span>Waveform</span>
+                          <span>{formatClock(effectiveDuration)}</span>
                         </div>
 
                         <div className="player-timeline-group">
@@ -746,9 +760,7 @@ export function ConversationDetailPage() {
                             onChange={(event) => {
                               const nextValue = Number(event.target.value)
                               setCurrentTime(nextValue)
-                              if (audioRef.current) {
-                                audioRef.current.currentTime = nextValue
-                              }
+                              waveSurferRef.current?.setTime(nextValue)
                             }}
                           />
                           <div className="player-time-row">
@@ -820,11 +832,11 @@ export function ConversationDetailPage() {
                     <p className="muted">No turns available.</p>
                   ) : (
                     <ul className="turns compact subtitles-list" ref={subtitleListRef} id="subtitles">
-                      {spokenTurnsForPlayback.map((turn) => (
+                      {spokenTurnsForPlayback.map((turn, index) => (
                         <li
                           key={turn.id}
-                          data-turn-index={turn.displayIndex}
-                          className={activeTurnIndex === turn.displayIndex ? 'is-active' : ''}
+                          data-turn-index={index}
+                          className={activeTurnIndex === index ? 'is-active' : ''}
                           onDoubleClick={() => {
                             void seekToSecond(turn.startSec)
                           }}

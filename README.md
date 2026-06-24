@@ -12,6 +12,7 @@
 	<a href="docs/quickstart.md">Quickstart</a> |
 	<a href="docs/development.md">Development</a> |
 	<a href="docs/backend-architecture.md">Architecture</a> |
+	<a href="docs/features/README.md">Feature Playbooks</a> |
 	<a href="docs/metrics-and-gates.md">Metrics</a> |
 	<a href="docs/v2-plan/README.md">V2 Plan</a>
 </p>
@@ -34,8 +35,16 @@ VaaniEval gives you:
 - Real conversation ingestion (historical and ongoing imports)
 - Conversation review workspace with transcript and audio playback
 - Evaluation runs with score breakdowns and rationale
+- Dashboard analytics with KPI cards, trend charts, and top-agent drilldowns
 - Configurable voice providers and evaluator providers
 - Queue-backed processing for reliability at scale
+
+## Recently Added
+
+- New analytics dashboard page with aggregated backend endpoint and trend visualizations
+- Improved call-player waveform rendering in conversation detail
+- Better subtitle sync strategy in both detail and list player views
+- Agent-friendly feature playbooks split by backend and frontend folders
 
 ## Product Snapshot
 
@@ -50,6 +59,10 @@ VaaniEval gives you:
 
 <details>
 <summary>Show screenshots</summary>
+
+### Dashboard Analytics
+
+![Dashboard Analytics](docs/assets/screenshots/dashboard-analytics.png)
 
 ### Conversations Overview
 
@@ -123,11 +136,18 @@ Highlights:
 ## Documentation
 
 - [Docs Index](docs/index.md)
+- [Feature Playbooks For Agents](docs/features/README.md)
+- [Backend Feature Playbooks](docs/features/backend/README.md)
+- [Frontend Feature Playbooks](docs/features/frontend/README.md)
 - [Quickstart](docs/quickstart.md)
 - [Development Guide](docs/development.md)
 - [Backend Architecture](docs/backend-architecture.md)
 - [Metrics and Gates](docs/metrics-and-gates.md)
 - [CLI and API](docs/cli-and-api.md)
+
+## Build In Public
+
+- [Day 2 Build Tweet Plan](tweets/day-2-build-update.md)
 
 ## Contributing
 

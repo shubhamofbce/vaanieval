@@ -7,6 +7,7 @@ import { ConversationsPage } from './pages/ConversationsPage'
 import { ImportNewPage } from './pages/ImportNewPage'
 import { ImportProgressPage } from './pages/ImportProgressPage'
 import { LoginPage } from './pages/LoginPage'
+import { DashboardPage } from './pages/DashboardPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { ProviderPage } from './pages/ProviderPage'
 
@@ -17,6 +18,7 @@ function App() {
 
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/settings/provider" element={<ProviderPage />} />
           <Route path="/settings/agents" element={<AgentsPage />} />

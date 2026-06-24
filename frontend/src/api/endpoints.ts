@@ -2,6 +2,7 @@ import { apiRequest } from './client'
 import type {
   AudioAssetResponse,
   AuthResponse,
+  DashboardOverviewResponse,
   ConversationEvaluationRunResponse,
   ConversationDetailResponse,
   ConversationInsightResponse,
@@ -169,4 +170,16 @@ export function runConversationEvaluation(
 
 export function getLatestConversationEvaluation(conversationId: string) {
   return apiRequest<ConversationEvaluationRunResponse>(`/evaluations/conversations/${conversationId}/latest`)
+}
+
+export function getDashboardOverview(options?: { startDate?: string; endDate?: string }) {
+  const params = new URLSearchParams()
+  if (options?.startDate) {
+    params.append('start_date', options.startDate)
+  }
+  if (options?.endDate) {
+    params.append('end_date', options.endDate)
+  }
+  const query = params.toString()
+  return apiRequest<DashboardOverviewResponse>(`/dashboard${query ? `?${query}` : ''}`)
 }
