@@ -1,88 +1,72 @@
 ﻿# Quickstart
 
-This guide helps you run your first evaluation in under 10 minutes.
+This guide helps you run the VaaniEval full-stack app locally. VaaniEval is not currently published as a Python package and does not expose a supported CLI; the source of truth is the `backend/` service, `frontend/` app, and backend worker.
 
 ## 1. Prerequisites
 
-- Python 3.10+
-- ElevenLabs API key
-- ElevenLabs conversational agent id
+- Python 3.11+
+- Node.js 20+ and npm
+- Git
+- ElevenLabs or Vapi credentials for importing production conversations
+- Evaluator provider credentials, such as OpenAI, for scoring
 
-## 2. Install
+## 2. Start the app
 
-From PyPI (after publish):
+From the repository root:
 
-```bash
-pip install vaanieval
-```
-
-From source (local development):
-
-```bash
-python -m venv .venv
-
-# Windows
-.\.venv\Scripts\Activate.ps1
-
-# macOS/Linux
-source .venv/bin/activate
-
-pip install -e .
-```
-
-## 3. Configure credentials
-
-Set environment variables:
-
-```env
-ELEVENLABS_API_KEY=xi_xxxxxxxxxxxxxxxxxxxx
-ELEVENLABS_AGENT_ID=agent_xxxxxxxxxxxxxxxxx
-```
-
-On Windows PowerShell:
+Windows:
 
 ```powershell
-$env:ELEVENLABS_API_KEY="xi_xxxxxxxxxxxxxxxxxxxx"
-$env:ELEVENLABS_AGENT_ID="agent_xxxxxxxxxxxxxxxxx"
+./start-dev.cmd
 ```
 
-## 4. Run smoke eval
+or:
+
+```powershell
+./start-dev.ps1
+```
+
+macOS/Linux:
 
 ```bash
-python -m vaanieval smoke
+chmod +x start-dev.sh
+./start-dev.sh
 ```
 
-Optional output directory:
+Services:
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Backend API docs: http://localhost:8000/docs
+- Backend worker: started by the dev scripts
+
+## 3. Configure providers
+
+Open the frontend and use Provider settings to connect:
+
+- A voice provider: ElevenLabs or Vapi
+- An evaluator provider: OpenAI-first defaults, with additional provider support in the backend
+
+For manual setup, copy the backend env example and fill in local values:
 
 ```bash
-python -m vaanieval smoke --output-dir ./.eval-reports
+cd backend
+cp .env.example .env
 ```
 
-## 5. Review outputs
-
-By default, outputs are written to `.eval-reports/`:
-
-- `summary.json` for machine-readable metrics
-- `report.md` for human-readable summary
-
-## 6. Run broader suites
+Then run migrations:
 
 ```bash
-python -m vaanieval regression
-python -m vaanieval custom --dataset datasets/regression/retrieval_regression.yaml
+alembic upgrade head
 ```
 
-## 7. Use as a Python library
+## 4. Run your first evaluation
 
-```python
-from vaanieval import run_smoke
+1. Log in with the local development flow.
+2. Connect a provider account.
+3. Import conversations.
+4. Open the Conversations workspace.
+5. Trigger an evaluation run and review metric scores, rationales, transcript, and audio playback.
 
-result = run_smoke()
-print(result.summary.task_success_rate)
-```
-
-## Notes
-
-- This package is ElevenLabs-only in v1 by design.
-- If you see pydantic warnings on Python 3.14, use Python 3.11 or 3.12 for best compatibility.
+For the full setup guide, see [development.md](development.md).
 

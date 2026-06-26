@@ -16,26 +16,14 @@ especially when using GitHub Copilot.
 ## Core principles
 
 - Keep evaluator behavior deterministic by default.
-- Keep provider-specific logic inside `vaanieval/adapters/`.
+- Keep provider-specific logic inside the backend provider adapters.
 - Add tests for metric, rubric, schema, and scoring changes.
 - Preserve backward compatibility for summary/report fields when possible.
 - Prefer small, targeted changes over broad refactors.
 
 ## Local development setup
 
-```bash
-python -m venv .venv
-
-# Windows
-.\.venv\Scripts\Activate.ps1
-
-# macOS/Linux
-source .venv/bin/activate
-
-pip install -e .[dev]
-```
-
-Create local credentials from `.env.example`.
+Follow the full-stack setup in [development.md](development.md). The current source of truth is `backend/`, `frontend/`, and the backend worker; there is no supported PyPI package or CLI.
 
 ## Daily development loop
 
@@ -50,7 +38,6 @@ Create local credentials from `.env.example`.
 ```bash
 python -m ruff check .
 python -m ruff format --check .
-python -m mypy vaanieval tests
 python -m pytest
 ```
 
@@ -116,14 +103,14 @@ Recommended usage:
 2. Ask Copilot to propose a minimal plan.
 3. Implement in small iterations.
 4. Run checks after each meaningful change.
-5. Request docs sync when CLI/API behavior changes.
+5. Request docs sync when backend API, worker, or frontend behavior changes.
 
 ### What to watch out for when using Copilot
 
 - Avoid broad rewrites unless explicitly needed.
 - Ensure new logic remains deterministic.
 - Do not move provider-specific logic outside adapters.
-- Do not introduce breaking CLI flag changes unintentionally.
+- Do not introduce breaking API, worker, or frontend workflow changes unintentionally.
 - Confirm report summary field names remain stable.
 - Never paste real secrets into tracked files or prompts.
 

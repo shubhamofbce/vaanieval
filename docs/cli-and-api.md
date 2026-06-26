@@ -1,80 +1,45 @@
-﻿# CLI And API Reference
+﻿# Backend API Reference
 
-## CLI
+VaaniEval does not currently ship a supported Python package, PyPI install, or `python -m vaanieval` CLI. The supported runtime is the full-stack app:
 
-Base command:
+- `backend/` FastAPI service
+- `backend/app/worker.py` queue worker
+- `frontend/` React + Vite app
 
-```bash
-python -m vaanieval <command> [options]
-```
+## Local API
 
-Commands:
-
-- `smoke`
-- `regression`
-- `custom --dataset <path>`
-
-Common options:
-
-- `--config <path>` YAML or JSON config
-- `--output-dir <path>` report directory
-- `--tsr-threshold <float>`
-- `--latency-p95-threshold-ms <float>`
-- `--unresolved-turn-threshold <float>`
-- `--hallucination-threshold <float>`
-- `--external-scorers <csv>`
-- `--openai-api-key <key>`
-- `--openai-model <model>`
-- `--external-scorer-timeout-seconds <int>`
-
-Examples:
+Start the backend from `backend/`:
 
 ```bash
-python -m vaanieval smoke
-python -m vaanieval regression --output-dir ./.eval-reports
-python -m vaanieval custom --dataset datasets/stress/stress_noise_interruptions.yaml
-python -m vaanieval smoke --external-scorers openai_evals
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Python API
+Run the worker in a second terminal:
 
-```python
-from vaanieval import run_smoke, run_regression, run_custom
-
-smoke_result = run_smoke()
-reg_result = run_regression(output_dir="./.eval-reports")
-custom_result = run_custom("datasets/regression/retrieval_regression.yaml")
-
-openai_scored = run_smoke(
-	external_scorers=["openai_evals"],
-	openai_api_key="sk-...",
-	openai_model="gpt-4o-mini",
-)
+```bash
+python -m app.worker
 ```
 
-Return type:
+Open the generated API docs:
 
-- `EvalRunResult` with fields:
-- `summary`
-- `scenario_scores`
-- `execution`
+```text
+http://localhost:8000/docs
+```
 
-## Summary fields
+## Main API Areas
 
-- `run_type`
-- `scenario_count`
-- `passed_count`
-- `task_success_rate`
-- `unresolved_turn_rate`
-- `hallucination_rate`
-- `fallback_quality`
-- `latency_p50_ms`
-- `latency_p95_ms`
-- `latency_p99_ms`
-- `gate_passed`
-- threshold fields
-- `external_scoring_enabled`
-- `external_scorers`
-- `external_summary`
-- `external_error_count`
+- Auth and workspace session
+- Provider account connection and agent discovery
+- Conversation imports and import progress
+- Conversation detail, transcript, insights, and media
+- Evaluation runs and metric scores
+- Dashboard aggregates
+- Worker drain and job lifecycle
+
+## Useful References
+
+- [Development Guide](development.md)
+- [Backend Architecture](backend-architecture.md)
+- [Backend Feature Playbooks](features/backend/README.md)
+- [Frontend Feature Playbooks](features/frontend/README.md)
 
