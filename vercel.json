@@ -11,6 +11,10 @@
   ],
   "routes": [
     {
+      "src": "/api/v1/(.*)",
+      "dest": "https://ca-vaanieval-api-prod-06260116.calmmushroom-a042a3da.centralindia.azurecontainerapps.io/api/v1/$1"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/frontend/assets/$1"
     },
