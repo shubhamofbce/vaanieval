@@ -1,16 +1,6 @@
 {
   "version": 2,
-  "crons": [
-    {
-      "path": "/api/v1/worker/drain",
-      "schedule": "* * * * *"
-    }
-  ],
   "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    },
     {
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
@@ -20,14 +10,6 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/health/(.*)",
-      "dest": "/api/index.py"
-    },
     {
       "src": "/assets/(.*)",
       "dest": "/frontend/assets/$1"
