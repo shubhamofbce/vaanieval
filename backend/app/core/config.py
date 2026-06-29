@@ -1,6 +1,6 @@
-from functools import lru_cache
 import base64
 import hashlib
+from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field
@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     elevenlabs_api_base: str = "https://api.elevenlabs.io"
     vapi_api_base: str = "https://api.vapi.ai"
     openai_api_base: str = "https://api.openai.com/v1"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_request_timeout_seconds: float = 300.0
 
     @property
     def resolved_credential_encryption_key(self) -> str:

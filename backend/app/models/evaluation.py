@@ -1,10 +1,9 @@
 from datetime import datetime
 from uuid import uuid4
 
+from app.db.base import Base
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.db.base import Base
 
 
 class EvalProviderAccount(Base):
@@ -22,7 +21,7 @@ class EvalProviderAccount(Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
     )
     provider_name: Mapped[str] = mapped_column(String(50), default="openai", index=True)
-    api_key: Mapped[str] = mapped_column(Text)
+    api_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     model_name: Mapped[str] = mapped_column(String(100), default="gpt-4.1-mini")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

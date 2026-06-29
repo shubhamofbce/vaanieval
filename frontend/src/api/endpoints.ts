@@ -131,7 +131,7 @@ export function getAudioMetadata(conversationId: string) {
   return apiRequest<AudioAssetResponse>(`/media/conversations/${conversationId}/audio`)
 }
 
-export function connectEvalProvider(apiKey: string, providerName = 'openai', modelName = 'gpt-4.1-mini') {
+export function connectEvalProvider(apiKey: string | null, providerName = 'openai', modelName = 'gpt-4.1-mini') {
   return apiRequest<EvalProviderResponse>('/evaluations/providers/connect', {
     method: 'POST',
     body: JSON.stringify({ api_key: apiKey, provider_name: providerName, model_name: modelName }),

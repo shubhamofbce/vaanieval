@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class ConnectEvalProviderRequest(BaseModel):
     provider_name: str = "openai"
-    api_key: str
+    api_key: str | None = None
     model_name: str = "gpt-4.1-mini"
 
 
@@ -20,8 +20,9 @@ class EvalProviderResponse(BaseModel):
 class EvalProviderCatalogResponse(BaseModel):
     provider_name: str
     display_name: str
-    default_model: str
+    default_model: str | None
     models: list[str]
+    requires_api_key: bool
 
 
 class ProviderModelsResponse(BaseModel):

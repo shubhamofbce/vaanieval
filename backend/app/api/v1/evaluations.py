@@ -1,7 +1,3 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from app.api.deps import get_current_workspace_id
 from app.db.session import get_db
 from app.models.evaluation import (
@@ -10,16 +6,25 @@ from app.models.evaluation import (
     EvalProviderAccount,
 )
 from app.schemas.evaluations import (
-    EvalProviderCatalogResponse,
     ConnectEvalProviderRequest,
     ConversationEvaluationRunResponse,
     ConversationMetricScoreResponse,
+    EvalProviderCatalogResponse,
     EvalProviderResponse,
     ProviderModelsResponse,
 )
-from app.services.evaluation_service import enqueue_evaluation_job, _get_provider_instance
 from app.services.credentials import encrypt_secret
-from app.services.eval_providers import get_provider_catalog, get_provider_catalog_entry
+from app.services.eval_providers import (
+    OllamaError,
+    OllamaModelNotFoundError,
+    get_available_models,
+    get_provider_catalog,
+    get_provider_catalog_entry,
+)
+from app.services.evaluation_service import enqueue_evaluation_job
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -32,6 +37,7 @@ def list_provider_catalog() -> list[EvalProviderCatalogResponse]:
             display_name=entry.display_name,
             default_model=entry.default_model,
             models=entry.models,
+            requires_api_key=entry.requires_api_key,
         )
         for entry in get_provider_catalog()
     ]
@@ -43,28 +49,55 @@ def connect_eval_provider(
     workspace_id: str = Depends(get_current_workspace_id),
     db: Session = Depends(get_db),
 ) -> EvalProviderResponse:
-    provider_entry = get_provider_catalog_entry(payload.provider_name)
-    if payload.model_name not in provider_entry.models:
+    provider_name = payload.provider_name.lower().strip()
+    model_name = payload.model_name.strip()
+    try:
+        provider_entry = get_provider_catalog_entry(provider_name)
+        available_models = get_available_models(provider_name)
+    except OllamaError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    api_key = payload.api_key.strip() if payload.api_key else None
+    if provider_entry.requires_api_key and not api_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Model '{payload.model_name}' is not supported for provider '{payload.provider_name}'",
+            detail=f"An API key is required for provider '{provider_name}'",
+        )
+    if not model_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An evaluation model is required",
+        )
+    if model_name not in available_models:
+        if provider_name == "ollama":
+            detail = (
+                f"Ollama model '{model_name}' is not installed. "
+                f"Run 'ollama pull {model_name}' on the Ollama host."
+            )
+        else:
+            detail = f"Model '{model_name}' is not supported for provider '{provider_name}'"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail,
         )
 
     row = db.scalar(
         select(EvalProviderAccount).where(
             EvalProviderAccount.workspace_id == workspace_id,
-            EvalProviderAccount.provider_name == payload.provider_name,
+            EvalProviderAccount.provider_name == provider_name,
         )
     )
     if row:
-        row.api_key = encrypt_secret(payload.api_key)
-        row.model_name = payload.model_name
+        row.api_key = encrypt_secret(api_key) if provider_entry.requires_api_key else None
+        row.model_name = model_name
     else:
         row = EvalProviderAccount(
             workspace_id=workspace_id,
-            provider_name=payload.provider_name,
-            api_key=encrypt_secret(payload.api_key),
-            model_name=payload.model_name,
+            provider_name=provider_name,
+            api_key=encrypt_secret(api_key) if provider_entry.requires_api_key else None,
+            model_name=model_name,
         )
         db.add(row)
 
@@ -105,13 +138,16 @@ def get_provider_models(
     workspace_id: str = Depends(get_current_workspace_id),
     db: Session = Depends(get_db),
 ) -> ProviderModelsResponse:
+    normalized_provider_name = provider_name.lower().strip()
     try:
-        provider_entry = get_provider_catalog_entry(provider_name)
+        models = get_available_models(normalized_provider_name)
+    except OllamaError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     return ProviderModelsResponse(
-        provider_name=provider_name, models=provider_entry.models
+        provider_name=normalized_provider_name, models=models
     )
 
 
@@ -144,7 +180,9 @@ def run_conversation_evaluation(
             provider_name=provider_name,
             model_name=model_name,
         )
-    except ValueError as exc:
+    except OllamaError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    except (OllamaModelNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     db.commit()

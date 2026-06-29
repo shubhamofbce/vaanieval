@@ -124,6 +124,8 @@ export function ConversationDetailPage() {
   const [selectedProvider, setSelectedProvider] = useState<string>('openai')
   const [selectedModel, setSelectedModel] = useState<string>('gpt-4o-mini')
   const [modelsLoading, setModelsLoading] = useState(false)
+  const [modelsError, setModelsError] = useState('')
+  const [modelsReloadKey, setModelsReloadKey] = useState(0)
 
   const mergeEvaluationForDisplay = (
     previous: ConversationEvaluationRunResponse | null,
@@ -242,6 +244,7 @@ export function ConversationDetailPage() {
 
     const loadModels = async () => {
       setModelsLoading(true)
+      setModelsError('')
       try {
         const response = await getEvalProviderModels(selectedProvider)
         if (!cancelled) {
@@ -257,9 +260,11 @@ export function ConversationDetailPage() {
           }
         }
       } catch (err) {
-        console.error('Failed to load provider models:', err)
-        setAvailableModels([])
-        setSelectedModel('')
+        if (!cancelled) {
+          setAvailableModels([])
+          setSelectedModel('')
+          setModelsError(err instanceof Error ? err.message : 'Failed to load provider models')
+        }
       } finally {
         if (!cancelled) {
           setModelsLoading(false)
@@ -272,7 +277,7 @@ export function ConversationDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [availableProviders, selectedProvider])
+  }, [availableProviders, modelsReloadKey, selectedProvider])
 
   useEffect(() => {
     if (!conversationId || !evaluationRun || !['queued', 'running'].includes(evaluationRun.status)) {
@@ -311,7 +316,7 @@ export function ConversationDetailPage() {
       return insights.duration_seconds
     }
     return (audio?.duration_ms ?? 0) / 1000
-  }, [audio?.duration_ms, duration, insights?.duration_seconds])
+  }, [audio, duration, insights])
 
   useEffect(() => {
     waveSurferRef.current?.setPlaybackRate(playbackRate, true)
@@ -908,6 +913,16 @@ export function ConversationDetailPage() {
                   </option>
                 ))}
               </select>
+              {modelsError ? (
+                <div>
+                  <p className="error">{modelsError}</p>
+                  <button type="button" className="secondary" onClick={() => setModelsReloadKey((value) => value + 1)}>
+                    Retry model discovery
+                  </button>
+                </div>
+              ) : selectedProvider === 'ollama' && !modelsLoading && availableModels.length === 0 ? (
+                <p className="muted">No Ollama models are installed. Run <code>ollama pull &lt;model&gt;</code>, then retry.</p>
+              ) : null}
             </div>
 
             <div className="form-group">

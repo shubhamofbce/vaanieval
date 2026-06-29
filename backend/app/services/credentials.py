@@ -1,6 +1,5 @@
-from cryptography.fernet import Fernet, InvalidToken
-
 from app.core.config import get_settings
+from cryptography.fernet import Fernet, InvalidToken
 
 ENCRYPTED_SECRET_PREFIX = "enc::"
 
@@ -10,7 +9,7 @@ def _get_fernet() -> Fernet:
     return Fernet(settings.resolved_credential_encryption_key.encode("utf-8"))
 
 
-def encrypt_secret(value: str) -> str:
+def encrypt_secret(value: str | None) -> str | None:
     if not value:
         return value
     if value.startswith(ENCRYPTED_SECRET_PREFIX):
@@ -19,7 +18,7 @@ def encrypt_secret(value: str) -> str:
     return f"{ENCRYPTED_SECRET_PREFIX}{token}"
 
 
-def decrypt_secret(value: str) -> str:
+def decrypt_secret(value: str | None) -> str | None:
     if not value:
         return value
     if not value.startswith(ENCRYPTED_SECRET_PREFIX):
