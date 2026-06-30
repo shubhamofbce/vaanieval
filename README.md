@@ -28,7 +28,10 @@ VaaniEval helps voice-agent teams inspect real conversations, run evaluator-back
 
 > VaaniEval is currently a full-stack application, not a published Python package. The source of truth is the `backend/` FastAPI service, `frontend/` React app, and backend worker process.
 
-![Dashboard Analytics](docs/assets/screenshots/dashboard-analytics.png)
+<p align="center">
+  <img src="docs/assets/screenshots/dashboard-analytics.png" alt="Dashboard Analytics" width="90%">
+</p>
+
 
 ## Why VaaniEval
 
