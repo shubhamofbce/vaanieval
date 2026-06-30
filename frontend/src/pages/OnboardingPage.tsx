@@ -1,87 +1,167 @@
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { PageHeader } from '../components/PageHeader'
-import { StatCard } from '../components/StatCard'
+import type { IconProp } from '@fortawesome/fontawesome-svg-core'
+
+const SETUP_STEPS: Array<{
+  number: string
+  icon: IconProp
+  title: string
+  description: string
+  link: string
+  action: string
+}> = [
+  {
+    number: '1',
+    icon: 'plug',
+    title: 'Connect your voice provider',
+    description: 'Add your ElevenLabs or Vapi account so VaaniEval can read your agents and calls.',
+    link: '/settings/provider',
+    action: 'Manage providers',
+  },
+  {
+    number: '2',
+    icon: 'users',
+    title: 'Choose an agent',
+    description: 'Sync your agents and select the one whose calls you want to review.',
+    link: '/settings/agents',
+    action: 'View agents',
+  },
+  {
+    number: '3',
+    icon: 'file-import',
+    title: 'Import conversations',
+    description: 'Choose an agent and date range. Imported calls are evaluated in the background.',
+    link: '/imports/new',
+    action: 'Import calls',
+  },
+  {
+    number: '4',
+    icon: 'comments',
+    title: 'Review what needs attention',
+    description: 'Start with the lowest-quality calls, see why they failed, and decide what to fix.',
+    link: '/conversations',
+    action: 'Review conversations',
+  },
+]
+
+const PRODUCT_AREAS: Array<{
+  icon: IconProp
+  title: string
+  description: string
+  link: string
+}> = [
+  {
+    icon: 'comments',
+    title: 'Conversations',
+    description: 'Your daily QA inbox. Listen to calls, read transcripts, inspect scores, and find failures.',
+    link: '/conversations',
+  },
+  {
+    icon: 'chart-line',
+    title: 'Dashboard',
+    description: 'See QA pass rate, evaluation coverage, score trends, and performance by agent.',
+    link: '/dashboard',
+  },
+  {
+    icon: 'users',
+    title: 'Agents',
+    description: 'Sync agents from connected providers and open calls for a specific agent.',
+    link: '/settings/agents',
+  },
+  {
+    icon: 'file-import',
+    title: 'Imports',
+    description: 'Bring historical calls into VaaniEval for a chosen agent and date range.',
+    link: '/imports/new',
+  },
+  {
+    icon: 'plug',
+    title: 'Providers',
+    description: 'Connect voice platforms and configure the model used to evaluate conversations.',
+    link: '/settings/provider',
+  },
+]
 
 export function OnboardingPage() {
   return (
     <section className="page onboarding-page">
-      <PageHeader
-        icon="sliders"
-        title="Evaluation Command Center"
-        subtitle="Run imports, validate call quality, and move from raw conversations to clear QA outcomes."
-      />
-
-      <section className="stats-grid">
-        <StatCard icon="plug" label="Provider" value="ElevenLabs" />
-        <StatCard icon="users" label="Agent discovery" value="Ready" tone="good" />
-        <StatCard icon="file-import" label="Imports" value="Continuous" />
-        <StatCard icon="chart-line" label="Quality review" value="In progress" tone="warn" />
-      </section>
-
-      <section className="grid onboarding-actions-grid">
-        <article className="panel onboarding-action-card">
-          <div className="onboarding-action-head">
-            <span className="provider-icon"><FontAwesomeIcon icon="plug" /></span>
-            <h2>Connect provider</h2>
-          </div>
-          <p>Add your ElevenLabs API key and validate workspace access in one step.</p>
-          <Link to="/settings/provider" className="action-link">
-            <FontAwesomeIcon icon="link" />
-            <span>Open provider settings</span>
-          </Link>
-        </article>
-
-        <article className="panel onboarding-action-card">
-          <div className="onboarding-action-head">
-            <span className="provider-icon"><FontAwesomeIcon icon="headset" /></span>
-            <h2>Discover agents</h2>
-          </div>
-          <p>Sync and manage your voice agents, then route directly into filtered conversations.</p>
-          <Link to="/settings/agents" className="action-link">
-            <FontAwesomeIcon icon="users" />
-            <span>Manage agents</span>
-          </Link>
-        </article>
-
-        <article className="panel onboarding-action-card">
-          <div className="onboarding-action-head">
-            <span className="provider-icon"><FontAwesomeIcon icon="download" /></span>
-            <h2>Import historical calls</h2>
-          </div>
-          <p>Create import jobs for date ranges or single agents and track queue progress live.</p>
-          <Link to="/imports/new" className="action-link">
-            <FontAwesomeIcon icon="file-import" />
-            <span>Start import</span>
-          </Link>
-        </article>
-
-        <article className="panel onboarding-action-card">
-          <div className="onboarding-action-head">
-            <span className="provider-icon"><FontAwesomeIcon icon="wave-square" /></span>
-            <h2>Review conversations</h2>
-          </div>
-          <p>Inspect transcripts, audio timeline, quality signals, and warnings in one workspace.</p>
-          <Link to="/conversations" className="action-link">
+      <section className="panel onboarding-hero">
+        <div>
+          <span className="onboarding-eyebrow">VaaniEval home</span>
+          <h1>Find the voice-agent calls that need fixing.</h1>
+          <p>
+            Import real conversations from your voice provider. VaaniEval scores each call, explains the weakest behavior,
+            and keeps the most important failures at the top of your review inbox.
+          </p>
+        </div>
+        <div className="onboarding-hero-actions">
+          <Link to="/conversations" className="onboarding-primary-action">
             <FontAwesomeIcon icon="comments" />
-            <span>Open conversations</span>
+            <span>Review calls needing attention</span>
           </Link>
-        </article>
-      </section>
-
-      <section className="panel onboarding-next-step">
-        <h2>Next best action</h2>
-        <p className="muted">Start by confirming provider connection health, then run a focused import for one agent to validate end-to-end quality signals.</p>
-        <div className="inline">
-          <Link to="/settings/provider" className="action-link">
-            <FontAwesomeIcon icon="shield" />
-            <span>Check provider health</span>
-          </Link>
-          <Link to="/imports/new" className="action-link">
-            <FontAwesomeIcon icon="clock" />
-            <span>Run a quick import</span>
+          <Link to="/imports/new" className="onboarding-secondary-action">
+            <FontAwesomeIcon icon="file-import" />
+            <span>Import conversations</span>
           </Link>
         </div>
+      </section>
+
+      <section className="onboarding-section" aria-labelledby="setup-heading">
+        <div className="onboarding-section-heading">
+          <div>
+            <span className="onboarding-eyebrow">First time here?</span>
+            <h2 id="setup-heading">Get from provider to useful QA in four steps</h2>
+          </div>
+          <p>Already connected and imported? Go straight to Conversations.</p>
+        </div>
+
+        <div className="onboarding-steps">
+          {SETUP_STEPS.map((step) => (
+            <article className="panel onboarding-step-card" key={step.number}>
+              <div className="onboarding-step-topline">
+                <span className="onboarding-step-number">{step.number}</span>
+                <FontAwesomeIcon icon={step.icon} />
+              </div>
+              <h3>{step.title}</h3>
+              <p>{step.description}</p>
+              <Link to={step.link} className="action-link">
+                <span>{step.action}</span>
+                <FontAwesomeIcon icon="arrow-up-right-from-square" />
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="onboarding-section" aria-labelledby="areas-heading">
+        <div className="onboarding-section-heading">
+          <div>
+            <span className="onboarding-eyebrow">What each section is for</span>
+            <h2 id="areas-heading">Choose where you want to work</h2>
+          </div>
+        </div>
+
+        <div className="onboarding-area-list">
+          {PRODUCT_AREAS.map((area) => (
+            <Link to={area.link} className="onboarding-area-row" key={area.title}>
+              <span className="onboarding-area-icon"><FontAwesomeIcon icon={area.icon} /></span>
+              <span className="onboarding-area-copy">
+                <strong>{area.title}</strong>
+                <span>{area.description}</span>
+              </span>
+              <FontAwesomeIcon icon="arrow-up-right-from-square" />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel onboarding-help-callout">
+        <FontAwesomeIcon icon="circle-info" />
+        <div>
+          <h2>The simplest useful workflow</h2>
+          <p>Import one agent’s last seven days of calls, then open the Needs attention view and review the lowest-scoring call first.</p>
+        </div>
+        <Link to="/imports/new" className="action-link">Start with a 7-day import</Link>
       </section>
     </section>
   )
