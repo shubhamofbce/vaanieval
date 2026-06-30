@@ -9,10 +9,6 @@
 </p>
 
 <p align="center">
-  <a href="https://vaanieval.vercel.app/"><strong>Try the deployed version</strong></a>
-</p>
-
-<p align="center">
   <a href="docs/quickstart.md">Quickstart</a> |
   <a href="docs/development.md">Development</a> |
   <a href="docs/backend-architecture.md">Architecture</a> |
