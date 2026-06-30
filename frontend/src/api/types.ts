@@ -119,8 +119,9 @@ export type EvalProviderResponse = {
 export type EvalProviderCatalogResponse = {
   provider_name: string
   display_name: string
-  default_model: string
+  default_model: string | null
   models: string[]
+  requires_api_key: boolean
 }
 
 export type ProviderModelsResponse = {

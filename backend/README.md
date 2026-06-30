@@ -35,6 +35,8 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
+For local Ollama evaluation setup, including Docker and LAN endpoint overrides, see [Configuration](../docs/configuration.md#ollama-evaluation-provider).
+
 ## Run API
 
 ```bash

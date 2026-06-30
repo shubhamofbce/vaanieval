@@ -5,6 +5,7 @@ import {
   connectEvalProvider,
   connectProvider,
   getEvalProviderCatalog,
+  getEvalProviderModels,
   listAgents,
   listProviderConnections,
   listEvalProviders,
@@ -40,6 +41,10 @@ export function ProviderPage() {
   const [evalError, setEvalError] = useState('')
   const [evalSaving, setEvalSaving] = useState(false)
   const [evalLoading, setEvalLoading] = useState(true)
+  const [evalModels, setEvalModels] = useState<string[]>([])
+  const [evalModelsLoading, setEvalModelsLoading] = useState(false)
+  const [evalModelsError, setEvalModelsError] = useState('')
+  const [evalModelsReloadKey, setEvalModelsReloadKey] = useState(0)
 
   const selectedEvalProvider = useMemo(
     () => evalCatalog.find((entry) => entry.provider_name === evalProviderName) ?? null,
@@ -54,6 +59,16 @@ export function ProviderPage() {
   const configuredEvalProvider = useMemo(
     () => configuredEvalProviders.find((provider) => provider.provider_name === evalProviderName) ?? configuredEvalProviders[0] ?? null,
     [configuredEvalProviders, evalProviderName],
+  )
+
+  const configuredEvalProviderCatalog = useMemo(
+    () => evalCatalog.find((entry) => entry.provider_name === configuredEvalProvider?.provider_name) ?? null,
+    [configuredEvalProvider, evalCatalog],
+  )
+
+  const configuredEvalProviderReady = Boolean(
+    configuredEvalProvider
+      && (!configuredEvalProviderCatalog?.requires_api_key || configuredEvalProvider.api_key_configured),
   )
 
   const readyProviderCount = providerConnections.length
@@ -77,11 +92,11 @@ export function ProviderPage() {
         setConfiguredEvalProviders(providers)
 
         const openAiConfig = providers.find((provider) => provider.provider_name === 'openai')
-        const preferredProvider = openAiConfig?.provider_name ?? catalog[0]?.provider_name ?? 'openai'
+        const preferredProvider = openAiConfig?.provider_name ?? providers[0]?.provider_name ?? catalog[0]?.provider_name ?? 'openai'
         const preferredCatalogEntry = catalog.find((entry) => entry.provider_name === preferredProvider)
 
         setEvalProviderName(preferredProvider)
-        setEvalModelName(openAiConfig?.model_name ?? preferredCatalogEntry?.default_model ?? 'gpt-4o-mini')
+        setEvalModelName(openAiConfig?.model_name ?? preferredCatalogEntry?.default_model ?? '')
       } catch (err) {
         if (!cancelled) {
           setEvalError(err instanceof Error ? err.message : 'Failed to load evaluation settings')
@@ -166,17 +181,45 @@ export function ProviderPage() {
   }, [providerConnections.length])
 
   useEffect(() => {
-    if (!selectedEvalProvider) {
+    if (!selectedEvalProvider || !evalProviderName) {
       return
     }
 
-    if (selectedEvalProvider.models.includes(evalModelName)) {
-      return
+    let cancelled = false
+    const loadModels = async () => {
+      setEvalModelsLoading(true)
+      setEvalModelsError('')
+      try {
+        const response = await getEvalProviderModels(evalProviderName)
+        if (cancelled) {
+          return
+        }
+        setEvalModels(response.models)
+        const configuredProvider = configuredEvalProviders.find((provider) => provider.provider_name === evalProviderName)
+        const preferredModel = configuredProvider?.model_name && response.models.includes(configuredProvider.model_name)
+          ? configuredProvider.model_name
+          : selectedEvalProvider.default_model && response.models.includes(selectedEvalProvider.default_model)
+            ? selectedEvalProvider.default_model
+            : response.models[0] ?? ''
+        setEvalModelName(preferredModel)
+      } catch (err) {
+        if (!cancelled) {
+          setEvalModels([])
+          setEvalModelName('')
+          setEvalModelsError(err instanceof Error ? err.message : 'Failed to load evaluation models')
+        }
+      } finally {
+        if (!cancelled) {
+          setEvalModelsLoading(false)
+        }
+      }
     }
 
-    const configuredProvider = configuredEvalProviders.find((provider) => provider.provider_name === evalProviderName)
-    setEvalModelName(configuredProvider?.model_name ?? selectedEvalProvider.default_model)
-  }, [configuredEvalProviders, evalModelName, evalProviderName, selectedEvalProvider])
+    void loadModels()
+    return () => {
+      cancelled = true
+    }
+  }, [configuredEvalProviders, evalModelsReloadKey, evalProviderName, selectedEvalProvider])
 
   async function handleConnect(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -240,14 +283,16 @@ export function ProviderPage() {
     setEvalSaving(true)
 
     try {
-      const response = await connectEvalProvider(evalApiKey, evalProviderName, evalModelName)
+      const response = await connectEvalProvider(
+        selectedEvalProvider?.requires_api_key ? evalApiKey : null,
+        evalProviderName,
+        evalModelName,
+      )
       const providers = await listEvalProviders()
       setConfiguredEvalProviders(providers)
       setEvalApiKey('')
       setEvalModelName(response.model_name)
-      setEvalResult(
-        `Saved ${response.provider_name} with default model ${response.model_name}. Credentials are encrypted at rest.`,
-      )
+      setEvalResult(`Saved ${response.provider_name} with default model ${response.model_name}.`)
     } catch (err) {
       setEvalError(err instanceof Error ? err.message : 'Failed to save evaluation provider')
     } finally {
@@ -423,7 +468,7 @@ export function ProviderPage() {
               </div>
             </div>
 
-            {configuredEvalProvider ? (
+            {configuredEvalProviderReady ? (
               <StatusPill icon="check-circle" label="Ready" tone="success" />
             ) : (
               <StatusPill icon="clock" label="Not configured" tone="neutral" />
@@ -435,9 +480,9 @@ export function ProviderPage() {
             <div className="provider-eval-meta">
               <span>Status</span>
               <StatusPill
-                icon={configuredEvalProvider?.api_key_configured ? 'check-circle' : 'clock'}
-                label={configuredEvalProvider?.api_key_configured ? 'Connected' : 'Not connected'}
-                tone={configuredEvalProvider?.api_key_configured ? 'success' : 'neutral'}
+                icon={configuredEvalProviderReady ? 'check-circle' : 'clock'}
+                label={configuredEvalProviderReady ? 'Connected' : 'Not connected'}
+                tone={configuredEvalProviderReady ? 'success' : 'neutral'}
               />
             </div>
             <p className="provider-eval-model">{configuredEvalProvider?.model_name ?? evalModelName}</p>
@@ -454,7 +499,10 @@ export function ProviderPage() {
               <select
                 id="eval-provider-name"
                 value={evalProviderName}
-                onChange={(event) => setEvalProviderName(event.target.value)}
+                onChange={(event) => {
+                  setEvalProviderName(event.target.value)
+                  setEvalApiKey('')
+                }}
                 disabled={evalLoading || evalSaving || evalCatalog.length === 0}
               >
                 {evalCatalog.map((entry) => (
@@ -469,26 +517,53 @@ export function ProviderPage() {
                 id="eval-model-name"
                 value={evalModelName}
                 onChange={(event) => setEvalModelName(event.target.value)}
-                disabled={evalLoading || evalSaving || !selectedEvalProvider}
+                disabled={evalLoading || evalSaving || evalModelsLoading || evalModels.length === 0}
               >
-                {(selectedEvalProvider?.models ?? []).map((model) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
+                {evalModelsLoading ? (
+                  <option value="">Loading models...</option>
+                ) : evalModels.length === 0 ? (
+                  <option value="">No models available</option>
+                ) : (
+                  evalModels.map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))
+                )}
               </select>
 
-              <label htmlFor="eval-api-key">Provider API key</label>
-              <input
-                id="eval-api-key"
-                type="password"
-                value={evalApiKey}
-                onChange={(event) => setEvalApiKey(event.target.value)}
-                required
-                placeholder={selectedEvalProvider ? `Paste your ${selectedEvalProvider.display_name} API key` : 'Paste your provider key'}
-              />
+              {evalModelsError ? (
+                <div>
+                  <p className="error">{evalModelsError}</p>
+                  <button type="button" className="secondary" onClick={() => setEvalModelsReloadKey((value) => value + 1)}>
+                    Retry model discovery
+                  </button>
+                </div>
+              ) : evalProviderName === 'ollama' && !evalModelsLoading && evalModels.length === 0 ? (
+                <p className="muted">No Ollama models are installed. Run <code>ollama pull &lt;model&gt;</code>, then retry.</p>
+              ) : null}
 
-              <button type="submit" className="provider-primary-btn" disabled={evalSaving || !evalApiKey || !evalModelName}>
+              {selectedEvalProvider?.requires_api_key ? (
+                <>
+                  <label htmlFor="eval-api-key">Provider API key</label>
+                  <input
+                    id="eval-api-key"
+                    type="password"
+                    value={evalApiKey}
+                    onChange={(event) => setEvalApiKey(event.target.value)}
+                    required
+                    placeholder={`Paste your ${selectedEvalProvider.display_name} API key`}
+                  />
+                </>
+              ) : (
+                <p className="muted">Ollama runs locally and does not require an API key.</p>
+              )}
+
+              <button
+                type="submit"
+                className="provider-primary-btn"
+                disabled={evalSaving || evalModelsLoading || !evalModelName || Boolean(selectedEvalProvider?.requires_api_key && !evalApiKey)}
+              >
                 <FontAwesomeIcon icon="floppy-disk" />
                 <span>{evalSaving ? 'Saving...' : 'Save Settings'}</span>
               </button>

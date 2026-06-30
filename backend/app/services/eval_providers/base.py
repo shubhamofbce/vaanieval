@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 class EvaluationProvider(ABC):
     """Abstract base class for evaluation providers."""
 
-    def __init__(self, api_key: str, model_name: str):
+    def __init__(self, api_key: str | None, model_name: str):
         """Initialize provider with API key and model name.
 
         Args:

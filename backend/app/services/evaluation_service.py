@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import json
 
-from sqlalchemy import delete, select
-from sqlalchemy.orm import Session
-
 from app.models.conversation import Conversation, ConversationTurn
 from app.models.evaluation import (
     ConversationEvaluationRun,
@@ -14,8 +11,15 @@ from app.models.evaluation import (
     EvalProviderAccount,
 )
 from app.services.credentials import decrypt_secret
-from app.services.eval_providers import create_provider, get_provider_catalog_entry
+from app.services.eval_providers import (
+    OllamaModelNotFoundError,
+    create_provider,
+    get_available_models,
+    get_provider_catalog_entry,
+)
 from app.services.queue_service import enqueue_job
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 
 EVAL_CONVERSATION_SCORES = "eval_conversation_scores"
 
@@ -60,7 +64,15 @@ def enqueue_evaluation_job(
 
     # Use provided model_name or fall back to provider's default
     model_to_use = model_name or provider_account.model_name or provider_entry.default_model
-    if model_to_use not in provider_entry.models:
+    if not model_to_use:
+        raise ValueError(f"No model is configured for provider '{provider_name}'")
+    available_models = get_available_models(provider_name)
+    if model_to_use not in available_models:
+        if provider_entry.models_are_dynamic:
+            raise OllamaModelNotFoundError(
+                f"Ollama model '{model_to_use}' is not installed. "
+                f"Run 'ollama pull {model_to_use}' on the Ollama host."
+            )
         raise ValueError(f"Model '{model_to_use}' is not supported for provider '{provider_name}'")
 
     run = ConversationEvaluationRun(
@@ -205,12 +217,12 @@ def run_evaluation_job(db: Session, payload: dict) -> None:
     db.flush()
 
 
-def _get_provider(provider_name: str, api_key: str, model_name: str):
+def _get_provider(provider_name: str, api_key: str | None, model_name: str):
     return create_provider(provider_name=provider_name, api_key=api_key, model_name=model_name)
 
 
 # Public alias for API usage
-def _get_provider_instance(provider_name: str, api_key: str, model_name: str):
+def _get_provider_instance(provider_name: str, api_key: str | None, model_name: str):
     """Public alias for _get_provider. Used by API endpoints."""
     return _get_provider(provider_name, api_key, model_name)
 
