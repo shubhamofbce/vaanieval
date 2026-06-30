@@ -3,19 +3,68 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendPath = Join-Path $root 'backend'
 $frontendPath = Join-Path $root 'frontend'
-$pythonPath = 'py -3.13'
+$minimumPython = [Version]'3.11'
+
+function Test-SupportedPython {
+    param([string[]]$Command)
+
+    try {
+        $executable = $Command[0]
+        $arguments = @($Command | Select-Object -Skip 1)
+        $version = & $executable @arguments -c 'import platform; print(platform.python_version())' 2>$null
+        return $LASTEXITCODE -eq 0 -and [Version]$version -ge $minimumPython
+    }
+    catch {
+        return $false
+    }
+}
+
+function Find-Python {
+    $candidates = @(
+        @('py', '-3.13'),
+        @('py', '-3.12'),
+        @('py', '-3.11'),
+        @('python', '--')
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Get-Command $candidate[0] -ErrorAction SilentlyContinue) {
+            $command = if ($candidate[1] -eq '--') { @($candidate[0]) } else { $candidate }
+            if (Test-SupportedPython $command) {
+                return $command
+            }
+        }
+    }
+
+    throw 'Python 3.11 or newer is required. Install it from python.org or with: winget install Python.Python.3.13'
+}
+
+$pythonCommand = Find-Python
+$pythonExecutable = $pythonCommand[0]
+$pythonArguments = @($pythonCommand | Select-Object -Skip 1)
 
 Write-Host 'Preparing backend environment...'
 Push-Location $backendPath
 try {
-    if (-not (Test-Path '.venv\Scripts\python.exe')) {
-        Invoke-Expression "$pythonPath -m venv .venv"
+    $venvPython = '.\.venv\Scripts\python.exe'
+    if ((Test-Path $venvPython) -and -not (Test-SupportedPython @($venvPython))) {
+        Write-Host "Rebuilding incompatible virtual environment with Python $minimumPython+..."
+        & $pythonExecutable @pythonArguments -m venv --clear .venv
+    }
+    elseif (-not (Test-Path $venvPython)) {
+        & $pythonExecutable @pythonArguments -m venv .venv
     }
 
     & '.\.venv\Scripts\python.exe' -m pip install -r requirements.txt
 
     if (-not (Test-Path '.env')) {
         Copy-Item '.env.example' '.env'
+    }
+
+    $databaseUrl = Get-Content '.env' | Where-Object { $_ -match '^\s*DATABASE_URL\s*=\s*\S+' } | Select-Object -First 1
+    if (-not $databaseUrl) {
+        $env:DATABASE_URL = 'sqlite:///./backend.db'
+        Write-Host 'Using the local SQLite database.'
     }
 
     Write-Host 'Running migrations...'
