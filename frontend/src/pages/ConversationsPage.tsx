@@ -142,6 +142,7 @@ export function ConversationsPage() {
   const [providerFilter, setProviderFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
   const [scoreFilter, setScoreFilter] = useState('all')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [qaInboxFilter, setQaInboxFilter] = useState<QaInboxFilter>('attention')
   const [selectedId, setSelectedId] = useState('')
   const [detail, setDetail] = useState<ConversationDetailResponse | null>(null)
@@ -317,22 +318,15 @@ export function ConversationsPage() {
     return Array.from(new Set(filteredRows.map((row) => row.provider_agent_id).filter(Boolean) as string[])).sort()
   }, [filteredRows])
 
-  const dateRangeLabel = useMemo(() => {
-    if (filteredRows.length === 0) {
-      return 'No dates'
-    }
-    const dates = filteredRows
-      .map((row) => getConversationDisplayDate(row))
-      .filter((value) => Number.isFinite(Date.parse(value)))
-      .map((value) => new Date(value))
-      .sort((left, right) => left.getTime() - right.getTime())
-    if (dates.length === 0) {
-      return 'All dates'
-    }
-    const start = dates[0]
-    const end = dates[dates.length - 1]
-    return `${start.toLocaleDateString([], { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
-  }, [filteredRows])
+  const activeFilterCount = [providerFilter !== 'all', !preselectedAgentId && agentFilter !== 'all', scoreFilter !== 'all']
+    .filter(Boolean).length
+
+  const clearFilters = () => {
+    setProviderFilter('all')
+    setAgentFilter('all')
+    setScoreFilter('all')
+    setCurrentPage(1)
+  }
 
   const selectedRow = selectedId ? filteredRows.find((row) => row.id === selectedId) ?? null : null
 
@@ -748,62 +742,83 @@ export function ConversationsPage() {
         }
       />
 
-      <div className="panel conversations-toolbar workspace-toolbar">
-        <label className="toolbar-field toolbar-field-search">
-          <span>
-            <FontAwesomeIcon icon="magnifying-glass" /> Search
-          </span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search conversations..."
-          />
-        </label>
-        <label className="toolbar-field">
-          <span>Provider</span>
-          <select value={providerFilter} onChange={(event) => setProviderFilter(event.target.value)}>
-            <option value="all">All Providers</option>
-            {providerOptions.map((providerName) => (
-              <option key={providerName} value={providerName}>
-                {formatProviderName(providerName)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="toolbar-field">
-          <span>Agent</span>
-          <select
-            value={preselectedAgentId || agentFilter}
-            onChange={(event) => setAgentFilter(event.target.value)}
-            disabled={Boolean(preselectedAgentId)}
+      <div className="panel conversations-toolbar">
+        <div className="conversations-toolbar-primary">
+          <label className="conversation-search">
+            <FontAwesomeIcon icon="magnifying-glass" aria-hidden="true" />
+            <input
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value)
+                setCurrentPage(1)
+              }}
+              placeholder="Search conversations..."
+              aria-label="Search conversations"
+            />
+          </label>
+          <button
+            type="button"
+            className={filtersOpen || activeFilterCount > 0 ? 'workspace-filter-button active' : 'workspace-filter-button'}
+            aria-expanded={filtersOpen}
+            aria-controls="conversation-filters"
+            onClick={() => setFiltersOpen((open) => !open)}
           >
-            <option value="all">All Agents</option>
-            {agentOptions.map((agentId) => (
-              <option key={agentId} value={agentId}>
-                {agentId}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="toolbar-field">
-          <span>Score</span>
-          <select value={scoreFilter} onChange={(event) => setScoreFilter(event.target.value)}>
-            <option value="all">All Scores</option>
-            <option value="red">Red (&lt; 60)</option>
-            <option value="yellow">Yellow (60-79)</option>
-            <option value="green">Green (80+)</option>
-          </select>
-        </label>
-        <label className="toolbar-field toolbar-field-date">
-          <span>
-            <FontAwesomeIcon icon="calendar" /> Date range
-          </span>
-          <input type="text" value={dateRangeLabel} readOnly />
-        </label>
-        <button type="button" className="workspace-filter-button">
-          <FontAwesomeIcon icon="sliders" />
-          <span>Filters</span>
-        </button>
+            <FontAwesomeIcon icon="sliders" aria-hidden="true" />
+            <span>Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
+          </button>
+        </div>
+
+        {filtersOpen ? (
+          <div id="conversation-filters" className="conversation-filter-fields">
+            <label className="toolbar-field">
+              <span>Provider</span>
+              <select
+                value={providerFilter}
+                onChange={(event) => {
+                  setProviderFilter(event.target.value)
+                  setCurrentPage(1)
+                }}
+              >
+                <option value="all">All providers</option>
+                {providerOptions.map((providerName) => (
+                  <option key={providerName} value={providerName}>{formatProviderName(providerName)}</option>
+                ))}
+              </select>
+            </label>
+            <label className="toolbar-field">
+              <span>Agent</span>
+              <select
+                value={preselectedAgentId || agentFilter}
+                onChange={(event) => {
+                  setAgentFilter(event.target.value)
+                  setCurrentPage(1)
+                }}
+                disabled={Boolean(preselectedAgentId)}
+              >
+                <option value="all">All agents</option>
+                {agentOptions.map((agentId) => <option key={agentId} value={agentId}>{agentId}</option>)}
+              </select>
+            </label>
+            <label className="toolbar-field">
+              <span>Overall score</span>
+              <select
+                value={scoreFilter}
+                onChange={(event) => {
+                  setScoreFilter(event.target.value)
+                  setCurrentPage(1)
+                }}
+              >
+                <option value="all">Any score</option>
+                <option value="red">Below 60</option>
+                <option value="yellow">60–79</option>
+                <option value="green">80 and above</option>
+              </select>
+            </label>
+            <button type="button" className="conversation-clear-filters" onClick={clearFilters} disabled={activeFilterCount === 0}>
+              Clear filters
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="qa-inbox-switcher" role="tablist" aria-label="QA inbox filter">
