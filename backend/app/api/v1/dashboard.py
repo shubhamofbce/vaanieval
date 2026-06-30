@@ -32,7 +32,8 @@ _METRIC_LABELS: dict[str, str] = {
     'ai_detectability_score': 'AI detectability',
 }
 _METRIC_ORDER = list(_METRIC_LABELS.keys())
-_SUCCESS_OUTCOMES = {'success', 'resolved', 'completed', 'converted', 'won'}
+_QA_PASS_OVERALL = 80
+_QA_PASS_METRIC_FLOOR = 60
 
 
 def _coalesce_timestamp(row: Conversation) -> datetime:
@@ -42,10 +43,12 @@ def _coalesce_timestamp(row: Conversation) -> datetime:
     return value.astimezone(timezone.utc)
 
 
-def _is_success_outcome(outcome: str | None) -> bool:
-    if not outcome:
-        return False
-    return outcome.strip().lower() in _SUCCESS_OUTCOMES
+def _is_qa_pass(metric_values: list[float]) -> bool:
+    return bool(
+        metric_values
+        and mean(metric_values) >= _QA_PASS_OVERALL
+        and min(metric_values) >= _QA_PASS_METRIC_FLOOR
+    )
 
 
 def _is_error_outcome(outcome: str | None) -> bool:
@@ -169,7 +172,9 @@ def _build_records(
                 'id': row.id,
                 'timestamp': timestamp,
                 'outcome': (row.outcome or 'unknown').strip().lower(),
-                'is_success': _is_success_outcome(row.outcome),
+                # Provider outcome describes call delivery. Dashboard success is the
+                # independent VaaniEval QA gate used by the conversation workspace.
+                'is_success': _is_qa_pass(metric_values),
                 'is_error': _is_error_outcome(row.outcome),
                 'provider_name': provider_name,
                 'agent_id': row.provider_agent_id,

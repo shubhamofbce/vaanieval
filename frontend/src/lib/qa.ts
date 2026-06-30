@@ -1,0 +1,136 @@
+import type { ConversationEvaluationRunResponse, ConversationMetricScoreResponse } from '../api/types'
+
+export type QaVerdict = 'needs_attention' | 'review' | 'passed' | 'pending'
+
+export type NormalizedEvidence = {
+  text: string
+  role: string | null
+  turnOrder: number | null
+  timestampMs: number | null
+}
+
+export type ConversationQaSummary = {
+  overallScore: number | null
+  lowestMetric: ConversationMetricScoreResponse | null
+  verdict: QaVerdict
+  warningCount: number
+  recommendedAction: string
+}
+
+export const QA_PASS_OVERALL = 80
+export const QA_PASS_METRIC_FLOOR = 60
+export const QA_ATTENTION_OVERALL = 60
+export const QA_ATTENTION_METRIC_FLOOR = 50
+
+const RECOMMENDATIONS: Record<string, string> = {
+  task_completion_score: 'Inspect the goal-completion step and the agent’s final response. Confirm that the requested outcome actually happened before the call ended.',
+  intent_understanding_score: 'Inspect the first misunderstood user turn. Tighten intent clarification before the agent commits to an action.',
+  required_info_capture_score: 'Verify which required fields were missed and add an explicit confirmation step before completing the workflow.',
+  ai_detectability_score: 'Review repetitive phrasing, pacing, long pauses, and interruption handling to make the exchange feel more natural.',
+}
+
+export const QA_VERDICT_LABELS: Record<QaVerdict, string> = {
+  needs_attention: 'Needs attention',
+  review: 'Review',
+  passed: 'Passed',
+  pending: 'Pending evaluation',
+}
+
+export function buildQaSummary(
+  run: ConversationEvaluationRunResponse | null | undefined,
+  warningCount = 0,
+): ConversationQaSummary {
+  const metrics = run?.metrics.filter((metric) => Number.isFinite(metric.score_value)) ?? []
+  const lowestMetric = metrics.length > 0
+    ? metrics.reduce((lowest, metric) => metric.score_value < lowest.score_value ? metric : lowest)
+    : null
+  const overallScore = metrics.length > 0
+    ? Math.round(metrics.reduce((sum, metric) => sum + metric.score_value, 0) / metrics.length)
+    : null
+
+  let verdict: QaVerdict = 'pending'
+  if (run?.status === 'failed') {
+    verdict = 'needs_attention'
+  } else if (overallScore != null) {
+    if (
+      overallScore < QA_ATTENTION_OVERALL
+      || (lowestMetric?.score_value ?? 100) < QA_ATTENTION_METRIC_FLOOR
+      || warningCount > 0
+    ) {
+      verdict = 'needs_attention'
+    } else if (overallScore >= QA_PASS_OVERALL && (lowestMetric?.score_value ?? 0) >= QA_PASS_METRIC_FLOOR) {
+      verdict = 'passed'
+    } else {
+      verdict = 'review'
+    }
+  }
+
+  return {
+    overallScore,
+    lowestMetric,
+    verdict,
+    warningCount,
+    recommendedAction: lowestMetric
+      ? RECOMMENDATIONS[lowestMetric.metric_key] ?? 'Review the evaluator rationale and supporting transcript evidence before changing the agent.'
+      : 'Run the evaluation to get a quality verdict and prioritized recommendation.',
+  }
+}
+
+function asFiniteNumber(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value)
+  return null
+}
+
+function normalizeEvidenceItem(value: unknown): NormalizedEvidence | null {
+  if (typeof value === 'string') {
+    const text = value.trim()
+    return text ? { text, role: null, turnOrder: null, timestampMs: null } : null
+  }
+  if (!value || typeof value !== 'object') return null
+
+  const item = value as Record<string, unknown>
+  const textCandidate = item.text ?? item.quote ?? item.excerpt ?? item.evidence ?? item.content ?? item.message
+  if (typeof textCandidate !== 'string' || !textCandidate.trim()) return null
+
+  const roleCandidate = item.role ?? item.speaker
+  const turnOrder = asFiniteNumber(item.turn_order ?? item.turnOrder ?? item.turn_index ?? item.turnIndex)
+  const timestampMs = asFiniteNumber(item.timestamp_ms ?? item.timestampMs ?? item.started_ms ?? item.start_ms)
+  return {
+    text: textCandidate.trim(),
+    role: typeof roleCandidate === 'string' ? roleCandidate : null,
+    turnOrder,
+    timestampMs,
+  }
+}
+
+export function parseEvidence(evidenceJson: string | null, fallback: string | null): NormalizedEvidence[] {
+  if (!evidenceJson?.trim()) {
+    return fallback?.trim() ? [{ text: fallback.trim(), role: null, turnOrder: null, timestampMs: null }] : []
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(evidenceJson)
+    const nested = parsed && typeof parsed === 'object'
+      ? (parsed as Record<string, unknown>).items ?? (parsed as Record<string, unknown>).evidence
+      : null
+    const candidates = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(nested)
+        ? nested
+        : nested != null
+          ? [nested]
+          : [parsed]
+    const normalized = candidates.map(normalizeEvidenceItem).filter((item): item is NormalizedEvidence => item != null)
+    if (normalized.length > 0) return normalized
+  } catch {
+    // Evaluator output is untrusted. A readable rationale is safer than raw JSON.
+  }
+
+  return fallback?.trim() ? [{ text: fallback.trim(), role: null, turnOrder: null, timestampMs: null }] : []
+}
+
+export function qaSeverity(summary: ConversationQaSummary) {
+  const rank: Record<QaVerdict, number> = { needs_attention: 0, pending: 1, review: 2, passed: 3 }
+  return [rank[summary.verdict], summary.overallScore ?? -1, -summary.warningCount] as const
+}

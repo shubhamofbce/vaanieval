@@ -10,6 +10,12 @@ import {
   listConversations,
 } from '../api/endpoints'
 import { PageHeader } from '../components/PageHeader'
+import {
+  buildQaSummary,
+  parseEvidence,
+  QA_VERDICT_LABELS,
+  qaSeverity,
+} from '../lib/qa'
 import type {
   AudioAssetResponse,
   ConversationEvaluationRunResponse,
@@ -60,6 +66,7 @@ const METRIC_LABELS: Record<string, string> = {
 }
 
 type DetailTab = 'score' | 'player' | 'transcript' | 'metadata'
+type QaInboxFilter = 'attention' | 'passed' | 'all'
 
 function formatConversationTitle(createdAt: string) {
   const date = new Date(createdAt)
@@ -115,7 +122,7 @@ function getScoreTone(score: number | null) {
   if (score == null) {
     return 'score-neutral'
   }
-  if (score >= 75) {
+  if (score >= 80) {
     return 'score-strong'
   }
   if (score >= 60) {
@@ -135,6 +142,7 @@ export function ConversationsPage() {
   const [providerFilter, setProviderFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
   const [scoreFilter, setScoreFilter] = useState('all')
+  const [qaInboxFilter, setQaInboxFilter] = useState<QaInboxFilter>('attention')
   const [selectedId, setSelectedId] = useState('')
   const [detail, setDetail] = useState<ConversationDetailResponse | null>(null)
   const [audio, setAudio] = useState<AudioAssetResponse | null>(null)
@@ -513,7 +521,7 @@ export function ConversationsPage() {
     if (selectedIndex < 0) {
       return
     }
-    const next = scoreFilteredRows[selectedIndex + step]
+    const next = qaFilteredRows[selectedIndex + step]
     if (next) {
       setSelectedId(next.id)
     }
@@ -612,15 +620,16 @@ export function ConversationsPage() {
     })
   }, [evaluationRun])
 
-  const evaluationSummaryScore = useMemo(() => {
-    const scoredMetrics = evaluationMetrics.filter((metric) => metric.score != null)
-    if (scoredMetrics.length === 0) {
-      return null
-    }
-
-    const total = scoredMetrics.reduce((sum, metric) => sum + (metric.score ?? 0), 0)
-    return Math.round(total / scoredMetrics.length)
-  }, [evaluationMetrics])
+  const selectedQaSummary = useMemo(
+    () => buildQaSummary(evaluationRun, insights?.warnings.length ?? 0),
+    [evaluationRun, insights?.warnings.length],
+  )
+  const evaluationSummaryScore = selectedQaSummary.overallScore
+  const selectedLowestMetric = selectedQaSummary.lowestMetric
+  const selectedEvidence = useMemo(
+    () => parseEvidence(selectedLowestMetric?.evidence_json ?? null, selectedLowestMetric?.rationale ?? null),
+    [selectedLowestMetric],
+  )
 
   const scoreSummaryTone = getScoreTone(evaluationSummaryScore)
   const scoreSummaryBackground =
@@ -631,68 +640,60 @@ export function ConversationsPage() {
         : 'score-summary-success'
 
   const listEvaluationSummary = useMemo(() => {
-    const summary: Record<string, { 
-      overall: number | null
-      status: string | null
-      model: string | null
-      metrics?: Array<{ key: string; score: number | null }>
-      createdAt?: string
-    }> = {}
+    const summary: Record<string, ReturnType<typeof buildQaSummary> & { status: string | null }> = {}
 
     for (const row of rows) {
       const run = listEvaluations[row.id]
       if (!run) {
-        summary[row.id] = { overall: null, status: null, model: null }
+        summary[row.id] = { ...buildQaSummary(null), status: null }
         continue
       }
-
-      const metricScores = run.metrics
-        .map((metric) => metric.score_value)
-        .filter((value) => Number.isFinite(value))
-
-      const overall = metricScores.length > 0
-        ? Math.round(metricScores.reduce((sum, value) => sum + value, 0) / metricScores.length)
-        : null
-
-      const metrics = [
-        { key: 'task_completion_score', score: run.metrics.find(m => m.metric_key === 'task_completion_score')?.score_value ?? null },
-        { key: 'intent_understanding_score', score: run.metrics.find(m => m.metric_key === 'intent_understanding_score')?.score_value ?? null },
-        { key: 'required_info_capture_score', score: run.metrics.find(m => m.metric_key === 'required_info_capture_score')?.score_value ?? null },
-        { key: 'ai_detectability_score', score: run.metrics.find(m => m.metric_key === 'ai_detectability_score')?.score_value ?? null },
-      ]
-
-      summary[row.id] = {
-        overall,
-        status: run.status,
-        model: run.provider_model,
-        metrics,
-        createdAt: run.created_at,
-      }
+      const warningCount = row.id === selectedId ? insights?.warnings.length ?? 0 : 0
+      summary[row.id] = { ...buildQaSummary(run, warningCount), status: run.status }
     }
 
     return summary
-  }, [listEvaluations, rows])
+  }, [insights?.warnings.length, listEvaluations, rows, selectedId])
 
   const scoreFilteredRows = useMemo(() => {
     if (scoreFilter === 'all') {
       return filteredRows
     }
     return filteredRows.filter((row) => {
-      const overall = listEvaluationSummary[row.id]?.overall
+      const overall = listEvaluationSummary[row.id]?.overallScore
       if (scoreFilter === 'red' && (overall == null || overall >= 60)) {
         return false
       }
-      if (scoreFilter === 'yellow' && (overall == null || overall < 60 || overall >= 75)) {
+      if (scoreFilter === 'yellow' && (overall == null || overall < 60 || overall >= 80)) {
         return false
       }
-      if (scoreFilter === 'green' && (overall == null || overall < 75)) {
+      if (scoreFilter === 'green' && (overall == null || overall < 80)) {
         return false
       }
       return true
     })
   }, [filteredRows, scoreFilter, listEvaluationSummary])
 
-  const totalPages = Math.max(1, Math.ceil(scoreFilteredRows.length / CONVERSATIONS_PAGE_SIZE))
+  const qaFilteredRows = useMemo(() => {
+    const visible = scoreFilteredRows.filter((row) => {
+      const verdict = listEvaluationSummary[row.id]?.verdict ?? 'pending'
+      if (qaInboxFilter === 'attention') return verdict === 'needs_attention' || verdict === 'pending'
+      if (qaInboxFilter === 'passed') return verdict === 'passed'
+      return true
+    })
+
+    if (qaInboxFilter !== 'attention') return visible
+    return [...visible].sort((left, right) => {
+      const leftSeverity = qaSeverity(listEvaluationSummary[left.id] ?? buildQaSummary(null))
+      const rightSeverity = qaSeverity(listEvaluationSummary[right.id] ?? buildQaSummary(null))
+      for (let index = 0; index < leftSeverity.length; index += 1) {
+        if (leftSeverity[index] !== rightSeverity[index]) return leftSeverity[index] - rightSeverity[index]
+      }
+      return Date.parse(getConversationDisplayDate(right)) - Date.parse(getConversationDisplayDate(left))
+    })
+  }, [listEvaluationSummary, qaInboxFilter, scoreFilteredRows])
+
+  const totalPages = Math.max(1, Math.ceil(qaFilteredRows.length / CONVERSATIONS_PAGE_SIZE))
 
   const visiblePageNumbers = useMemo(() => {
     if (totalPages <= 7) {
@@ -705,14 +706,14 @@ export function ConversationsPage() {
 
   const paginatedRows = useMemo(() => {
     const start = (currentPage - 1) * CONVERSATIONS_PAGE_SIZE
-    return scoreFilteredRows.slice(start, start + CONVERSATIONS_PAGE_SIZE)
-  }, [currentPage, scoreFilteredRows])
+    return qaFilteredRows.slice(start, start + CONVERSATIONS_PAGE_SIZE)
+  }, [currentPage, qaFilteredRows])
 
   useEffect(() => {
-    if (!scoreFilteredRows.some((row) => row.id === selectedId)) {
-      setSelectedId(scoreFilteredRows[0]?.id || '')
+    if (!qaFilteredRows.some((row) => row.id === selectedId)) {
+      setSelectedId(qaFilteredRows[0]?.id || '')
     }
-  }, [scoreFilteredRows, selectedId])
+  }, [qaFilteredRows, selectedId])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -727,8 +728,8 @@ export function ConversationsPage() {
   }, [paginatedRows, selectedId])
 
   const selectedIndex = useMemo(() => {
-    return scoreFilteredRows.findIndex((row) => row.id === selectedId)
-  }, [scoreFilteredRows, selectedId])
+    return qaFilteredRows.findIndex((row) => row.id === selectedId)
+  }, [qaFilteredRows, selectedId])
 
   useEffect(() => {
     setDetailTab('score')
@@ -743,13 +744,7 @@ export function ConversationsPage() {
         subtitle={
           preselectedAgentId
             ? `Showing calls for ${preselectedAgentName || 'selected agent'}.`
-            : 'Review and evaluate imported conversations.'
-        }
-        actions={
-          <button type="button" className="workspace-export-button">
-            <FontAwesomeIcon icon="download" />
-            <span>Export</span>
-          </button>
+            : 'Start with the calls most likely to need a fix.'
         }
       />
 
@@ -811,27 +806,54 @@ export function ConversationsPage() {
         </button>
       </div>
 
+      <div className="qa-inbox-switcher" role="tablist" aria-label="QA inbox filter">
+        {([
+          ['attention', 'Needs attention'],
+          ['passed', 'Passed'],
+          ['all', 'All'],
+        ] as Array<[QaInboxFilter, string]>).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={qaInboxFilter === value}
+            className={qaInboxFilter === value ? 'qa-inbox-tab active' : 'qa-inbox-tab'}
+            onClick={() => {
+              setQaInboxFilter(value)
+              setCurrentPage(1)
+            }}
+          >
+            {label}
+          </button>
+        ))}
+        <span className="qa-pass-rule" title="Passed means an overall score of at least 80 with no metric below 60.">
+          Passed = 80+ overall, every metric 60+
+        </span>
+      </div>
+
       <div className="conversations-grid workspace-grid">
         <aside className="panel conversations-list-panel workspace-list-panel">
           <div className="workspace-list-header">
-            <strong>{scoreFilteredRows.length} conversations</strong>
-            <select value="newest" onChange={() => undefined}>
-              <option value="newest">Newest first</option>
-            </select>
+            <strong>{qaFilteredRows.length} conversations</strong>
+            <span className="muted">{qaInboxFilter === 'attention' ? 'Highest risk first' : 'Newest first'}</span>
           </div>
 
           {loading ? (
             <p className="muted">Loading conversations...</p>
-          ) : scoreFilteredRows.length === 0 ? (
-            <p className="muted">No conversations match your filters.</p>
+          ) : qaFilteredRows.length === 0 ? (
+            <p className="muted">No conversations match this QA view and your current filters.</p>
           ) : (
             <ul className="conversations-list" role="listbox" aria-label="Conversations">
               {paginatedRows.map((row) => {
                 const selected = row.id === selectedId
                 const evalSummary = listEvaluationSummary[row.id]
                 const isEvalLoading = listEvaluationLoading[row.id] ?? false
-                const scoreToneClass = getScoreTone(evalSummary?.overall ?? null)
+                const scoreToneClass = getScoreTone(evalSummary?.overallScore ?? null)
                 const status = evalSummary?.status ?? null
+                const verdict = evalSummary?.verdict ?? 'pending'
+                const lowestMetricLabel = evalSummary?.lowestMetric
+                  ? METRIC_LABELS[evalSummary.lowestMetric.metric_key] ?? evalSummary.lowestMetric.metric_key
+                  : null
                 const statusClass =
                   status === 'completed'
                     ? 'eval-status-completed'
@@ -855,24 +877,26 @@ export function ConversationsPage() {
                       <span className="conversation-meta">
                         <FontAwesomeIcon icon="clock" /> {formatConversationDate(getConversationDisplayDate(row))}
                       </span>
-                      <span className="conversation-meta">
-                        <FontAwesomeIcon icon="clock" /> {formatClock((audio?.duration_ms ?? 0) / 1000)}
-                      </span>
+                      {lowestMetricLabel ? (
+                        <span className="conversation-risk-reason">
+                          Lowest: {lowestMetricLabel} · {evalSummary?.lowestMetric?.score_value}/100
+                        </span>
+                      ) : null}
                       <span className="conversation-eval-row">
                         <span className={`conversation-score-badge ${scoreToneClass} ${isEvalLoading ? 'is-loading' : ''}`}>
                           {isEvalLoading ? (
                             <>
                               <FontAwesomeIcon icon="circle-notch" spin /> Fetching
                             </>
-                          ) : evalSummary?.overall == null ? (
+                          ) : evalSummary?.overallScore == null ? (
                             '--/100'
                           ) : (
-                            `${evalSummary.overall}/100`
+                            `${evalSummary.overallScore}/100`
                           )}
                         </span>
-                        <span className={`eval-status-pill ${statusClass}`}>
+                        <span className={`eval-status-pill qa-verdict-${verdict} ${statusClass}`}>
                           {status === 'queued' || status === 'running' ? <FontAwesomeIcon icon="circle-notch" spin /> : null}
-                          {status ? 'Evaluated' : 'Not evaluated'}
+                          {QA_VERDICT_LABELS[verdict]}
                         </span>
                       </span>
                     </button>
@@ -933,7 +957,7 @@ export function ConversationsPage() {
                 <div>
                   <h2>{selectedRow ? getConversationDisplayName(selectedRow) : 'Conversation review'}</h2>
                   <p className="muted">
-                      Provider: {formatProviderName(selectedRow.provider_name)} · Agent: {pickAgentDisplayName(insights?.assistant_name, selectedRow.provider_agent_name)} · Duration: {formatClock(effectiveDuration)}
+                      Provider: {formatProviderName(selectedRow.provider_name)} · Agent: {pickAgentDisplayName(insights?.assistant_name, selectedRow.provider_agent_name)} · Duration: {effectiveDuration > 0 ? formatClock(effectiveDuration) : 'Unavailable'}
                   </p>
                 </div>
                   <div className="workspace-detail-actions">
@@ -965,11 +989,67 @@ export function ConversationsPage() {
 
                 {detailTab === 'score' ? (
                   <>
+                    <section className="qa-diagnosis-grid" aria-label="QA diagnosis">
+                      <article className={`qa-diagnosis-card qa-verdict-card qa-verdict-${selectedQaSummary.verdict}`}>
+                        <small>QA verdict</small>
+                        <h3>{QA_VERDICT_LABELS[selectedQaSummary.verdict]}</h3>
+                        <p>
+                          {selectedQaSummary.verdict === 'passed'
+                            ? 'This call clears the demo quality gate.'
+                            : selectedQaSummary.verdict === 'pending'
+                              ? 'Run or finish the evaluation to classify this call.'
+                              : 'Review the weakest behavior before changing or shipping this agent.'}
+                        </p>
+                      </article>
+                      <article className="qa-diagnosis-card">
+                        <small>Why it failed</small>
+                        <h3>
+                          {selectedLowestMetric
+                            ? `${METRIC_LABELS[selectedLowestMetric.metric_key] ?? selectedLowestMetric.metric_key} · ${selectedLowestMetric.score_value}/100`
+                            : 'No evaluated metric yet'}
+                        </h3>
+                        <p>{selectedLowestMetric?.rationale ?? 'This conversation does not have evaluator rationale yet.'}</p>
+                      </article>
+                      <article className="qa-diagnosis-card qa-next-step-card">
+                        <small>Recommended next step</small>
+                        <h3>Fix the weakest behavior first</h3>
+                        <p>{selectedQaSummary.recommendedAction}</p>
+                      </article>
+                    </section>
+
+                    {selectedEvidence.length > 0 ? (
+                      <section className="qa-evidence-panel">
+                        <div>
+                          <small>Supporting evidence</small>
+                          <h3>What the evaluator saw</h3>
+                        </div>
+                        <div className="qa-evidence-list">
+                          {selectedEvidence.map((item, index) => (
+                            <button
+                              key={`${item.text}-${index}`}
+                              type="button"
+                              className="qa-evidence-quote"
+                              onClick={() => {
+                                setDetailTab('transcript')
+                                if (item.timestampMs != null) void seekToSecond(item.timestampMs / 1000)
+                              }}
+                              title={item.timestampMs != null || item.turnOrder != null ? 'Open this moment in the transcript' : 'Open the transcript'}
+                            >
+                              <span>“{item.text}”</span>
+                              <small>
+                                {[item.role, item.turnOrder != null ? `Turn ${item.turnOrder}` : null].filter(Boolean).join(' · ') || 'Evaluator rationale'}
+                              </small>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                    ) : null}
+
                     <section className={`panel evaluation-hero-card ${scoreSummaryBackground}`}>
                       <div className="evaluation-hero-left">
                         <small>Overall Evaluation Score</small>
                         <p>{evaluationSummaryScore == null ? '--' : `${evaluationSummaryScore}/100`}</p>
-                        <span className="muted">Average across the four evaluation metrics.</span>
+                        <span className="muted">QA score across the four evaluation metrics. Passed requires 80+ overall and every metric at 60+.</span>
                       </div>
                       <div className="evaluation-hero-right">
                         <div className="sparkline">
@@ -1231,11 +1311,11 @@ export function ConversationsPage() {
                   <>
                     <div className="conversation-kpis">
                       <article>
-                        <small>Call result</small>
+                        <small>Call delivery result</small>
                         <p>{insights.call_result || 'Unknown'}</p>
                       </article>
                       <article>
-                        <small>Status</small>
+                        <small>Provider processing status</small>
                         <p>{insights.call_status || 'Unknown'}</p>
                       </article>
                       <article>

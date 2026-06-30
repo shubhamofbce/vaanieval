@@ -258,7 +258,7 @@ export function DashboardPage() {
       {summary ? (
         <>
           <section className="stats-grid dashboard-stats-grid">
-            <StatCard icon="chart-line" label="Success rate" value={formatPercent(summary.success_rate)} tone="good" />
+            <StatCard icon="chart-line" label="QA pass rate" value={formatPercent(summary.success_rate)} tone="good" />
             <StatCard icon="bolt" label="Evaluation coverage" value={formatPercent(summary.evaluation_coverage_rate)} />
             <StatCard icon="table-cells-large" label="Overall score" value={formatScore(summary.average_overall_score)} />
             <StatCard icon="clock" label="Call duration p95" value={formatDuration(summary.p95_call_duration_seconds)} tone="warn" />
@@ -279,7 +279,7 @@ export function DashboardPage() {
                   <DeltaChip value={comparison?.conversations.delta ?? null} />
                 </div>
                 <div>
-                  <small>Successful conversations</small>
+                  <small>QA-passed conversations</small>
                   <strong>{summary.successful_conversations}</strong>
                   <DeltaChip value={comparison?.successful_conversations.delta ?? null} />
                 </div>
@@ -326,7 +326,7 @@ export function DashboardPage() {
             <TrendChart
               points={overview.trend}
               valueKey="success_rate"
-              label="Success rate trend"
+              label="QA pass rate trend"
               color="#0f766e"
               formatter={(value) => `${value.toFixed(0)}%`}
             />
