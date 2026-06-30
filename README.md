@@ -102,7 +102,7 @@ Services:
 5. Open the Conversations workspace.
 6. Trigger an evaluation and inspect scores, rationales, transcript, and audio.
 
-For manual setup, environment variables, migrations, and troubleshooting, see the [Development Guide](docs/development.md).
+For manual setup, environment variable, migrations, and troubleshooting, see the [Development Guide](docs/development.md).
 
 ## How It Works
 
