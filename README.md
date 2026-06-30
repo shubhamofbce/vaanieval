@@ -2,10 +2,14 @@
   <img src="docs/assets/screenshots/twitter_banner.png" alt="VaaniEval banner" width="100%">
 </p>
 
-<h1 align="center">VaaniEval</h1>
+<h1 align="center"><a href="https://vaanieval.vercel.app/">VaaniEval</a></h1>
 
 <p align="center">
   Open-source evaluation workspace for production Voice AI agents.
+</p>
+
+<p align="center">
+  <a href="https://vaanieval.vercel.app/"><strong>Try the deployed version</strong></a>
 </p>
 
 <p align="center">
