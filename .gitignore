@@ -24,3 +24,6 @@ node_modules/
 *.txt
 !frontend/public/robots.txt
 backend.db
+
+# Private agent skills (tweeting strategy)
+.agents/skills/trend-tweeter/
