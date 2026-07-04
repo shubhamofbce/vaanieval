@@ -1,0 +1,4 @@
+interface:
+  display_name: "VaaniEval SEO Operator"
+  short_description: "Audit and improve VaaniEval organic search performance"
+  default_prompt: "Use $seo-operator to audit or improve the VaaniEval public site."
