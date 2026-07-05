@@ -113,8 +113,22 @@ export function cancelImport(importJobId: string) {
   })
 }
 
-export function listConversations() {
-  return apiRequest<ConversationListItem[]>('/conversations')
+export function listConversations(options?: {
+  agent_id?: string
+  language?: string
+  outcome?: string
+  date_from?: string
+  date_to?: string
+}) {
+  const params = new URLSearchParams()
+  if (options?.agent_id) params.append('agent_id', options.agent_id)
+  if (options?.language) params.append('language', options.language)
+  if (options?.outcome) params.append('outcome', options.outcome)
+  if (options?.date_from) params.append('date_from', options.date_from)
+  if (options?.date_to) params.append('date_to', options.date_to)
+  
+  const query = params.toString()
+  return apiRequest<ConversationListItem[]>(`/conversations${query ? `?${query}` : ''}`)
 }
 
 export function getConversation(conversationId: string) {

@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -114,11 +114,27 @@ def list_conversations(
     db: Session = Depends(get_db),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    agent_id: str | None = Query(default=None),
+    language: str | None = Query(default=None),
+    outcome: str | None = Query(default=None),
+    date_from: datetime | None = Query(default=None),
+    date_to: datetime | None = Query(default=None),
 ) -> list[ConversationListItem]:
+    stmt = select(Conversation).where(Conversation.workspace_id == workspace_id)
+    
+    if agent_id:
+        stmt = stmt.where(Conversation.provider_agent_id == agent_id)
+    if language:
+        stmt = stmt.where(Conversation.language == language)
+    if outcome:
+        stmt = stmt.where(Conversation.outcome == outcome)
+    if date_from:
+        stmt = stmt.where(Conversation.started_at >= date_from)
+    if date_to:
+        stmt = stmt.where(Conversation.started_at <= date_to)
+
     rows = db.scalars(
-        select(Conversation)
-        .where(Conversation.workspace_id == workspace_id)
-        .order_by(Conversation.created_at.desc())
+        stmt.order_by(Conversation.created_at.desc())
         .offset(offset)
         .limit(limit)
     ).all()
