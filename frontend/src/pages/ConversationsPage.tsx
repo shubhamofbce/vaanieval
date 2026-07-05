@@ -142,6 +142,10 @@ export function ConversationsPage() {
   const [providerFilter, setProviderFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
   const [scoreFilter, setScoreFilter] = useState('all')
+  const [languageFilter, setLanguageFilter] = useState('all')
+  const [outcomeFilter, setOutcomeFilter] = useState('all')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [qaInboxFilter, setQaInboxFilter] = useState<QaInboxFilter>('attention')
   const [selectedId, setSelectedId] = useState('')
@@ -192,10 +196,19 @@ export function ConversationsPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const data = await listConversations()
+        const options: any = {}
+        if (preselectedAgentId) options.agent_id = preselectedAgentId
+        else if (agentFilter !== 'all') options.agent_id = agentFilter
+        
+        if (languageFilter !== 'all') options.language = languageFilter
+        if (outcomeFilter !== 'all') options.outcome = outcomeFilter
+        if (dateFrom) options.date_from = `${dateFrom}T00:00:00.000Z`
+        if (dateTo) options.date_to = `${dateTo}T23:59:59.999Z`
+
+        const data = await listConversations(options)
         if (!cancelled) {
           setRows(data)
-          setSelectedId((current) => current || data[0]?.id || '')
+          setSelectedId((current) => data.some(d => d.id === current) ? current : (data[0]?.id || ''))
           setError('')
         }
       } catch (err) {
@@ -214,7 +227,7 @@ export function ConversationsPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [preselectedAgentId, agentFilter, languageFilter, outcomeFilter, dateFrom, dateTo])
 
   useEffect(() => {
     if (rows.length === 0) {
@@ -318,13 +331,24 @@ export function ConversationsPage() {
     return Array.from(new Set(filteredRows.map((row) => row.provider_agent_id).filter(Boolean) as string[])).sort()
   }, [filteredRows])
 
-  const activeFilterCount = [providerFilter !== 'all', !preselectedAgentId && agentFilter !== 'all', scoreFilter !== 'all']
-    .filter(Boolean).length
+  const activeFilterCount = [
+    providerFilter !== 'all', 
+    !preselectedAgentId && agentFilter !== 'all', 
+    scoreFilter !== 'all',
+    languageFilter !== 'all',
+    outcomeFilter !== 'all',
+    dateFrom !== '',
+    dateTo !== ''
+  ].filter(Boolean).length
 
   const clearFilters = () => {
     setProviderFilter('all')
     setAgentFilter('all')
     setScoreFilter('all')
+    setLanguageFilter('all')
+    setOutcomeFilter('all')
+    setDateFrom('')
+    setDateTo('')
     setCurrentPage(1)
   }
 
@@ -798,6 +822,61 @@ export function ConversationsPage() {
                 <option value="all">All agents</option>
                 {agentOptions.map((agentId) => <option key={agentId} value={agentId}>{agentId}</option>)}
               </select>
+            </label>
+            <label className="toolbar-field">
+              <span>Language</span>
+              <select
+                value={languageFilter}
+                onChange={(event) => {
+                  setLanguageFilter(event.target.value)
+                  setCurrentPage(1)
+                }}
+              >
+                <option value="all">All languages</option>
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="hi">Hindi</option>
+              </select>
+            </label>
+            <label className="toolbar-field">
+              <span>Outcome</span>
+              <select
+                value={outcomeFilter}
+                onChange={(event) => {
+                  setOutcomeFilter(event.target.value)
+                  setCurrentPage(1)
+                }}
+              >
+                <option value="all">All outcomes</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="unknown">Unknown</option>
+                <option value="abandoned">Abandoned</option>
+              </select>
+            </label>
+            <label className="toolbar-field">
+              <span>From Date</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(event) => {
+                  setDateFrom(event.target.value)
+                  setCurrentPage(1)
+                }}
+              />
+            </label>
+            <label className="toolbar-field">
+              <span>To Date</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(event) => {
+                  setDateTo(event.target.value)
+                  setCurrentPage(1)
+                }}
+              />
             </label>
             <label className="toolbar-field">
               <span>Overall score</span>
