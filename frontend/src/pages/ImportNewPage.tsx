@@ -13,13 +13,25 @@ function formatProviderName(providerName: string) {
       : providerName
 }
 
+function toDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function getLastNDaysRange(days: number) {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - (days - 1))
+  return { start: toDateInputValue(start), end: toDateInputValue(end) }
+}
+
 export function ImportNewPage() {
   const navigate = useNavigate()
   const [agents, setAgents] = useState<ProviderAgentResponse[]>([])
   const [providerName, setProviderName] = useState('')
   const [agentId, setAgentId] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const defaultRange = useMemo(() => getLastNDaysRange(7), [])
+  const [startDate, setStartDate] = useState(defaultRange.start)
+  const [endDate, setEndDate] = useState(defaultRange.end)
   const [pageSize, setPageSize] = useState(50)
   const [error, setError] = useState('')
   const [loadingAgents, setLoadingAgents] = useState(true)
@@ -134,6 +146,32 @@ export function ImportNewPage() {
     }
   }
 
+  async function handleQuickImportLast7Days() {
+    setError('')
+
+    if (!selectedProvider) {
+      setError('Choose a provider before starting an import.')
+      return
+    }
+
+    const range = getLastNDaysRange(7)
+    setStartDate(range.start)
+    setEndDate(range.end)
+
+    try {
+      const created = await createImport({
+        provider_account_id: selectedProvider.accountId,
+        agent_id: agentId || undefined,
+        start_date: range.start,
+        end_date: range.end,
+        page_size: pageSize,
+      })
+      navigate(`/imports/${created.id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create import job')
+    }
+  }
+
   return (
     <section className="page">
       <PageHeader
@@ -147,6 +185,21 @@ export function ImportNewPage() {
             <p className="muted">
               This import creates a background job for historical conversations. The provider and agent lists come from the agents already synced into your workspace.
             </p>
+          </div>
+
+          <div className="import-quick-action">
+            <button
+              type="button"
+              className="secondary"
+              onClick={handleQuickImportLast7Days}
+              disabled={loadingAgents || !selectedProvider}
+            >
+              <span className="control-with-icon">
+                <FontAwesomeIcon icon="bolt" />
+                <span>Import last 7 days</span>
+              </span>
+            </button>
+            <p className="muted">One click to pull the last 7 days for the selected provider and agent. Need a custom range? Adjust the dates below.</p>
           </div>
 
           <label htmlFor="providerName">Provider</label>
@@ -180,7 +233,7 @@ export function ImportNewPage() {
             ))}
           </select>
 
-          <label htmlFor="startDate">Start date</label>
+          <label htmlFor="startDate">Start date (optional)</label>
           <input
             id="startDate"
             type="date"
@@ -188,7 +241,7 @@ export function ImportNewPage() {
             onChange={(event) => setStartDate(event.target.value)}
           />
 
-          <label htmlFor="endDate">End date</label>
+          <label htmlFor="endDate">End date (optional)</label>
           <input
             id="endDate"
             type="date"
