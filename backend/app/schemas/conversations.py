@@ -15,6 +15,13 @@ class ConversationListItem(BaseModel):
     started_at: datetime | None
     ended_at: datetime | None
     created_at: datetime
+    overall_score: float | None = None
+    qa_verdict: str | None = None
+
+
+class ConversationListResponse(BaseModel):
+    items: list[ConversationListItem]
+    total: int
 
 
 class ConversationTurnItem(BaseModel):

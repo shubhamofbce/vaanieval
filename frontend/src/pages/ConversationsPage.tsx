@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { API_BASE } from '../api/client'
@@ -14,7 +14,6 @@ import {
   buildQaSummary,
   parseEvidence,
   QA_VERDICT_LABELS,
-  qaSeverity,
 } from '../lib/qa'
 import type {
   AudioAssetResponse,
@@ -136,14 +135,15 @@ export function ConversationsPage() {
   const preselectedAgentId = searchParams.get('agentId') ?? ''
   const preselectedAgentName = searchParams.get('agentName') ?? ''
   const [rows, setRows] = useState<ConversationListItem[]>([])
+  const [total, setTotal] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [providerFilter, setProviderFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
   const [scoreFilter, setScoreFilter] = useState('all')
   const [languageFilter, setLanguageFilter] = useState('all')
-  const [outcomeFilter, setOutcomeFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -154,8 +154,6 @@ export function ConversationsPage() {
   const [insights, setInsights] = useState<ConversationInsightResponse | null>(null)
   const [insightsError, setInsightsError] = useState('')
   const [evaluationRun, setEvaluationRun] = useState<ConversationEvaluationRunResponse | null>(null)
-  const [listEvaluations, setListEvaluations] = useState<Record<string, ConversationEvaluationRunResponse | null>>({})
-  const [listEvaluationLoading, setListEvaluationLoading] = useState<Record<string, boolean>>({})
 
   const mergeEvaluationForDisplay = (
     previous: ConversationEvaluationRunResponse | null,
@@ -190,25 +188,40 @@ export function ConversationsPage() {
   const subtitleListRef = useRef<HTMLUListElement | null>(null)
   const lastActiveTurnRef = useRef(-1)
 
+  // Debounce the search query to avoid excessive API calls.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(query)
+      setCurrentPage(1)
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [query])
+
   useEffect(() => {
     let cancelled = false
 
     const load = async () => {
       setLoading(true)
       try {
-        const options: any = {}
+        const options: Record<string, string | number> = {}
         if (preselectedAgentId) options.agent_id = preselectedAgentId
         else if (agentFilter !== 'all') options.agent_id = agentFilter
         
         if (languageFilter !== 'all') options.language = languageFilter
-        if (outcomeFilter !== 'all') options.outcome = outcomeFilter
+        if (providerFilter !== 'all') options.provider_name = providerFilter
+        if (debouncedQuery) options.search = debouncedQuery
+        if (scoreFilter !== 'all') options.score_band = scoreFilter
+        if (qaInboxFilter !== 'all') options.qa_status = qaInboxFilter
         if (dateFrom) options.date_from = `${dateFrom}T00:00:00.000Z`
         if (dateTo) options.date_to = `${dateTo}T23:59:59.999Z`
+        options.limit = CONVERSATIONS_PAGE_SIZE
+        options.offset = (currentPage - 1) * CONVERSATIONS_PAGE_SIZE
 
-        const data = await listConversations(options)
+        const data = await listConversations(options as any)
         if (!cancelled) {
-          setRows(data)
-          setSelectedId((current) => data.some(d => d.id === current) ? current : (data[0]?.id || ''))
+          setRows(data.items)
+          setTotal(data.total)
+          setSelectedId((current) => data.items.some(d => d.id === current) ? current : (data.items[0]?.id || ''))
           setError('')
         }
       } catch (err) {
@@ -227,41 +240,7 @@ export function ConversationsPage() {
     return () => {
       cancelled = true
     }
-  }, [preselectedAgentId, agentFilter, languageFilter, outcomeFilter, dateFrom, dateTo])
-
-  useEffect(() => {
-    if (rows.length === 0) {
-      setListEvaluations({})
-      setListEvaluationLoading({})
-      return
-    }
-
-    let cancelled = false
-
-    const loadListEvaluations = async () => {
-      const loadingState = Object.fromEntries(rows.map((row) => [row.id, true])) as Record<string, boolean>
-      setListEvaluationLoading(loadingState)
-
-      const pairs = await Promise.all(
-        rows.map(async (row) => {
-          const latest = await getLatestConversationEvaluation(row.id).catch(() => null)
-          return [row.id, latest] as const
-        }),
-      )
-
-      if (!cancelled) {
-        setListEvaluations(Object.fromEntries(pairs))
-        const doneState = Object.fromEntries(rows.map((row) => [row.id, false])) as Record<string, boolean>
-        setListEvaluationLoading(doneState)
-      }
-    }
-
-    void loadListEvaluations()
-
-    return () => {
-      cancelled = true
-    }
-  }, [rows])
+  }, [preselectedAgentId, agentFilter, languageFilter, providerFilter, debouncedQuery, scoreFilter, qaInboxFilter, dateFrom, dateTo, currentPage])
 
   useEffect(() => {
     if (!selectedId || !evaluationRun || !['queued', 'running'].includes(evaluationRun.status)) {
@@ -277,9 +256,6 @@ export function ConversationsPage() {
           }
 
           setEvaluationRun((current) => mergeEvaluationForDisplay(current, latest))
-          if (latest) {
-            setListEvaluations((current) => ({ ...current, [selectedId]: latest }))
-          }
         })
         .catch(() => undefined)
     }, 2500)
@@ -296,47 +272,15 @@ export function ConversationsPage() {
     )
   }, [rows])
 
-  const filteredRows = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
-    return rows
-      .filter((row) => {
-        if (preselectedAgentId && (row.provider_agent_id ?? '') !== preselectedAgentId) {
-          return false
-        }
-        if (agentFilter !== 'all' && (row.provider_agent_id ?? '') !== agentFilter) {
-          return false
-        }
-        if (providerFilter !== 'all' && row.provider_name !== providerFilter) {
-          return false
-        }
-        if (!normalized) {
-          return true
-        }
-        return [
-          row.provider_conversation_id,
-          row.provider_agent_id ?? '',
-          row.provider_name,
-          formatProviderName(row.provider_name),
-          row.outcome ?? '',
-          row.language ?? '',
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(normalized)
-      })
-      .sort((a, b) => Date.parse(getConversationDisplayDate(b)) - Date.parse(getConversationDisplayDate(a)))
-  }, [agentFilter, preselectedAgentId, providerFilter, query, rows])
-
   const agentOptions = useMemo(() => {
-    return Array.from(new Set(filteredRows.map((row) => row.provider_agent_id).filter(Boolean) as string[])).sort()
-  }, [filteredRows])
+    return Array.from(new Set(rows.map((row) => row.provider_agent_id).filter(Boolean) as string[])).sort()
+  }, [rows])
 
   const activeFilterCount = [
     providerFilter !== 'all', 
     !preselectedAgentId && agentFilter !== 'all', 
     scoreFilter !== 'all',
     languageFilter !== 'all',
-    outcomeFilter !== 'all',
     dateFrom !== '',
     dateTo !== ''
   ].filter(Boolean).length
@@ -346,13 +290,12 @@ export function ConversationsPage() {
     setAgentFilter('all')
     setScoreFilter('all')
     setLanguageFilter('all')
-    setOutcomeFilter('all')
     setDateFrom('')
     setDateTo('')
     setCurrentPage(1)
   }
 
-  const selectedRow = selectedId ? filteredRows.find((row) => row.id === selectedId) ?? null : null
+  const selectedRow = selectedId ? rows.find((row) => row.id === selectedId) ?? null : null
 
   useEffect(() => {
     if (!selectedId) {
@@ -535,15 +478,16 @@ export function ConversationsPage() {
     audioElement.playbackRate = playbackRate
   }, [playbackRate])
 
-  const jumpSelection = (step: number) => {
-    if (selectedIndex < 0) {
+  const jumpSelection = useCallback((step: number) => {
+    const currentIndex = rows.findIndex((row) => row.id === selectedId)
+    if (currentIndex < 0) {
       return
     }
-    const next = qaFilteredRows[selectedIndex + step]
+    const next = rows[currentIndex + step]
     if (next) {
       setSelectedId(next.id)
     }
-  }
+  }, [rows, selectedId])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -657,61 +601,7 @@ export function ConversationsPage() {
         ? 'score-summary-warning'
         : 'score-summary-success'
 
-  const listEvaluationSummary = useMemo(() => {
-    const summary: Record<string, ReturnType<typeof buildQaSummary> & { status: string | null }> = {}
-
-    for (const row of rows) {
-      const run = listEvaluations[row.id]
-      if (!run) {
-        summary[row.id] = { ...buildQaSummary(null), status: null }
-        continue
-      }
-      const warningCount = row.id === selectedId ? insights?.warnings.length ?? 0 : 0
-      summary[row.id] = { ...buildQaSummary(run, warningCount), status: run.status }
-    }
-
-    return summary
-  }, [insights?.warnings.length, listEvaluations, rows, selectedId])
-
-  const scoreFilteredRows = useMemo(() => {
-    if (scoreFilter === 'all') {
-      return filteredRows
-    }
-    return filteredRows.filter((row) => {
-      const overall = listEvaluationSummary[row.id]?.overallScore
-      if (scoreFilter === 'red' && (overall == null || overall >= 60)) {
-        return false
-      }
-      if (scoreFilter === 'yellow' && (overall == null || overall < 60 || overall >= 80)) {
-        return false
-      }
-      if (scoreFilter === 'green' && (overall == null || overall < 80)) {
-        return false
-      }
-      return true
-    })
-  }, [filteredRows, scoreFilter, listEvaluationSummary])
-
-  const qaFilteredRows = useMemo(() => {
-    const visible = scoreFilteredRows.filter((row) => {
-      const verdict = listEvaluationSummary[row.id]?.verdict ?? 'pending'
-      if (qaInboxFilter === 'attention') return verdict === 'needs_attention' || verdict === 'pending'
-      if (qaInboxFilter === 'passed') return verdict === 'passed'
-      return true
-    })
-
-    if (qaInboxFilter !== 'attention') return visible
-    return [...visible].sort((left, right) => {
-      const leftSeverity = qaSeverity(listEvaluationSummary[left.id] ?? buildQaSummary(null))
-      const rightSeverity = qaSeverity(listEvaluationSummary[right.id] ?? buildQaSummary(null))
-      for (let index = 0; index < leftSeverity.length; index += 1) {
-        if (leftSeverity[index] !== rightSeverity[index]) return leftSeverity[index] - rightSeverity[index]
-      }
-      return Date.parse(getConversationDisplayDate(right)) - Date.parse(getConversationDisplayDate(left))
-    })
-  }, [listEvaluationSummary, qaInboxFilter, scoreFilteredRows])
-
-  const totalPages = Math.max(1, Math.ceil(qaFilteredRows.length / CONVERSATIONS_PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(total / CONVERSATIONS_PAGE_SIZE))
 
   const visiblePageNumbers = useMemo(() => {
     if (totalPages <= 7) {
@@ -722,32 +612,11 @@ export function ConversationsPage() {
     return Array.from(pages).filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b)
   }, [currentPage, totalPages])
 
-  const paginatedRows = useMemo(() => {
-    const start = (currentPage - 1) * CONVERSATIONS_PAGE_SIZE
-    return qaFilteredRows.slice(start, start + CONVERSATIONS_PAGE_SIZE)
-  }, [currentPage, qaFilteredRows])
-
   useEffect(() => {
-    if (!qaFilteredRows.some((row) => row.id === selectedId)) {
-      setSelectedId(qaFilteredRows[0]?.id || '')
-    }
-  }, [qaFilteredRows, selectedId])
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
+    if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(totalPages)
     }
   }, [currentPage, totalPages])
-
-  useEffect(() => {
-    if (paginatedRows.length > 0 && !paginatedRows.some((row) => row.id === selectedId)) {
-      setSelectedId(paginatedRows[0].id)
-    }
-  }, [paginatedRows, selectedId])
-
-  const selectedIndex = useMemo(() => {
-    return qaFilteredRows.findIndex((row) => row.id === selectedId)
-  }, [qaFilteredRows, selectedId])
 
   useEffect(() => {
     setDetailTab('score')
@@ -841,22 +710,6 @@ export function ConversationsPage() {
               </select>
             </label>
             <label className="toolbar-field">
-              <span>Outcome</span>
-              <select
-                value={outcomeFilter}
-                onChange={(event) => {
-                  setOutcomeFilter(event.target.value)
-                  setCurrentPage(1)
-                }}
-              >
-                <option value="all">All outcomes</option>
-                <option value="success">Success</option>
-                <option value="failed">Failed</option>
-                <option value="unknown">Unknown</option>
-                <option value="abandoned">Abandoned</option>
-              </select>
-            </label>
-            <label className="toolbar-field">
               <span>From Date</span>
               <input
                 type="date"
@@ -928,34 +781,20 @@ export function ConversationsPage() {
       <div className="conversations-grid workspace-grid">
         <aside className="panel conversations-list-panel workspace-list-panel">
           <div className="workspace-list-header">
-            <strong>{qaFilteredRows.length} conversations</strong>
+          <strong>{total} conversations</strong>
             <span className="muted">{qaInboxFilter === 'attention' ? 'Highest risk first' : 'Newest first'}</span>
           </div>
 
           {loading ? (
             <p className="muted">Loading conversations...</p>
-          ) : qaFilteredRows.length === 0 ? (
+          ) : rows.length === 0 ? (
             <p className="muted">No conversations match this QA view and your current filters.</p>
           ) : (
             <ul className="conversations-list" role="listbox" aria-label="Conversations">
-              {paginatedRows.map((row) => {
+              {rows.map((row) => {
                 const selected = row.id === selectedId
-                const evalSummary = listEvaluationSummary[row.id]
-                const isEvalLoading = listEvaluationLoading[row.id] ?? false
-                const scoreToneClass = getScoreTone(evalSummary?.overallScore ?? null)
-                const status = evalSummary?.status ?? null
-                const verdict = evalSummary?.verdict ?? 'pending'
-                const lowestMetricLabel = evalSummary?.lowestMetric
-                  ? METRIC_LABELS[evalSummary.lowestMetric.metric_key] ?? evalSummary.lowestMetric.metric_key
-                  : null
-                const statusClass =
-                  status === 'completed'
-                    ? 'eval-status-completed'
-                    : status === 'failed'
-                      ? 'eval-status-failed'
-                      : status === 'queued' || status === 'running'
-                        ? 'eval-status-pending'
-                        : 'eval-status-idle'
+                const scoreToneClass = getScoreTone(row.overall_score ?? null)
+                const verdict = (row.qa_verdict ?? 'pending') as keyof typeof QA_VERDICT_LABELS
                 return (
                   <li key={row.id}>
                     <button
@@ -971,26 +810,16 @@ export function ConversationsPage() {
                       <span className="conversation-meta">
                         <FontAwesomeIcon icon="clock" /> {formatConversationDate(getConversationDisplayDate(row))}
                       </span>
-                      {lowestMetricLabel ? (
-                        <span className="conversation-risk-reason">
-                          Lowest: {lowestMetricLabel} · {evalSummary?.lowestMetric?.score_value}/100
-                        </span>
-                      ) : null}
                       <span className="conversation-eval-row">
-                        <span className={`conversation-score-badge ${scoreToneClass} ${isEvalLoading ? 'is-loading' : ''}`}>
-                          {isEvalLoading ? (
-                            <>
-                              <FontAwesomeIcon icon="circle-notch" spin /> Fetching
-                            </>
-                          ) : evalSummary?.overallScore == null ? (
+                        <span className={`conversation-score-badge ${scoreToneClass}`}>
+                          {row.overall_score == null ? (
                             '--/100'
                           ) : (
-                            `${evalSummary.overallScore}/100`
+                            `${Math.round(row.overall_score)}/100`
                           )}
                         </span>
-                        <span className={`eval-status-pill qa-verdict-${verdict} ${statusClass}`}>
-                          {status === 'queued' || status === 'running' ? <FontAwesomeIcon icon="circle-notch" spin /> : null}
-                          {QA_VERDICT_LABELS[verdict]}
+                        <span className={`eval-status-pill qa-verdict-${verdict}`}>
+                          {QA_VERDICT_LABELS[verdict] ?? verdict}
                         </span>
                       </span>
                     </button>

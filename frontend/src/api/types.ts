@@ -58,6 +58,13 @@ export type ConversationListItem = {
   started_at: string | null
   ended_at: string | null
   created_at: string
+  overall_score: number | null
+  qa_verdict: string | null
+}
+
+export type ConversationListResponse = {
+  items: ConversationListItem[]
+  total: number
 }
 
 export type ConversationTurnItem = {
