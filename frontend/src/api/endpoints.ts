@@ -7,6 +7,7 @@ import type {
   ConversationDetailResponse,
   ConversationInsightResponse,
   ConversationListItem,
+  ConversationListResponse,
   EvalProviderCatalogResponse,
   EvalProviderResponse,
   ImportJobResponse,
@@ -116,19 +117,29 @@ export function cancelImport(importJobId: string) {
 export function listConversations(options?: {
   agent_id?: string
   language?: string
-  outcome?: string
+  provider_name?: string
+  search?: string
+  score_band?: string
+  qa_status?: string
   date_from?: string
   date_to?: string
+  limit?: number
+  offset?: number
 }) {
   const params = new URLSearchParams()
   if (options?.agent_id) params.append('agent_id', options.agent_id)
   if (options?.language) params.append('language', options.language)
-  if (options?.outcome) params.append('outcome', options.outcome)
+  if (options?.provider_name) params.append('provider_name', options.provider_name)
+  if (options?.search) params.append('search', options.search)
+  if (options?.score_band) params.append('score_band', options.score_band)
+  if (options?.qa_status) params.append('qa_status', options.qa_status)
   if (options?.date_from) params.append('date_from', options.date_from)
   if (options?.date_to) params.append('date_to', options.date_to)
+  if (options?.limit != null) params.append('limit', String(options.limit))
+  if (options?.offset != null) params.append('offset', String(options.offset))
   
   const query = params.toString()
-  return apiRequest<ConversationListItem[]>(`/conversations${query ? `?${query}` : ''}`)
+  return apiRequest<ConversationListResponse>(`/conversations${query ? `?${query}` : ''}`)
 }
 
 export function getConversation(conversationId: string) {
