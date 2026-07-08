@@ -8,6 +8,8 @@ import {
   getConversationInsights,
   getLatestConversationEvaluation,
   listConversations,
+  listAgents,
+  listProviderConnections,
 } from '../api/endpoints'
 import { PageHeader } from '../components/PageHeader'
 import {
@@ -266,15 +268,41 @@ export function ConversationsPage() {
     }
   }, [selectedId, evaluationRun])
 
+  const [availableProviders, setAvailableProviders] = useState<string[]>([])
+  const [availableAgents, setAvailableAgents] = useState<{id: string, name: string}[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([
+      listProviderConnections().catch(() => []),
+      listAgents().catch(() => [])
+    ]).then(([providers, agents]) => {
+      if (cancelled) return
+      setAvailableProviders(providers.map(p => p.provider_name))
+      setAvailableAgents(agents.map(a => ({ id: a.provider_agent_id, name: a.name || a.provider_agent_id })))
+    })
+    return () => { cancelled = true }
+  }, [])
+
   const providerOptions = useMemo(() => {
-    return Array.from(new Set(rows.map((row) => row.provider_name))).sort((left, right) =>
+    const set = new Set(availableProviders)
+    rows.forEach((row) => set.add(row.provider_name))
+    return Array.from(set).sort((left, right) =>
       formatProviderName(left).localeCompare(formatProviderName(right)),
     )
-  }, [rows])
+  }, [availableProviders, rows])
 
   const agentOptions = useMemo(() => {
-    return Array.from(new Set(rows.map((row) => row.provider_agent_id).filter(Boolean) as string[])).sort()
-  }, [rows])
+    const map = new Map(availableAgents.map((a) => [a.id, a.name]))
+    rows.forEach((row) => {
+      if (row.provider_agent_id && !map.has(row.provider_agent_id)) {
+        map.set(row.provider_agent_id, row.provider_agent_name || row.provider_agent_id)
+      }
+    })
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [availableAgents, rows])
 
   const activeFilterCount = [
     providerFilter !== 'all', 
@@ -689,7 +717,7 @@ export function ConversationsPage() {
                 disabled={Boolean(preselectedAgentId)}
               >
                 <option value="all">All agents</option>
-                {agentOptions.map((agentId) => <option key={agentId} value={agentId}>{agentId}</option>)}
+                {agentOptions.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
               </select>
             </label>
             <label className="toolbar-field">
