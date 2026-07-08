@@ -22,3 +22,11 @@ node_modules/
 
 *.txt
 backend.db
+backend/backend.db
+
+# Local agent skills and temporary files
+.agents/
+marketing/
+mygh
+docs/marketing-plan.md
+tests/test_marketing_workspace.py
