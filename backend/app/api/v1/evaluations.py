@@ -156,6 +156,11 @@ def run_conversation_evaluation(
         provider_model=run.provider_model,
         status=run.status,
         error_message=run.error_message,
+        qa_verdict=run.qa_verdict,
+        qa_summary=run.qa_summary,
+        failure_reason=run.failure_reason,
+        recommended_next_step=run.recommended_next_step,
+        supporting_evidence=run.supporting_evidence,
         created_at=run.created_at,
         updated_at=run.updated_at,
         metrics=[],
@@ -189,6 +194,8 @@ def get_latest_conversation_evaluation(
     ).all()
 
     # Keep the previous scored metrics visible while a newer run is queued/running/failed.
+    summary_source = run
+
     if not metrics and run.status in {"queued", "running", "failed"}:
         previous_scored_run = db.scalar(
             select(ConversationEvaluationRun)
@@ -200,6 +207,7 @@ def get_latest_conversation_evaluation(
             .order_by(ConversationEvaluationRun.created_at.desc())
         )
         if previous_scored_run:
+            summary_source = previous_scored_run
             metrics = db.scalars(
                 select(ConversationMetricScore)
                 .where(ConversationMetricScore.evaluation_run_id == previous_scored_run.id)
@@ -213,6 +221,11 @@ def get_latest_conversation_evaluation(
         provider_model=run.provider_model,
         status=run.status,
         error_message=run.error_message,
+        qa_verdict=summary_source.qa_verdict,
+        qa_summary=summary_source.qa_summary,
+        failure_reason=summary_source.failure_reason,
+        recommended_next_step=summary_source.recommended_next_step,
+        supporting_evidence=summary_source.supporting_evidence,
         created_at=run.created_at,
         updated_at=run.updated_at,
         metrics=[

@@ -55,6 +55,11 @@ class ConversationEvaluationRunResponse(BaseModel):
     provider_model: str
     status: str
     error_message: str | None
+    qa_verdict: str | None = None
+    qa_summary: str | None = None
+    failure_reason: str | None = None
+    recommended_next_step: str | None = None
+    supporting_evidence: str | None = None
     created_at: datetime
     updated_at: datetime
     metrics: list[ConversationMetricScoreResponse]

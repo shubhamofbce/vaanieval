@@ -13,6 +13,11 @@ import {
   listEvalProviders,
   runConversationEvaluation,
 } from '../api/endpoints'
+import {
+  buildQaSummary,
+  parseEvidence,
+  QA_VERDICT_LABELS,
+} from '../lib/qa'
 import type {
   AudioAssetResponse,
   ConversationDetailResponse,
@@ -144,6 +149,11 @@ export function ConversationDetailPage() {
     return {
       ...incoming,
       metrics: previous.metrics,
+      qa_verdict: incoming.qa_verdict ?? previous.qa_verdict,
+      qa_summary: incoming.qa_summary ?? previous.qa_summary,
+      failure_reason: incoming.failure_reason ?? previous.failure_reason,
+      recommended_next_step: incoming.recommended_next_step ?? previous.recommended_next_step,
+      supporting_evidence: incoming.supporting_evidence ?? previous.supporting_evidence,
     }
   }
 
@@ -490,15 +500,16 @@ export function ConversationDetailPage() {
     })
   }, [evaluationRun])
 
-  const evaluationSummaryScore = useMemo(() => {
-    const scoredMetrics = evaluationMetrics.filter((metric) => metric.score != null)
-    if (scoredMetrics.length === 0) {
-      return null
-    }
-
-    const total = scoredMetrics.reduce((sum, metric) => sum + (metric.score ?? 0), 0)
-    return Math.round(total / scoredMetrics.length)
-  }, [evaluationMetrics])
+  const qaSummary = useMemo(
+    () => buildQaSummary(evaluationRun, insights?.warnings.length ?? 0),
+    [evaluationRun, insights?.warnings.length],
+  )
+  const evaluationSummaryScore = qaSummary.overallScore
+  const lowestMetric = qaSummary.lowestMetric
+  const supportingEvidence = useMemo(
+    () => parseEvidence(lowestMetric?.evidence_json ?? null, lowestMetric?.rationale ?? null),
+    [lowestMetric],
+  )
 
   const refreshLatestEvaluation = async () => {
     if (!conversationId) {
@@ -616,6 +627,61 @@ export function ConversationDetailPage() {
                 ) : null}
 
                 {evaluationRun?.error_message ? <p className="error">{evaluationRun.error_message}</p> : null}
+
+                <section className="qa-diagnosis-grid detail-qa-diagnosis-grid" aria-label="QA diagnosis">
+                  <article className={`qa-diagnosis-card qa-verdict-card qa-verdict-${qaSummary.verdict}`}>
+                    <small>QA verdict</small>
+                    <h3>{QA_VERDICT_LABELS[qaSummary.verdict]}</h3>
+                    <p>{qaSummary.summary}</p>
+                  </article>
+                  <article className="qa-diagnosis-card">
+                    <small>Why this verdict</small>
+                    <h3>
+                      {lowestMetric
+                        ? `${METRIC_LABELS[lowestMetric.metric_key] ?? lowestMetric.metric_key} · ${lowestMetric.score_value}/100`
+                        : 'No evaluated metric yet'}
+                    </h3>
+                    <p>{qaSummary.failureReason}</p>
+                  </article>
+                  <article className="qa-diagnosis-card qa-next-step-card">
+                    <small>Recommended next step</small>
+                    <h3>Next action</h3>
+                    <p>{qaSummary.recommendedAction}</p>
+                  </article>
+                </section>
+
+                {qaSummary.supportingEvidence || supportingEvidence.length > 0 ? (
+                  <section className="qa-evidence-panel detail-qa-evidence-panel">
+                    <div>
+                      <small>Supporting evidence</small>
+                      <h3>What the evaluator saw</h3>
+                    </div>
+                    <div className="qa-evidence-list">
+                      {qaSummary.supportingEvidence ? (
+                        <div className="qa-evidence-quote is-static">
+                          <span>“{qaSummary.supportingEvidence}”</span>
+                          <small>Evaluator summary</small>
+                        </div>
+                      ) : null}
+                      {supportingEvidence.map((item, index) => (
+                        <button
+                          key={`${item.text}-${index}`}
+                          type="button"
+                          className="qa-evidence-quote"
+                          onClick={() => {
+                            if (item.timestampMs != null) void seekToSecond(item.timestampMs / 1000)
+                          }}
+                          title={item.timestampMs != null || item.turnOrder != null ? 'Open this moment in the player' : 'Evaluator rationale'}
+                        >
+                          <span>“{item.text}”</span>
+                          <small>
+                            {[item.role, item.turnOrder != null ? `Turn ${item.turnOrder}` : null].filter(Boolean).join(' · ') || 'Evaluator rationale'}
+                          </small>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
 
                 <table className="evaluation-table detail-evaluation-table">
                   <thead>

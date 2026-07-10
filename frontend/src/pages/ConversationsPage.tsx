@@ -7,7 +7,9 @@ import {
   getConversation,
   getConversationInsights,
   getLatestConversationEvaluation,
+  listEvalProviders,
   listConversations,
+  runConversationEvaluation,
 } from '../api/endpoints'
 import { PageHeader } from '../components/PageHeader'
 import {
@@ -154,6 +156,8 @@ export function ConversationsPage() {
   const [insights, setInsights] = useState<ConversationInsightResponse | null>(null)
   const [insightsError, setInsightsError] = useState('')
   const [evaluationRun, setEvaluationRun] = useState<ConversationEvaluationRunResponse | null>(null)
+  const [listEvaluationLoading, setListEvaluationLoading] = useState<Record<string, boolean>>({})
+  const [evaluationProviders, setEvaluationProviders] = useState<Array<{ provider_name: string; model_name: string }>>([])
 
   const mergeEvaluationForDisplay = (
     previous: ConversationEvaluationRunResponse | null,
@@ -174,6 +178,11 @@ export function ConversationsPage() {
     return {
       ...incoming,
       metrics: previous.metrics,
+      qa_verdict: incoming.qa_verdict ?? previous.qa_verdict,
+      qa_summary: incoming.qa_summary ?? previous.qa_summary,
+      failure_reason: incoming.failure_reason ?? previous.failure_reason,
+      recommended_next_step: incoming.recommended_next_step ?? previous.recommended_next_step,
+      supporting_evidence: incoming.supporting_evidence ?? previous.supporting_evidence,
     }
   }
   const [insightsLoading, setInsightsLoading] = useState(false)
@@ -241,6 +250,26 @@ export function ConversationsPage() {
       cancelled = true
     }
   }, [preselectedAgentId, agentFilter, languageFilter, providerFilter, debouncedQuery, scoreFilter, qaInboxFilter, dateFrom, dateTo, currentPage])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadProviders = async () => {
+      const providers = await listEvalProviders().catch(() => [])
+      if (!cancelled) {
+        setEvaluationProviders(providers.map((provider) => ({
+          provider_name: provider.provider_name,
+          model_name: provider.model_name,
+        })))
+      }
+    }
+
+    void loadProviders()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!selectedId || !evaluationRun || !['queued', 'running'].includes(evaluationRun.status)) {
@@ -618,6 +647,56 @@ export function ConversationsPage() {
     }
   }, [currentPage, totalPages])
 
+  const rerunEvaluation = async (conversationId: string) => {
+    const provider = evaluationProviders.find((item) => item.provider_name === 'openai') ?? evaluationProviders[0]
+    setError('')
+    setListEvaluationLoading((current) => ({ ...current, [conversationId]: true }))
+    if (conversationId === selectedId) {
+      setEvaluationRun((current) => current ? { ...current, status: 'queued' } : current)
+    }
+
+    const queued = await runConversationEvaluation(
+      conversationId,
+      provider?.provider_name ?? 'openai',
+      provider?.model_name,
+    ).catch((err: unknown) => {
+      setError(err instanceof Error ? err.message : 'Failed to re-run evaluation')
+      return null
+    })
+
+    if (queued) {
+      if (conversationId === selectedId) {
+        setEvaluationRun((current) => mergeEvaluationForDisplay(current, queued))
+      }
+
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 2500))
+        const latest = await getLatestConversationEvaluation(conversationId).catch(() => null)
+        if (!latest) {
+          continue
+        }
+        if (conversationId === selectedId) {
+          setEvaluationRun((current) => mergeEvaluationForDisplay(current, latest))
+        }
+        if (!['queued', 'running'].includes(latest.status)) {
+          const summary = buildQaSummary(latest, conversationId === selectedId ? insights?.warnings.length ?? 0 : 0)
+          setRows((current) => current.map((row) => (
+            row.id === conversationId
+              ? {
+                  ...row,
+                  overall_score: summary.overallScore,
+                  qa_verdict: summary.verdict,
+                }
+              : row
+          )))
+          break
+        }
+      }
+    }
+
+    setListEvaluationLoading((current) => ({ ...current, [conversationId]: false }))
+  }
+
   useEffect(() => {
     setDetailTab('score')
   }, [selectedId])
@@ -793,36 +872,53 @@ export function ConversationsPage() {
             <ul className="conversations-list" role="listbox" aria-label="Conversations">
               {rows.map((row) => {
                 const selected = row.id === selectedId
+                const isEvalLoading = listEvaluationLoading[row.id] ?? false
                 const scoreToneClass = getScoreTone(row.overall_score ?? null)
                 const verdict = (row.qa_verdict ?? 'pending') as keyof typeof QA_VERDICT_LABELS
                 return (
                   <li key={row.id}>
-                    <button
-                      type="button"
-                      className={`conversation-card ${selected ? 'active' : ''}`}
-                      onClick={() => setSelectedId(row.id)}
-                    >
-                      <span className="conversation-card-title-row">
-                        <span className="conversation-id">{getConversationDisplayName(row)}</span>
-                        <span className="conversation-provider-badge">{formatProviderName(row.provider_name)}</span>
-                      </span>
-                      <span className="conversation-subtitle">Agent: {pickAgentDisplayName(row.provider_agent_name)}</span>
-                      <span className="conversation-meta">
-                        <FontAwesomeIcon icon="clock" /> {formatConversationDate(getConversationDisplayDate(row))}
-                      </span>
-                      <span className="conversation-eval-row">
-                        <span className={`conversation-score-badge ${scoreToneClass}`}>
-                          {row.overall_score == null ? (
-                            '--/100'
-                          ) : (
-                            `${Math.round(row.overall_score)}/100`
-                          )}
+                    <div className={`conversation-card ${selected ? 'active' : ''}`}>
+                      <button
+                        type="button"
+                        className="conversation-card-select"
+                        onClick={() => setSelectedId(row.id)}
+                      >
+                        <span className="conversation-card-title-row">
+                          <span className="conversation-id">{getConversationDisplayName(row)}</span>
+                          <span className="conversation-provider-badge">{formatProviderName(row.provider_name)}</span>
                         </span>
-                        <span className={`eval-status-pill qa-verdict-${verdict}`}>
-                          {QA_VERDICT_LABELS[verdict] ?? verdict}
+                        <span className="conversation-subtitle">Agent: {pickAgentDisplayName(row.provider_agent_name)}</span>
+                        <span className="conversation-meta">
+                          <FontAwesomeIcon icon="clock" /> {formatConversationDate(getConversationDisplayDate(row))}
                         </span>
-                      </span>
-                    </button>
+                        <span className="conversation-eval-row">
+                          <span className={`conversation-score-badge ${scoreToneClass} ${isEvalLoading ? 'is-loading' : ''}`}>
+                            {isEvalLoading ? (
+                              <>
+                                <FontAwesomeIcon icon="circle-notch" spin /> Fetching
+                              </>
+                            ) : row.overall_score == null ? (
+                              '--/100'
+                            ) : (
+                              `${Math.round(row.overall_score)}/100`
+                            )}
+                          </span>
+                          <span className={`eval-status-pill qa-verdict-${verdict}`}>
+                            {isEvalLoading ? <FontAwesomeIcon icon="circle-notch" spin /> : null}
+                            {QA_VERDICT_LABELS[verdict] ?? verdict}
+                          </span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="conversation-rerun-button secondary"
+                        disabled={isEvalLoading}
+                        onClick={() => void rerunEvaluation(row.id)}
+                      >
+                        <FontAwesomeIcon icon="arrow-rotate-right" />
+                        <span>Re-run evaluation</span>
+                      </button>
+                    </div>
                   </li>
                 )
               })}
@@ -916,22 +1012,16 @@ export function ConversationsPage() {
                       <article className={`qa-diagnosis-card qa-verdict-card qa-verdict-${selectedQaSummary.verdict}`}>
                         <small>QA verdict</small>
                         <h3>{QA_VERDICT_LABELS[selectedQaSummary.verdict]}</h3>
-                        <p>
-                          {selectedQaSummary.verdict === 'passed'
-                            ? 'This call clears the demo quality gate.'
-                            : selectedQaSummary.verdict === 'pending'
-                              ? 'Run or finish the evaluation to classify this call.'
-                              : 'Review the weakest behavior before changing or shipping this agent.'}
-                        </p>
+                        <p>{selectedQaSummary.summary}</p>
                       </article>
                       <article className="qa-diagnosis-card">
-                        <small>Why it failed</small>
+                        <small>Why this verdict</small>
                         <h3>
                           {selectedLowestMetric
                             ? `${METRIC_LABELS[selectedLowestMetric.metric_key] ?? selectedLowestMetric.metric_key} · ${selectedLowestMetric.score_value}/100`
                             : 'No evaluated metric yet'}
                         </h3>
-                        <p>{selectedLowestMetric?.rationale ?? 'This conversation does not have evaluator rationale yet.'}</p>
+                        <p>{selectedQaSummary.failureReason}</p>
                       </article>
                       <article className="qa-diagnosis-card qa-next-step-card">
                         <small>Recommended next step</small>
@@ -940,13 +1030,24 @@ export function ConversationsPage() {
                       </article>
                     </section>
 
-                    {selectedEvidence.length > 0 ? (
+                    {selectedQaSummary.supportingEvidence || selectedEvidence.length > 0 ? (
                       <section className="qa-evidence-panel">
                         <div>
                           <small>Supporting evidence</small>
                           <h3>What the evaluator saw</h3>
                         </div>
                         <div className="qa-evidence-list">
+                          {selectedQaSummary.supportingEvidence ? (
+                            <button
+                              type="button"
+                              className="qa-evidence-quote"
+                              onClick={() => setDetailTab('transcript')}
+                              title="Open the transcript"
+                            >
+                              <span>“{selectedQaSummary.supportingEvidence}”</span>
+                              <small>Evaluator summary</small>
+                            </button>
+                          ) : null}
                           {selectedEvidence.map((item, index) => (
                             <button
                               key={`${item.text}-${index}`}

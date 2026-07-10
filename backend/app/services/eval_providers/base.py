@@ -36,6 +36,15 @@ class EvaluationProvider(ABC):
         """
         pass
 
+    def summarize_evaluation(
+        self,
+        transcript: str,
+        scores: list[dict],
+        context: dict | None = None,
+    ) -> dict:
+        """Generate a concise QA verdict and next step for an evaluated conversation."""
+        return {}
+
     def get_provider_name(self) -> str:
         """Return the provider name."""
         raise NotImplementedError

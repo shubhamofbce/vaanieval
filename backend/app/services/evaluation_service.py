@@ -26,6 +26,8 @@ METRIC_KEYS = {
     "ai_detectability_score",
 }
 
+QA_VERDICTS = {"needs_attention", "review", "passed", "pending"}
+
 
 def enqueue_evaluation_job(
     db: Session,
@@ -145,20 +147,32 @@ def run_evaluation_job(db: Session, payload: dict) -> None:
         model_name=run.provider_model,  # Use the model specified in this run
     )
 
+    context = {
+        "language": conversation.language,
+        "outcome": conversation.outcome,
+        "provider_agent_id": conversation.provider_agent_id,
+    }
+
     try:
         scores = provider.evaluate_conversation(
             transcript=transcript,
-            context={
-                "language": conversation.language,
-                "outcome": conversation.outcome,
-                "provider_agent_id": conversation.provider_agent_id,
-            },
+            context=context,
         )
     except Exception as exc:  # noqa: BLE001
         run.status = "failed"
         run.error_message = str(exc)
         db.flush()
         return
+
+    summary: dict = {}
+    try:
+        summary = provider.summarize_evaluation(
+            transcript=transcript,
+            scores=scores,
+            context=context,
+        )
+    except Exception:
+        summary = {}
 
     # Delete previous scores for this run
     db.execute(
@@ -200,6 +214,12 @@ def run_evaluation_job(db: Session, payload: dict) -> None:
             )
         )
 
+    verdict = summary.get("qa_verdict")
+    run.qa_verdict = verdict if verdict in QA_VERDICTS else None
+    run.qa_summary = _trim_summary_value(summary.get("qa_summary"), 1000)
+    run.failure_reason = _trim_summary_value(summary.get("failure_reason"), 2000)
+    run.recommended_next_step = _trim_summary_value(summary.get("recommended_next_step"), 2000)
+    run.supporting_evidence = _trim_summary_value(summary.get("supporting_evidence"), 2000)
     run.status = "completed"
     run.error_message = None
     db.flush()
@@ -207,6 +227,13 @@ def run_evaluation_job(db: Session, payload: dict) -> None:
 
 def _get_provider(provider_name: str, api_key: str, model_name: str):
     return create_provider(provider_name=provider_name, api_key=api_key, model_name=model_name)
+
+
+def _trim_summary_value(value: object, max_length: int) -> str | None:
+    if not isinstance(value, str):
+        return None
+    trimmed = value.strip()
+    return trimmed[:max_length] or None
 
 
 # Public alias for API usage

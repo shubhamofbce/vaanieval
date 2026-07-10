@@ -112,7 +112,11 @@ def _load_evaluation_summaries(
         overall_score = int(mean(finite_scores) + 0.5) if finite_scores else None
         lowest_score = min(finite_scores) if finite_scores else None
         eval_status = latest_run.status if latest_run else None
-        qa_verdict = _compute_qa_verdict(overall_score, lowest_score, eval_status)
+        qa_verdict = (
+            completed_run.qa_verdict
+            if completed_run and completed_run.qa_verdict
+            else _compute_qa_verdict(overall_score, lowest_score, eval_status)
+        )
 
         result[cid] = {
             "overall_score": overall_score,

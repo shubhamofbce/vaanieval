@@ -41,6 +41,11 @@ class ConversationEvaluationRun(Base):
     provider_model: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default="queued", index=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    qa_verdict: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    qa_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommended_next_step: Mapped[str | None] = mapped_column(Text, nullable=True)
+    supporting_evidence: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

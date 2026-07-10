@@ -150,6 +150,11 @@ export type ConversationEvaluationRunResponse = {
   provider_model: string
   status: string
   error_message: string | null
+  qa_verdict: string | null
+  qa_summary: string | null
+  failure_reason: string | null
+  recommended_next_step: string | null
+  supporting_evidence: string | null
   created_at: string
   updated_at: string
   metrics: ConversationMetricScoreResponse[]

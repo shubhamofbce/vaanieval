@@ -29,6 +29,25 @@ class LangChainEvaluationProvider(EvaluationProvider):
         text = self._extract_text(response.content)
         return self._parse_scores(text)
 
+    def summarize_evaluation(
+        self,
+        transcript: str,
+        scores: list[dict],
+        context: dict | None = None,
+    ) -> dict:
+        if context is None:
+            context = {}
+
+        llm = self.create_chat_model()
+        response = llm.invoke(
+            [
+                SystemMessage(content=self._build_summary_instructions()),
+                HumanMessage(content=self._build_summary_prompt(transcript, scores, context)),
+            ]
+        )
+        text = self._extract_text(response.content)
+        return self._parse_summary(text)
+
     def _build_instructions(self) -> str:
         return (
             "You are an expert evaluator of voice agent conversations. "
@@ -66,6 +85,41 @@ class LangChainEvaluationProvider(EvaluationProvider):
         )
         return "\n".join(prompt)
 
+    def _build_summary_instructions(self) -> str:
+        return (
+            "You are a senior QA lead reviewing voice-agent evaluation results. "
+            "Return strict JSON only. Do not invent facts beyond the transcript and scores. "
+            "Make the verdict actionable, specific, and suitable for a product UI."
+        )
+
+    def _build_summary_prompt(self, transcript: str, scores: list[dict], context: dict) -> str:
+        prompt = ["Conversation context:"]
+        if context.get("language"):
+            prompt.append(f"Language: {context['language']}")
+        if context.get("outcome"):
+            prompt.append(f"Outcome: {context['outcome']}")
+        if context.get("provider_agent_id"):
+            prompt.append(f"Agent: {context['provider_agent_id']}")
+
+        prompt.extend(
+            [
+                "",
+                "Metric scores JSON:",
+                json.dumps(scores, ensure_ascii=False),
+                "",
+                "Transcript:",
+                transcript,
+                "",
+                "Return one JSON object with these keys:",
+                "qa_verdict: one of needs_attention, review, passed, pending",
+                "qa_summary: one short sentence explaining the overall QA verdict",
+                "failure_reason: one sentence naming the most important failure or risk; if passed, name the strongest observed behavior",
+                "recommended_next_step: one concrete next action for the agent owner",
+                "supporting_evidence: one short transcript quote or evaluator-observed evidence string",
+            ]
+        )
+        return "\n".join(prompt)
+
     def _extract_text(self, content) -> str:
         if isinstance(content, str):
             return content
@@ -99,3 +153,18 @@ class LangChainEvaluationProvider(EvaluationProvider):
             raise ValueError("Evaluator response must be a JSON list")
 
         return [item for item in parsed if isinstance(item, dict)]
+
+    def _parse_summary(self, text: str) -> dict:
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            start = text.find("{")
+            end = text.rfind("}")
+            if start == -1 or end == -1 or end <= start:
+                raise ValueError("Could not parse QA summary JSON from evaluator response")
+            parsed = json.loads(text[start : end + 1])
+
+        if not isinstance(parsed, dict):
+            raise ValueError("Evaluator QA summary response must be a JSON object")
+
+        return parsed

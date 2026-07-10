@@ -14,7 +14,10 @@ export type ConversationQaSummary = {
   lowestMetric: ConversationMetricScoreResponse | null
   verdict: QaVerdict
   warningCount: number
+  summary: string
+  failureReason: string
   recommendedAction: string
+  supportingEvidence: string | null
 }
 
 export const QA_PASS_OVERALL = 80
@@ -34,6 +37,10 @@ export const QA_VERDICT_LABELS: Record<QaVerdict, string> = {
   review: 'Review',
   passed: 'Passed',
   pending: 'Pending evaluation',
+}
+
+function isQaVerdict(value: unknown): value is QaVerdict {
+  return value === 'needs_attention' || value === 'review' || value === 'passed' || value === 'pending'
 }
 
 export function buildQaSummary(
@@ -65,14 +72,27 @@ export function buildQaSummary(
     }
   }
 
+  const finalVerdict = isQaVerdict(run?.qa_verdict) ? run.qa_verdict : verdict
+
   return {
     overallScore,
     lowestMetric,
-    verdict,
+    verdict: finalVerdict,
     warningCount,
-    recommendedAction: lowestMetric
+    summary: run?.qa_summary?.trim()
+      || (finalVerdict === 'passed'
+        ? 'This call clears the quality gate.'
+        : finalVerdict === 'pending'
+          ? 'Run or finish the evaluation to classify this call.'
+          : 'Review the weakest behavior before changing or shipping this agent.'),
+    failureReason: run?.failure_reason?.trim()
+      || (lowestMetric
+        ? `${lowestMetric.rationale ?? 'The evaluator flagged this metric as the weakest behavior.'}`
+        : 'This conversation does not have evaluator rationale yet.'),
+    recommendedAction: run?.recommended_next_step?.trim() || (lowestMetric
       ? RECOMMENDATIONS[lowestMetric.metric_key] ?? 'Review the evaluator rationale and supporting transcript evidence before changing the agent.'
-      : 'Run the evaluation to get a quality verdict and prioritized recommendation.',
+      : 'Run the evaluation to get a quality verdict and prioritized recommendation.'),
+    supportingEvidence: run?.supporting_evidence?.trim() || null,
   }
 }
 

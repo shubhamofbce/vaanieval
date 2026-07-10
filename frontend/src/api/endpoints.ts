@@ -6,7 +6,6 @@ import type {
   ConversationEvaluationRunResponse,
   ConversationDetailResponse,
   ConversationInsightResponse,
-  ConversationListItem,
   ConversationListResponse,
   EvalProviderCatalogResponse,
   EvalProviderResponse,
