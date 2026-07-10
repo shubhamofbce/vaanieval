@@ -23,6 +23,7 @@ import type {
   ConversationDetailResponse,
   ConversationInsightResponse,
   ConversationListItem,
+  ConversationListResponse,
 } from '../api/types'
 
 function formatProviderName(providerName: string) {
@@ -132,6 +133,21 @@ function getScoreTone(score: number | null) {
   return 'score-risk'
 }
 
+function normalizeConversationListItems(value: unknown): ConversationListItem[] {
+  return Array.isArray(value) ? value : []
+}
+
+function normalizeConversationListResponse(value: unknown): { items: ConversationListItem[]; total: number } {
+  if (!value || typeof value !== 'object') {
+    return { items: [], total: 0 }
+  }
+
+  const response = value as Partial<ConversationListResponse> & { items?: unknown }
+  const items = normalizeConversationListItems(response.items)
+  const total = typeof response.total === 'number' && Number.isFinite(response.total) ? response.total : items.length
+  return { items, total }
+}
+
 export function ConversationsPage() {
   const [searchParams] = useSearchParams()
   const preselectedAgentId = searchParams.get('agentId') ?? ''
@@ -228,9 +244,10 @@ export function ConversationsPage() {
 
         const data = await listConversations(options as any)
         if (!cancelled) {
-          setRows(data.items)
-          setTotal(data.total)
-          setSelectedId((current) => data.items.some(d => d.id === current) ? current : (data.items[0]?.id || ''))
+          const { items, total: nextTotal } = normalizeConversationListResponse(data)
+          setRows(items)
+          setTotal(nextTotal)
+          setSelectedId((current) => items.some((d) => d.id === current) ? current : (items[0]?.id || ''))
           setError('')
         }
       } catch (err) {
@@ -296,13 +313,15 @@ export function ConversationsPage() {
   }, [selectedId, evaluationRun])
 
   const providerOptions = useMemo(() => {
-    return Array.from(new Set(rows.map((row) => row.provider_name))).sort((left, right) =>
+    const safeRows = normalizeConversationListItems(rows)
+    return Array.from(new Set(safeRows.map((row) => row.provider_name))).sort((left, right) =>
       formatProviderName(left).localeCompare(formatProviderName(right)),
     )
   }, [rows])
 
   const agentOptions = useMemo(() => {
-    return Array.from(new Set(rows.map((row) => row.provider_agent_id).filter(Boolean) as string[])).sort()
+    const safeRows = normalizeConversationListItems(rows)
+    return Array.from(new Set(safeRows.map((row) => row.provider_agent_id).filter(Boolean) as string[])).sort()
   }, [rows])
 
   const activeFilterCount = [
@@ -680,7 +699,7 @@ export function ConversationsPage() {
         }
         if (!['queued', 'running'].includes(latest.status)) {
           const summary = buildQaSummary(latest, conversationId === selectedId ? insights?.warnings.length ?? 0 : 0)
-          setRows((current) => current.map((row) => (
+          setRows((current) => normalizeConversationListItems(current).map((row) => (
             row.id === conversationId
               ? {
                   ...row,
