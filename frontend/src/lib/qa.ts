@@ -24,6 +24,7 @@ export const QA_PASS_OVERALL = 80
 export const QA_PASS_METRIC_FLOOR = 60
 export const QA_ATTENTION_OVERALL = 60
 export const QA_ATTENTION_METRIC_FLOOR = 50
+export const AI_DETECTABILITY_METRIC_KEY = 'ai_detectability_score'
 
 const RECOMMENDATIONS: Record<string, string> = {
   task_completion_score: 'Inspect the goal-completion step and the agent’s final response. Confirm that the requested outcome actually happened before the call ended.',
@@ -43,17 +44,56 @@ function isQaVerdict(value: unknown): value is QaVerdict {
   return value === 'needs_attention' || value === 'review' || value === 'passed' || value === 'pending'
 }
 
+export function getScoreTone(score: number | null, strongThreshold = 80) {
+  if (score == null) {
+    return 'score-neutral'
+  }
+  if (score >= strongThreshold) {
+    return 'score-strong'
+  }
+  if (score >= 60) {
+    return 'score-warning'
+  }
+  return 'score-risk'
+}
+
+export function getMetricScoreTone(metricKey: string, score: number | null, strongThreshold = 80) {
+  if (score == null) {
+    return 'score-neutral'
+  }
+  if (metricKey === AI_DETECTABILITY_METRIC_KEY) {
+    if (score < 60) {
+      return 'score-strong'
+    }
+    if (score <= 70) {
+      return 'score-warning'
+    }
+    return 'score-risk'
+  }
+  return getScoreTone(score, strongThreshold)
+}
+
+function metricQualityScore(metric: ConversationMetricScoreResponse) {
+  if (metric.metric_key === AI_DETECTABILITY_METRIC_KEY) {
+    if (metric.score_value < 60) return 100
+    if (metric.score_value <= 70) return 70
+    return Math.max(0, 100 - metric.score_value)
+  }
+  return metric.score_value
+}
+
 export function buildQaSummary(
   run: ConversationEvaluationRunResponse | null | undefined,
   warningCount = 0,
 ): ConversationQaSummary {
   const metrics = run?.metrics.filter((metric) => Number.isFinite(metric.score_value)) ?? []
   const lowestMetric = metrics.length > 0
-    ? metrics.reduce((lowest, metric) => metric.score_value < lowest.score_value ? metric : lowest)
+    ? metrics.reduce((lowest, metric) => metricQualityScore(metric) < metricQualityScore(lowest) ? metric : lowest)
     : null
   const overallScore = metrics.length > 0
-    ? Math.round(metrics.reduce((sum, metric) => sum + metric.score_value, 0) / metrics.length)
+    ? Math.round(metrics.reduce((sum, metric) => sum + metricQualityScore(metric), 0) / metrics.length)
     : null
+  const lowestQualityScore = lowestMetric ? metricQualityScore(lowestMetric) : null
 
   let verdict: QaVerdict = 'pending'
   if (run?.status === 'failed') {
@@ -61,18 +101,18 @@ export function buildQaSummary(
   } else if (overallScore != null) {
     if (
       overallScore < QA_ATTENTION_OVERALL
-      || (lowestMetric?.score_value ?? 100) < QA_ATTENTION_METRIC_FLOOR
+      || (lowestQualityScore ?? 100) < QA_ATTENTION_METRIC_FLOOR
       || warningCount > 0
     ) {
       verdict = 'needs_attention'
-    } else if (overallScore >= QA_PASS_OVERALL && (lowestMetric?.score_value ?? 0) >= QA_PASS_METRIC_FLOOR) {
+    } else if (overallScore >= QA_PASS_OVERALL && (lowestQualityScore ?? 0) >= QA_PASS_METRIC_FLOOR) {
       verdict = 'passed'
     } else {
       verdict = 'review'
     }
   }
 
-  const finalVerdict = isQaVerdict(run?.qa_verdict) ? run.qa_verdict : verdict
+  const finalVerdict = metrics.length === 0 && isQaVerdict(run?.qa_verdict) ? run.qa_verdict : verdict
 
   return {
     overallScore,

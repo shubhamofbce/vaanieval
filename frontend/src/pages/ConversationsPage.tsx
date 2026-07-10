@@ -14,6 +14,8 @@ import {
 import { PageHeader } from '../components/PageHeader'
 import {
   buildQaSummary,
+  getMetricScoreTone,
+  getScoreTone,
   parseEvidence,
   QA_VERDICT_LABELS,
 } from '../lib/qa'
@@ -118,19 +120,6 @@ function normalizeTimelineOffsets<T extends { started_ms: number | null; ended_m
   }
 
   return { offsetMs: 0 }
-}
-
-function getScoreTone(score: number | null) {
-  if (score == null) {
-    return 'score-neutral'
-  }
-  if (score >= 80) {
-    return 'score-strong'
-  }
-  if (score >= 60) {
-    return 'score-warning'
-  }
-  return 'score-risk'
 }
 
 function normalizeConversationListItems(value: unknown): ConversationListItem[] {
@@ -1109,7 +1098,7 @@ export function ConversationsPage() {
                           <small>{metric.label}</small>
                           <strong>{metric.score == null ? '--/100' : `${metric.score}/100`}</strong>
                           <div className="metric-progress-track">
-                            <span className={`metric-progress-bar ${getScoreTone(metric.score)}`} style={{ width: `${metric.score ?? 0}%` }} />
+                            <span className={`metric-progress-bar ${getMetricScoreTone(metric.key, metric.score)}`} style={{ width: `${metric.score ?? 0}%` }} />
                           </div>
                         </article>
                       ))}
@@ -1129,7 +1118,7 @@ export function ConversationsPage() {
                           <tr key={metric.key}>
                             <td>{metric.label}</td>
                             <td>
-                              <span className={`score-pill ${getScoreTone(metric.score)}`}>
+                              <span className={`score-pill ${getMetricScoreTone(metric.key, metric.score)}`}>
                                 {metric.score == null ? '-' : `${metric.score}/100`}
                               </span>
                             </td>

@@ -27,6 +27,7 @@ _QA_PASS_OVERALL = 80
 _QA_PASS_METRIC_FLOOR = 60
 _QA_ATTENTION_OVERALL = 60
 _QA_ATTENTION_METRIC_FLOOR = 50
+_AI_DETECTABILITY_METRIC_KEY = "ai_detectability_score"
 
 
 def _compute_qa_verdict(
@@ -57,6 +58,16 @@ def _compute_qa_verdict(
         return "passed"
 
     return "review"
+
+
+def _metric_quality_score(metric: ConversationMetricScore) -> int:
+    if metric.metric_key == _AI_DETECTABILITY_METRIC_KEY:
+        if metric.score_value < 60:
+            return 100
+        if metric.score_value <= 70:
+            return 70
+        return max(0, 100 - metric.score_value)
+    return metric.score_value
 
 
 def _load_evaluation_summaries(
@@ -107,16 +118,17 @@ def _load_evaluation_summaries(
         latest_run = latest_by_conversation.get(cid)
         completed_run = completed_by_conversation.get(cid)
         metrics = scores_by_run.get(completed_run.id, []) if completed_run else []
-        finite_scores = [m.score_value for m in metrics if m.score_value is not None]
+        finite_scores = [_metric_quality_score(m) for m in metrics if m.score_value is not None]
 
         overall_score = int(mean(finite_scores) + 0.5) if finite_scores else None
         lowest_score = min(finite_scores) if finite_scores else None
         eval_status = latest_run.status if latest_run else None
-        qa_verdict = (
-            completed_run.qa_verdict
-            if completed_run and completed_run.qa_verdict
-            else _compute_qa_verdict(overall_score, lowest_score, eval_status)
-        )
+        if finite_scores:
+            qa_verdict = _compute_qa_verdict(overall_score, lowest_score, eval_status)
+        elif completed_run and completed_run.qa_verdict:
+            qa_verdict = completed_run.qa_verdict
+        else:
+            qa_verdict = _compute_qa_verdict(overall_score, lowest_score, eval_status)
 
         result[cid] = {
             "overall_score": overall_score,

@@ -107,6 +107,9 @@ class LangChainEvaluationProvider(EvaluationProvider):
                 "Metric scores JSON:",
                 json.dumps(scores, ensure_ascii=False),
                 "",
+                "Interpret ai_detectability_score as a risk score where lower is better: "
+                "less than 60 is good, 60 through 70 needs review, and above 70 is high risk.",
+                "",
                 "Transcript:",
                 transcript,
                 "",

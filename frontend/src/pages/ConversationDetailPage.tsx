@@ -15,6 +15,8 @@ import {
 } from '../api/endpoints'
 import {
   buildQaSummary,
+  getMetricScoreTone,
+  getScoreTone,
   parseEvidence,
   QA_VERDICT_LABELS,
 } from '../lib/qa'
@@ -86,19 +88,6 @@ function formatCallDate(unixSeconds: number | null) {
     return 'Unknown'
   }
   return date.toLocaleString()
-}
-
-function getScoreTone(score: number | null) {
-  if (score == null) {
-    return 'score-neutral'
-  }
-  if (score >= 75) {
-    return 'score-strong'
-  }
-  if (score >= 60) {
-    return 'score-warning'
-  }
-  return 'score-risk'
 }
 
 export function ConversationDetailPage() {
@@ -594,12 +583,12 @@ export function ConversationDetailPage() {
               {evaluationMetrics.map((metric) => (
                 <article key={metric.key} className="detail-metric-card">
                   <small>{metric.label}</small>
-                  <span className={`score-pill ${getScoreTone(metric.score)} detail-metric-value`}>
+                  <span className={`score-pill ${getMetricScoreTone(metric.key, metric.score)} detail-metric-value`}>
                     {metric.score == null ? '-' : `${metric.score}/100`}
                   </span>
                   <div className="metric-progress-track">
                     <span
-                      className={`metric-progress-bar ${getScoreTone(metric.score)}`}
+                      className={`metric-progress-bar ${getMetricScoreTone(metric.key, metric.score)}`}
                       style={{ width: `${metric.score ?? 0}%` }}
                     />
                   </div>
@@ -696,7 +685,7 @@ export function ConversationDetailPage() {
                       <tr key={metric.key}>
                         <td>{metric.label}</td>
                         <td>
-                          <span className={`score-pill ${getScoreTone(metric.score)}`}>
+                          <span className={`score-pill ${getMetricScoreTone(metric.key, metric.score)}`}>
                             {metric.score == null ? '-' : `${metric.score}/100`}
                           </span>
                         </td>
