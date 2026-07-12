@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from app.providers.base import ProviderAdapter, ProviderAgentInfo, ProviderConversationDetail
@@ -37,12 +37,21 @@ class ElevenLabsProviderAdapter(ProviderAdapter):
         return self._client.get_conversation_detail(conversation_id)
 
     def normalize_conversation_detail(self, detail: dict[str, Any]) -> ProviderConversationDetail:
+        metadata = detail.get("metadata", {}) if isinstance(detail.get("metadata"), dict) else {}
+        started_at = _parse_unix_datetime(metadata.get("start_time_unix_secs")) or _parse_datetime(
+            detail.get("start_time") or detail.get("started_at") or detail.get("created_at")
+        )
+        ended_at = _parse_datetime(detail.get("end_time") or detail.get("ended_at"))
+        duration = metadata.get("call_duration_secs")
+        if ended_at is None and started_at and isinstance(duration, (int, float)):
+            ended_at = started_at + timedelta(seconds=duration)
+
         return ProviderConversationDetail(
             provider_agent_id=detail.get("agent_id") or detail.get("agent", {}).get("agent_id"),
             language=detail.get("language"),
             outcome=detail.get("outcome"),
-            started_at=_parse_datetime(detail.get("start_time")),
-            ended_at=_parse_datetime(detail.get("end_time")),
+            started_at=started_at,
+            ended_at=ended_at,
             turns=(detail.get("transcript") if isinstance(detail.get("transcript"), list) else []),
             audio_url=detail.get("audio_url"),
         )
@@ -141,3 +150,12 @@ def _parse_datetime(value: object) -> datetime | None:
     if parsed.tzinfo is None:
         return parsed.replace(tzinfo=timezone.utc)
     return parsed
+
+
+def _parse_unix_datetime(value: object) -> datetime | None:
+    if not isinstance(value, (int, float)):
+        return None
+    timestamp = float(value)
+    if timestamp > 1_000_000_000_000:
+        timestamp = timestamp / 1000
+    return datetime.fromtimestamp(timestamp, tz=timezone.utc)

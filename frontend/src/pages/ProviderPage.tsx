@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { StatusPill } from '../components/StatusPill'
+import { formatDateTime } from '../lib/format'
 import {
   connectEvalProvider,
   connectProvider,
@@ -26,6 +27,7 @@ export function ProviderPage() {
     localStorage.getItem(PROVIDER_NAME_STORAGE_KEY) ?? 'elevenlabs',
   )
   const [providerConnections, setProviderConnections] = useState<ProviderConnectionListItem[]>([])
+  const [showConnectForm, setShowConnectForm] = useState(false)
   const [result, setResult] = useState('')
   const [error, setError] = useState('')
   const [evalCatalog, setEvalCatalog] = useState<EvalProviderCatalogResponse[]>([])
@@ -190,6 +192,8 @@ export function ProviderPage() {
       const connections = await listProviderConnections()
       setProviderConnections(connections)
       setResult(`${res.provider_name} connected successfully.`)
+      setApiKey('')
+      setShowConnectForm(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect provider')
     }
@@ -316,9 +320,16 @@ export function ProviderPage() {
               </div>
             </div>
 
-            <button type="button" className="provider-primary-btn" onClick={() => setProviderName('elevenlabs')}>
+            <button
+              type="button"
+              className="provider-primary-btn"
+              onClick={() => {
+                setProviderName('elevenlabs')
+                setShowConnectForm((value) => !value)
+              }}
+            >
               <FontAwesomeIcon icon="link" />
-              <span>Connect Provider</span>
+              <span>{showConnectForm ? 'Hide' : 'Add provider'}</span>
             </button>
           </div>
 
@@ -343,7 +354,7 @@ export function ProviderPage() {
                       <FontAwesomeIcon icon="users" /> {agentCountByAccount[connection.id] ?? 0} agents imported
                     </span>
                     <span>
-                      <FontAwesomeIcon icon="clock" /> Added {new Date(connection.created_at).toLocaleString()}
+                      <FontAwesomeIcon icon="clock" /> Added {formatDateTime(connection.created_at)}
                     </span>
                   </div>
 
@@ -375,39 +386,43 @@ export function ProviderPage() {
           </div>
 
           <div className="provider-connect-new">
-            <h3>Connect New Provider</h3>
-            <p className="muted">Choose a voice platform to get started.</p>
+            {showConnectForm ? (
+              <>
+                <h3>Connect New Provider</h3>
+                <p className="muted">Choose a voice platform to get started.</p>
 
-            <div className="provider-choice-row">
-              <button type="button" className={providerName === 'vapi' ? 'provider-choice active' : 'provider-choice'} onClick={() => setProviderName('vapi')}>
-                <span>Vapi</span>
-              </button>
-              <button type="button" className={providerName === 'elevenlabs' ? 'provider-choice active' : 'provider-choice'} onClick={() => setProviderName('elevenlabs')}>
-                <span>ElevenLabs</span>
-              </button>
-            </div>
+                <div className="provider-choice-row">
+                  <button type="button" className={providerName === 'vapi' ? 'provider-choice active' : 'provider-choice'} onClick={() => setProviderName('vapi')}>
+                    <span>Vapi</span>
+                  </button>
+                  <button type="button" className={providerName === 'elevenlabs' ? 'provider-choice active' : 'provider-choice'} onClick={() => setProviderName('elevenlabs')}>
+                    <span>ElevenLabs</span>
+                  </button>
+                </div>
 
-            <form onSubmit={handleConnect} className="provider-inline-form">
-              <label htmlFor="apiKey">{providerName === 'vapi' ? 'Vapi' : 'ElevenLabs'} API key</label>
-              <input
-                id="apiKey"
-                type="password"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                required
-                placeholder={`Paste your ${providerName === 'vapi' ? 'Vapi' : 'ElevenLabs'} key`}
-              />
-              <div className="inline">
-                <button type="submit" className="provider-primary-btn">
-                  <FontAwesomeIcon icon="link" />
-                  <span>Connect</span>
-                </button>
-                <button type="button" className="secondary" onClick={handleTest} disabled={!selectedVoiceConnection}>
-                  <FontAwesomeIcon icon="shield" />
-                  <span>Test Connection</span>
-                </button>
-              </div>
-            </form>
+                <form onSubmit={handleConnect} className="provider-inline-form">
+                  <label htmlFor="apiKey">{providerName === 'vapi' ? 'Vapi' : 'ElevenLabs'} API key</label>
+                  <input
+                    id="apiKey"
+                    type="password"
+                    value={apiKey}
+                    onChange={(event) => setApiKey(event.target.value)}
+                    required
+                    placeholder={`Paste your ${providerName === 'vapi' ? 'Vapi' : 'ElevenLabs'} key`}
+                  />
+                  <div className="inline">
+                    <button type="submit" className="provider-primary-btn">
+                      <FontAwesomeIcon icon="link" />
+                      <span>Connect</span>
+                    </button>
+                    <button type="button" className="secondary" onClick={handleTest} disabled={!selectedVoiceConnection}>
+                      <FontAwesomeIcon icon="shield" />
+                      <span>Test Connection</span>
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : null}
           </div>
 
           {result && <p className="note">{result}</p>}
@@ -431,7 +446,11 @@ export function ProviderPage() {
           </div>
 
           <div className="provider-eval-card">
-            <h3>{configuredEvalProvider?.provider_name ?? 'OpenAI'}</h3>
+            <h3>
+              {evalCatalog.find((entry) => entry.provider_name === configuredEvalProvider?.provider_name)?.display_name
+                ?? configuredEvalProvider?.provider_name
+                ?? 'OpenAI'}
+            </h3>
             <div className="provider-eval-meta">
               <span>Status</span>
               <StatusPill

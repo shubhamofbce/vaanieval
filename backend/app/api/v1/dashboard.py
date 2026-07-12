@@ -29,7 +29,7 @@ _METRIC_LABELS: dict[str, str] = {
     'task_completion_score': 'Task completion',
     'intent_understanding_score': 'Intent understanding',
     'required_info_capture_score': 'Required info capture',
-    'ai_detectability_score': 'AI detectability',
+    'ai_detectability_score': 'Human-like delivery',
 }
 _METRIC_ORDER = list(_METRIC_LABELS.keys())
 _QA_PASS_OVERALL = 80
@@ -41,6 +41,16 @@ def _coalesce_timestamp(row: Conversation) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
+
+
+def _metric_quality_score(metric_key: str, score_value: float) -> float:
+    if metric_key == 'ai_detectability_score':
+        if score_value < 60:
+            return 100.0
+        if score_value <= 70:
+            return 70.0
+        return float(max(0.0, 100.0 - score_value))
+    return score_value
 
 
 def _is_qa_pass(metric_values: list[float]) -> bool:
@@ -165,7 +175,10 @@ def _build_records(
         metric_map = {metric.metric_key: metric for metric in metrics}
         provider_name = provider_name_by_account_id.get(row.provider_account_id, 'unknown')
         agent_name = provider_agent_name_by_key.get((row.provider_account_id, row.provider_agent_id or ''), 'Unassigned')
-        metric_values = [float(metric.score_value) for metric in metrics]
+        metric_values = [
+            _metric_quality_score(metric.metric_key, float(metric.score_value))
+            for metric in metrics
+        ]
 
         records.append(
             {
@@ -200,12 +213,21 @@ def _summarize_records(records: list[dict[str, object]]) -> dict[str, object]:
     conversations = len(records)
     successful_conversations = sum(1 for row in records if row['is_success'])
     evaluated_conversations = sum(1 for row in records if row['evaluated'])
+    needs_attention_conversations = sum(1 for row in records if row['evaluated'] and not row['is_success'])
     durations = [row['duration_seconds'] for row in records if row['duration_seconds'] is not None]
     overall_scores = [row['overall_score'] for row in records if row['overall_score'] is not None]
 
     metric_summaries: list[DashboardMetricSummary] = []
     for metric_key in _METRIC_ORDER:
-        metric_values = [float(row[metric_key]) for row in records if row.get(metric_key) is not None]
+        # Human-like delivery (ai_detectability_score) is a risk score where lower is
+        # better. Convert it to the same "higher is better" quality scale as every
+        # other metric so averages, trend colors, and the weakest-metric ranking stay
+        # consistent instead of misreporting a good score as the worst metric.
+        metric_values = [
+            _metric_quality_score(metric_key, float(row[metric_key]))
+            for row in records
+            if row.get(metric_key) is not None
+        ]
         confidence_values = [
             float(row['confidence_by_metric'][metric_key])
             for row in records
@@ -222,15 +244,24 @@ def _summarize_records(records: list[dict[str, object]]) -> dict[str, object]:
             )
         )
 
+    weakest_metric = min(
+        (metric for metric in metric_summaries if metric.average_score is not None),
+        key=lambda metric: metric.average_score or 0,
+        default=None,
+    )
+
     return {
         'conversations': conversations,
         'successful_conversations': successful_conversations,
         'evaluated_conversations': evaluated_conversations,
+        'needs_attention_conversations': needs_attention_conversations,
         'evaluation_coverage_rate': round(evaluated_conversations / conversations, 4) if conversations else None,
         'success_rate': round(successful_conversations / conversations, 4) if conversations else None,
         'average_overall_score': _safe_average([float(value) for value in overall_scores]),
         'average_call_duration_seconds': _safe_average([float(value) for value in durations]),
         'p95_call_duration_seconds': _p95([float(value) for value in durations]),
+        'weakest_metric_key': weakest_metric.metric_key if weakest_metric else None,
+        'weakest_metric_label': weakest_metric.label if weakest_metric else None,
         'metric_summaries': metric_summaries,
     }
 
@@ -369,11 +400,14 @@ def get_dashboard_overview(
             conversations=current_summary['conversations'],
             successful_conversations=current_summary['successful_conversations'],
             evaluated_conversations=current_summary['evaluated_conversations'],
+            needs_attention_conversations=current_summary['needs_attention_conversations'],
             evaluation_coverage_rate=current_summary['evaluation_coverage_rate'],
             success_rate=current_summary['success_rate'],
             average_overall_score=current_summary['average_overall_score'],
             average_call_duration_seconds=current_summary['average_call_duration_seconds'],
             p95_call_duration_seconds=current_summary['p95_call_duration_seconds'],
+            weakest_metric_key=current_summary['weakest_metric_key'],
+            weakest_metric_label=current_summary['weakest_metric_label'],
         ),
         comparison=comparison,
         metric_summaries=current_summary['metric_summaries'],

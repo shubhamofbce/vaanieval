@@ -12,13 +12,17 @@ import {
   runConversationEvaluation,
 } from '../api/endpoints'
 import { PageHeader } from '../components/PageHeader'
+import { Skeleton } from '../components/Skeleton'
 import {
   buildQaSummary,
+  getMetricDisplayLabel,
+  getMetricDisplayScore,
   getMetricScoreTone,
   getScoreTone,
   parseEvidence,
   QA_VERDICT_LABELS,
 } from '../lib/qa'
+import { formatDateTime, humanizeDiagnosticText, humanizeOutcome } from '../lib/format'
 import type {
   AudioAssetResponse,
   ConversationEvaluationRunResponse,
@@ -77,7 +81,7 @@ function formatConversationTitle(createdAt: string) {
   if (Number.isNaN(date.getTime())) {
     return 'Conversation'
   }
-  return `Conversation on ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  return `Conversation on ${formatDateTime(date)}`
 }
 
 function getConversationDisplayName(row: ConversationListItem) {
@@ -92,11 +96,7 @@ function formatConversationDate(value: string | null) {
   if (!value) {
     return 'Unknown'
   }
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return 'Unknown'
-  }
-  return date.toLocaleString()
+  return formatDateTime(value)
 }
 
 function normalizeTimelineOffsets<T extends { started_ms: number | null; ended_ms: number | null }>(
@@ -561,11 +561,7 @@ export function ConversationsPage() {
     if (!unixSeconds) {
       return 'Unknown'
     }
-    const date = new Date(unixSeconds * 1000)
-    if (Number.isNaN(date.getTime())) {
-      return 'Unknown'
-    }
-    return date.toLocaleString()
+    return formatDateTime(unixSeconds * 1000)
   }
 
   const togglePlayback = async () => {
@@ -610,10 +606,12 @@ export function ConversationsPage() {
     const scores = evaluationRun?.metrics ?? []
     return Object.entries(METRIC_LABELS).map(([key, label]) => {
       const metric = scores.find((item) => item.metric_key === key)
+      const rawScore = metric?.score_value ?? null
       return {
         key,
-        label,
-        score: metric?.score_value ?? null,
+        label: getMetricDisplayLabel(key, label),
+        score: rawScore,
+        displayScore: getMetricDisplayScore(key, rawScore),
         rationale: metric?.rationale ?? null,
       }
     })
@@ -977,14 +975,14 @@ export function ConversationsPage() {
           {!selectedRow ? (
             <p className="muted">Select a conversation to preview details.</p>
           ) : detailLoading ? (
-            <p className="muted">Loading selected conversation...</p>
+            <Skeleton lines={5} />
           ) : detail ? (
             <>
                 <div className="workspace-detail-header">
                 <div>
                   <h2>{selectedRow ? getConversationDisplayName(selectedRow) : 'Conversation review'}</h2>
                   <p className="muted">
-                      Provider: {formatProviderName(selectedRow.provider_name)} · Agent: {pickAgentDisplayName(insights?.assistant_name, selectedRow.provider_agent_name)} · Duration: {effectiveDuration > 0 ? formatClock(effectiveDuration) : 'Unavailable'}
+                      Provider: {formatProviderName(selectedRow.provider_name)} · Agent: {pickAgentDisplayName(insights?.assistant_name, selectedRow.provider_agent_name)} · Duration: {effectiveDuration > 0 ? formatClock(effectiveDuration) : 'Not captured'}
                   </p>
                 </div>
                   <div className="workspace-detail-actions">
@@ -1026,7 +1024,7 @@ export function ConversationsPage() {
                         <small>Why this verdict</small>
                         <h3>
                           {selectedLowestMetric
-                            ? `${METRIC_LABELS[selectedLowestMetric.metric_key] ?? selectedLowestMetric.metric_key} · ${selectedLowestMetric.score_value}/100`
+                            ? `${getMetricDisplayLabel(selectedLowestMetric.metric_key, METRIC_LABELS[selectedLowestMetric.metric_key] ?? selectedLowestMetric.metric_key)} · ${getMetricDisplayScore(selectedLowestMetric.metric_key, selectedLowestMetric.score_value)}/100`
                             : 'No evaluated metric yet'}
                         </h3>
                         <p>{selectedQaSummary.failureReason}</p>
@@ -1096,9 +1094,9 @@ export function ConversationsPage() {
                       {evaluationMetrics.map((metric) => (
                         <article key={metric.key} className="metric-card">
                           <small>{metric.label}</small>
-                          <strong>{metric.score == null ? '--/100' : `${metric.score}/100`}</strong>
+                          <strong>{metric.displayScore == null ? '--/100' : `${metric.displayScore}/100`}</strong>
                           <div className="metric-progress-track">
-                            <span className={`metric-progress-bar ${getMetricScoreTone(metric.key, metric.score)}`} style={{ width: `${metric.score ?? 0}%` }} />
+                            <span className={`metric-progress-bar ${getMetricScoreTone(metric.key, metric.score)}`} style={{ width: `${metric.displayScore ?? 0}%` }} />
                           </div>
                         </article>
                       ))}
@@ -1119,7 +1117,7 @@ export function ConversationsPage() {
                             <td>{metric.label}</td>
                             <td>
                               <span className={`score-pill ${getMetricScoreTone(metric.key, metric.score)}`}>
-                                {metric.score == null ? '-' : `${metric.score}/100`}
+                                {metric.displayScore == null ? '-' : `${metric.displayScore}/100`}
                               </span>
                             </td>
                             <td>{metric.rationale ?? 'No rationale available yet.'}</td>
@@ -1268,7 +1266,7 @@ export function ConversationsPage() {
                               <strong>{turn.role === 'agent' ? 'Agent' : 'User'}</strong>
                               <small>{formatClock(turn.startSec)}</small>
                             </div>
-                            <p>{turn.text || '...'}</p>
+                            <p>{turn.text ? turn.text : <span className="muted">No transcript text captured</span>}</p>
                           </div>
                         </li>
                       ))}
@@ -1297,7 +1295,7 @@ export function ConversationsPage() {
                   </article>
                   <article className="metadata-card">
                     <small>Outcome</small>
-                    <strong>{selectedRow.outcome || 'Unknown'}</strong>
+                    <strong>{humanizeOutcome(selectedRow.outcome)}</strong>
                   </article>
                   <article className="metadata-card">
                     <small>Created</small>
@@ -1370,7 +1368,7 @@ export function ConversationsPage() {
                     {insights.end_reason && (
                       <div className="insight-block">
                         <h4>How the call ended</h4>
-                        <p>{insights.end_reason}</p>
+                        <p>{humanizeDiagnosticText(insights.end_reason)}</p>
                       </div>
                     )}
 

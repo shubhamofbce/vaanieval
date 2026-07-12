@@ -15,11 +15,14 @@ class DashboardSummary(BaseModel):
     conversations: int
     successful_conversations: int
     evaluated_conversations: int
+    needs_attention_conversations: int
     evaluation_coverage_rate: float | None = None
     success_rate: float | None = None
     average_overall_score: float | None = None
     average_call_duration_seconds: float | None = None
     p95_call_duration_seconds: float | None = None
+    weakest_metric_key: str | None = None
+    weakest_metric_label: str | None = None
 
 
 class DashboardComparisonValue(BaseModel):

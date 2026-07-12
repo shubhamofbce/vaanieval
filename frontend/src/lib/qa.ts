@@ -57,6 +57,26 @@ export function getScoreTone(score: number | null, strongThreshold = 80) {
   return 'score-risk'
 }
 
+/**
+ * Human-like delivery (ai_detectability_score) is a risk score where a *lower*
+ * raw value is better. Showing the raw value next to normal "higher is
+ * better" metrics confuses readers, so callers should display this inverted,
+ * quality-oriented number instead of the raw score.
+ */
+export function getMetricDisplayLabel(metricKey: string, fallbackLabel: string) {
+  return metricKey === AI_DETECTABILITY_METRIC_KEY ? 'Human-like Delivery' : fallbackLabel
+}
+
+export function getMetricDisplayScore(metricKey: string, score: number | null | undefined) {
+  if (score == null || Number.isNaN(score)) {
+    return null
+  }
+  if (metricKey === AI_DETECTABILITY_METRIC_KEY) {
+    return Math.round(Math.max(0, Math.min(100, 100 - score)))
+  }
+  return Math.round(score)
+}
+
 export function getMetricScoreTone(metricKey: string, score: number | null, strongThreshold = 80) {
   if (score == null) {
     return 'score-neutral'

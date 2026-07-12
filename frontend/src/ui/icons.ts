@@ -1,5 +1,6 @@
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
+  faArrowLeft,
   faArrowRotateRight,
   faArrowUpRightFromSquare,
   faBackward,
@@ -11,7 +12,9 @@ import {
   faCircleNotch,
   faClock,
   faComments,
+  faCopy,
   faDownload,
+  faEllipsisVertical,
   faExclamationTriangle,
   faFileImport,
   faFileLines,
@@ -56,6 +59,7 @@ library.add(
   faExclamationTriangle,
   faArrowRotateRight,
   faArrowUpRightFromSquare,
+  faArrowLeft,
   faMagnifyingGlass,
   faFilter,
   faPlay,
@@ -89,6 +93,8 @@ library.add(
   faShuffle,
   faTableCellsLarge,
   faSoundcloud,
+  faCopy,
+  faEllipsisVertical,
 )
 
 export {}

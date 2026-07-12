@@ -9,6 +9,10 @@ import { StatusPill } from '../components/StatusPill'
 
 const IMPORT_DAYS_OPTIONS = [7, 30, 60]
 
+function formatProviderName(providerName: string) {
+  return providerName === 'elevenlabs' ? 'ElevenLabs' : providerName === 'vapi' ? 'Vapi' : providerName
+}
+
 type AgentImportState = {
   status: 'idle' | 'starting' | 'queued' | 'running' | 'completed' | 'failed'
   jobId?: string
@@ -22,6 +26,7 @@ export function AgentsPage() {
   const [nameFilter, setNameFilter] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null)
   const [importDaysByAgentId, setImportDaysByAgentId] = useState<Record<string, number>>({})
   const [importStateByAgentId, setImportStateByAgentId] = useState<Record<string, AgentImportState>>({})
   const importTimersRef = useRef<Record<string, number>>({})
@@ -277,127 +282,132 @@ export function AgentsPage() {
             message="Adjust the provider or name filters to broaden the result set."
           />
         ) : (
-          <div className="agents-grid">
-            {filteredAgents.map((agent) => (
-              <article key={agent.id} className="agent-card">
-                <div className="agent-card-header">
-                  <div>
-                    <div className="agent-title-row">
-                      <span className="agent-avatar">
-                        <FontAwesomeIcon icon="robot" />
-                      </span>
-                      <h3>{agent.name}</h3>
-                    </div>
-                    <p className="muted">{agent.provider_name} voice assistant</p>
-                  </div>
+          <>
+            <div className="agents-summary-band">
+              <span>
+                <strong>{agents.length}</strong> agents
+              </span>
+              <span>
+                <strong>{providerOptions.length}</strong> connected {providerOptions.length === 1 ? 'provider' : 'providers'}
+              </span>
+              <span>
+                <strong>{filteredAgents.length}</strong> shown
+              </span>
+            </div>
 
-                  {agent.is_default ? <StatusPill icon="check-circle" label="Default" tone="success" /> : null}
-                </div>
-
-                <div className="agent-capabilities">
-                  <span className="chip">
-                    <FontAwesomeIcon icon="plug" />
-                    <span>{agent.provider_name}</span>
-                  </span>
-                  <span className="chip">
-                    <FontAwesomeIcon icon="wave-square" />
-                    <span>Voice workflow</span>
-                  </span>
-                  <span className="chip">
-                    <FontAwesomeIcon icon="comments" />
-                    <span>Conversation review</span>
-                  </span>
-                </div>
-
-                <div className="inline">
-                  <div className="agents-import-inline">
-                    <label className="sr-only" htmlFor={`import-days-${agent.id}`}>
-                      Import days for {agent.name}
-                    </label>
-                    <select
-                      id={`import-days-${agent.id}`}
-                      value={importDaysByAgentId[agent.id] ?? 7}
-                      onChange={(event) =>
-                        setImportDaysByAgentId((current) => ({
-                          ...current,
-                          [agent.id]: Number(event.target.value),
-                        }))
-                      }
-                      disabled={loading || importStateByAgentId[agent.id]?.status === 'starting' || importStateByAgentId[agent.id]?.status === 'queued' || importStateByAgentId[agent.id]?.status === 'running'}
-                    >
-                      {IMPORT_DAYS_OPTIONS.map((days) => (
-                        <option key={days} value={days}>
-                          Last {days} days
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => void handleImportConversations(agent)}
-                      disabled={
-                        loading ||
-                        importStateByAgentId[agent.id]?.status === 'starting' ||
-                        importStateByAgentId[agent.id]?.status === 'queued' ||
-                        importStateByAgentId[agent.id]?.status === 'running'
-                      }
-                    >
-                      <span className="control-with-icon">
-                        <FontAwesomeIcon
-                          icon={
-                            importStateByAgentId[agent.id]?.status === 'starting' ||
-                            importStateByAgentId[agent.id]?.status === 'queued' ||
-                            importStateByAgentId[agent.id]?.status === 'running'
-                              ? 'spinner'
-                              : 'file-import'
-                          }
-                          spin={
-                            importStateByAgentId[agent.id]?.status === 'starting' ||
-                            importStateByAgentId[agent.id]?.status === 'queued' ||
-                            importStateByAgentId[agent.id]?.status === 'running'
-                          }
-                        />
+            <div className="agents-table" role="table" aria-label="Agents">
+              <div className="agents-table-row agents-table-row-head" role="row">
+                <span role="columnheader">Agent</span>
+                <span role="columnheader">Provider</span>
+                <span role="columnheader">Default</span>
+                <span role="columnheader">Actions</span>
+              </div>
+              {filteredAgents.map((agent) => {
+                const importing =
+                  importStateByAgentId[agent.id]?.status === 'starting' ||
+                  importStateByAgentId[agent.id]?.status === 'queued' ||
+                  importStateByAgentId[agent.id]?.status === 'running'
+                const isExpanded = expandedAgentId === agent.id
+                return (
+                  <div key={agent.id} className="agents-table-group">
+                    <div className="agents-table-row" role="row">
+                      <span className="agents-table-agent-cell" role="cell">
+                        <span className="agent-avatar agent-avatar-compact">
+                          <FontAwesomeIcon icon="robot" />
+                        </span>
                         <span>
-                          {importStateByAgentId[agent.id]?.status === 'starting' ||
-                          importStateByAgentId[agent.id]?.status === 'queued' ||
-                          importStateByAgentId[agent.id]?.status === 'running'
-                            ? 'Importing conversations...'
-                            : 'Import conversations'}
+                          <strong>{agent.name}</strong>
                         </span>
                       </span>
-                    </button>
+                      <span role="cell">{formatProviderName(agent.provider_name)}</span>
+                      <span role="cell">
+                        {agent.is_default ? <StatusPill icon="check-circle" label="Default" tone="success" /> : <span className="muted">-</span>}
+                      </span>
+                      <span className="agents-table-actions" role="cell">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(
+                              `/conversations?agentId=${encodeURIComponent(agent.provider_agent_id)}&agentName=${encodeURIComponent(agent.name)}`,
+                            )
+                          }
+                        >
+                          <span className="control-with-icon">
+                            <FontAwesomeIcon icon="comments" />
+                            <span>View conversations</span>
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary agents-table-menu-toggle"
+                          title="More actions"
+                          onClick={() => setExpandedAgentId(isExpanded ? null : agent.id)}
+                          aria-expanded={isExpanded}
+                        >
+                          <FontAwesomeIcon icon="ellipsis-vertical" />
+                        </button>
+                      </span>
+                    </div>
+
+                    {isExpanded ? (
+                      <div className="agents-row-detail">
+                        <div className="agents-row-detail-actions">
+                          <button
+                            type="button"
+                            className="secondary"
+                            disabled={agent.is_default}
+                            onClick={() => handleSetDefault(agent.id)}
+                          >
+                            <span className="control-with-icon">
+                              <FontAwesomeIcon icon="check-circle" />
+                              <span>{agent.is_default ? 'Already default' : 'Make default'}</span>
+                            </span>
+                          </button>
+                        </div>
+
+                        <div className="agents-import-inline">
+                          <label className="sr-only" htmlFor={`import-days-${agent.id}`}>
+                            Import range for {agent.name}
+                          </label>
+                          <select
+                            id={`import-days-${agent.id}`}
+                            value={importDaysByAgentId[agent.id] ?? 7}
+                            onChange={(event) =>
+                              setImportDaysByAgentId((current) => ({
+                                ...current,
+                                [agent.id]: Number(event.target.value),
+                              }))
+                            }
+                            disabled={loading || importing}
+                          >
+                            {IMPORT_DAYS_OPTIONS.map((days) => (
+                              <option key={days} value={days}>
+                                Last {days} days
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => void handleImportConversations(agent)}
+                            disabled={loading || importing}
+                          >
+                            <span className="control-with-icon">
+                              <FontAwesomeIcon icon={importing ? 'spinner' : 'file-import'} spin={importing} />
+                              <span>{importing ? 'Importing conversations...' : 'Import conversations'}</span>
+                            </span>
+                          </button>
+                        </div>
+                        {importStateByAgentId[agent.id]?.message ? (
+                          <p className="muted agent-import-status">{importStateByAgentId[agent.id]?.message}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        `/conversations?agentId=${encodeURIComponent(agent.provider_agent_id)}&agentName=${encodeURIComponent(agent.name)}`,
-                      )
-                    }
-                  >
-                    <span className="control-with-icon">
-                      <FontAwesomeIcon icon="comments" />
-                      <span>View conversations</span>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary"
-                    disabled={agent.is_default}
-                    onClick={() => handleSetDefault(agent.id)}
-                  >
-                    <span className="control-with-icon">
-                      <FontAwesomeIcon icon="check-circle" />
-                      <span>Make default</span>
-                    </span>
-                  </button>
-                </div>
-                {importStateByAgentId[agent.id]?.message ? (
-                  <p className="muted agent-import-status">{importStateByAgentId[agent.id]?.message}</p>
-                ) : null}
-              </article>
-            ))}
-          </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
     </section>

@@ -16,6 +16,7 @@ from app.services.queue_service import enqueue_job
 
 IMPORT_PAGE_FETCH = "import_page_fetch"
 IMPORT_CONVERSATION_DETAIL = "import_conversation_detail"
+BACKFILL_CONVERSATION_TIMESTAMP = "backfill_conversation_timestamp"
 
 
 def create_import_job(
@@ -207,6 +208,30 @@ def run_import_conversation_detail(db: Session, payload: dict) -> None:
     import_job.imported_count += 1
 
 
+def run_backfill_conversation_timestamp(db: Session, payload: dict) -> None:
+    conversation_id = payload["conversation_id"]
+
+    record = db.scalar(select(Conversation).where(Conversation.id == conversation_id))
+    if not record or record.started_at is not None:
+        return
+
+    account = db.scalar(select(ProviderAccount).where(ProviderAccount.id == record.provider_account_id))
+    if not account or account.provider_name not in {"elevenlabs", "vapi"}:
+        return
+
+    adapter = get_provider_adapter(
+        provider_name=account.provider_name,
+        api_key=decrypt_secret(account.api_key),
+    )
+    detail = adapter.get_conversation_detail(record.provider_conversation_id)
+    normalized_detail = adapter.normalize_conversation_detail(detail)
+
+    if normalized_detail.started_at is not None:
+        record.started_at = normalized_detail.started_at
+    if normalized_detail.ended_at is not None:
+        record.ended_at = normalized_detail.ended_at
+
+
 def queue_depth_for_import(db: Session, import_job_id: str) -> dict[str, int]:
     rows = db.scalars(
         select(JobQueue).where(
@@ -241,5 +266,4 @@ def cancel_import(db: Session, import_job_id: str) -> ImportJob | None:
     db.commit()
     db.refresh(job)
     return job
-
 

@@ -6,9 +6,10 @@ type StatCardProps = {
   label: string
   value: string
   tone?: 'default' | 'good' | 'warn'
+  hint?: string
 }
 
-export function StatCard({ icon, label, value, tone = 'default' }: StatCardProps) {
+export function StatCard({ icon, label, value, tone = 'default', hint }: StatCardProps) {
   return (
     <article className={`stat-card stat-${tone}`}>
       <span className="stat-icon" aria-hidden="true">
@@ -16,6 +17,7 @@ export function StatCard({ icon, label, value, tone = 'default' }: StatCardProps
       </span>
       <small>{label}</small>
       <p>{value}</p>
+      {hint ? <span className="stat-hint">{hint}</span> : null}
     </article>
   )
 }

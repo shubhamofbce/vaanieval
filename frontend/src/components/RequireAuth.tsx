@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { getMe } from '../api/endpoints'
+import { PageSkeleton } from './Skeleton'
 
 export function RequireAuth() {
   const location = useLocation()
@@ -11,7 +12,7 @@ export function RequireAuth() {
   })
 
   if (isLoading) {
-    return <div className="panel">Checking session...</div>
+    return <PageSkeleton />
   }
 
   if (isError || !data) {

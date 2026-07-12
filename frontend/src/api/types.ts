@@ -172,11 +172,14 @@ export type DashboardSummary = {
   conversations: number
   successful_conversations: number
   evaluated_conversations: number
+  needs_attention_conversations: number
   evaluation_coverage_rate: number | null
   success_rate: number | null
   average_overall_score: number | null
   average_call_duration_seconds: number | null
   p95_call_duration_seconds: number | null
+  weakest_metric_key: string | null
+  weakest_metric_label: string | null
 }
 
 export type DashboardComparisonValue = {

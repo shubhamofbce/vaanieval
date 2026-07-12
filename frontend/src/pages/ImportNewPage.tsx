@@ -14,7 +14,10 @@ function formatProviderName(providerName: string) {
 }
 
 function toDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 function getLastNDaysRange(days: number) {
@@ -23,6 +26,12 @@ function getLastNDaysRange(days: number) {
   start.setDate(start.getDate() - (days - 1))
   return { start: toDateInputValue(start), end: toDateInputValue(end) }
 }
+
+const IMPORT_QUICK_RANGES = [
+  { days: 7, label: '7 days' },
+  { days: 30, label: '30 days' },
+  { days: 90, label: '90 days' },
+]
 
 export function ImportNewPage() {
   const navigate = useNavigate()
@@ -249,7 +258,24 @@ export function ImportNewPage() {
             onChange={(event) => setEndDate(event.target.value)}
           />
 
-          <label htmlFor="pageSize">Page size</label>
+          <div className="import-quick-range-row">
+            {IMPORT_QUICK_RANGES.map((option) => (
+              <button
+                key={option.days}
+                type="button"
+                className="chip-button"
+                onClick={() => {
+                  const range = getLastNDaysRange(option.days)
+                  setStartDate(range.start)
+                  setEndDate(range.end)
+                }}
+              >
+                Last {option.label}
+              </button>
+            ))}
+          </div>
+
+          <label htmlFor="pageSize">Maximum calls to import</label>
           <input
             id="pageSize"
             type="number"
@@ -258,8 +284,17 @@ export function ImportNewPage() {
             value={pageSize}
             onChange={(event) => setPageSize(Number(event.target.value))}
           />
+          <p className="muted import-helper-text">Smaller batches finish faster.</p>
 
-          <button type="submit" disabled={loadingAgents || !selectedProvider}>
+          {selectedProvider ? (
+            <p className="import-preview-line">
+              This will import <strong>{formatProviderName(selectedProvider.name)}</strong> ·{' '}
+              <strong>{agentId ? (agentOptions.find((agent) => agent.provider_agent_id === agentId)?.name ?? 'selected agent') : 'all agents'}</strong> ·{' '}
+              <strong>{startDate || 'any start date'} to {endDate || 'any end date'}</strong>
+            </p>
+          ) : null}
+
+          <button type="submit" className="import-submit-button" disabled={loadingAgents || !selectedProvider}>
             <span className="control-with-icon">
               <FontAwesomeIcon icon="play" />
               <span>Start conversation import</span>
@@ -271,3 +306,4 @@ export function ImportNewPage() {
     </section>
   )
 }
+

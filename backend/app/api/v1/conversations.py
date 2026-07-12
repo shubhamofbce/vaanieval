@@ -243,6 +243,7 @@ def list_conversations(
     date_from: datetime | None = Query(default=None),
     date_to: datetime | None = Query(default=None),
 ) -> ConversationListResponse:
+    conversation_timestamp = func.coalesce(Conversation.started_at, Conversation.created_at)
 
     stmt = (
         select(Conversation)
@@ -257,9 +258,9 @@ def list_conversations(
     if provider_name:
         stmt = stmt.where(ProviderAccount.provider_name == provider_name)
     if date_from:
-        stmt = stmt.where(Conversation.started_at >= date_from)
+        stmt = stmt.where(conversation_timestamp >= date_from)
     if date_to:
-        stmt = stmt.where(Conversation.started_at <= date_to)
+        stmt = stmt.where(conversation_timestamp <= date_to)
     if search:
         pattern = f"%{search}%"
         stmt = stmt.where(
@@ -272,7 +273,7 @@ def list_conversations(
         )
 
     all_rows = db.scalars(
-        stmt.order_by(Conversation.created_at.desc())
+        stmt.order_by(conversation_timestamp.desc())
     ).all()
 
     eval_summaries = _load_evaluation_summaries(
@@ -311,7 +312,8 @@ def list_conversations(
             verdict = summary.get("qa_verdict", "pending")
             overall = summary.get("overall_score")
             verdict_rank = {"needs_attention": 0, "pending": 1, "review": 2, "passed": 3}.get(verdict, 1)
-            return (verdict_rank, overall if overall is not None else -1)
+            timestamp = row.started_at or row.created_at
+            return (verdict_rank, overall if overall is not None else -1, -timestamp.timestamp())
 
         all_rows = sorted(all_rows, key=_severity_key)
 

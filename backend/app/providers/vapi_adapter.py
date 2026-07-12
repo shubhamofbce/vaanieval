@@ -40,12 +40,14 @@ class VapiProviderAdapter(ProviderAdapter):
         return self._client.get_call(conversation_id)
 
     def normalize_conversation_detail(self, detail: dict[str, Any]) -> ProviderConversationDetail:
+        started_at = _parse_datetime(detail.get("startedAt") or detail.get("started_at") or detail.get("createdAt"))
+        ended_at = _parse_datetime(detail.get("endedAt") or detail.get("ended_at"))
         return ProviderConversationDetail(
             provider_agent_id=detail.get("assistantId") or detail.get("assistant", {}).get("id"),
             language=_extract_language(detail),
             outcome=_extract_outcome(detail),
-            started_at=_parse_datetime(detail.get("startedAt")),
-            ended_at=_parse_datetime(detail.get("endedAt")),
+            started_at=started_at,
+            ended_at=ended_at,
             turns=_extract_turns(detail),
             audio_url=self.extract_audio_url(detail),
         )
@@ -266,6 +268,9 @@ def _extract_end_ms(message: dict[str, Any], started_ms: int | None) -> int | No
             return value
     duration = message.get("duration")
     if started_ms is not None and isinstance(duration, (int, float)):
+        duration_value = int(duration)
+        if duration_value >= 1000:
+            return started_ms + duration_value
         return started_ms + int(duration * 1000)
     return None
 

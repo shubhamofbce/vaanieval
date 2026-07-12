@@ -15,11 +15,14 @@ import {
 } from '../api/endpoints'
 import {
   buildQaSummary,
+  getMetricDisplayLabel,
+  getMetricDisplayScore,
   getMetricScoreTone,
   getScoreTone,
   parseEvidence,
   QA_VERDICT_LABELS,
 } from '../lib/qa'
+import { formatDateTime, humanizeDiagnosticText } from '../lib/format'
 import type {
   AudioAssetResponse,
   ConversationDetailResponse,
@@ -83,11 +86,7 @@ function formatCallDate(unixSeconds: number | null) {
   if (!unixSeconds) {
     return 'Unknown'
   }
-  const date = new Date(unixSeconds * 1000)
-  if (Number.isNaN(date.getTime())) {
-    return 'Unknown'
-  }
-  return date.toLocaleString()
+  return formatDateTime(unixSeconds * 1000)
 }
 
 export function ConversationDetailPage() {
@@ -480,10 +479,12 @@ export function ConversationDetailPage() {
     const scores = evaluationRun?.metrics ?? []
     return Object.entries(METRIC_LABELS).map(([key, label]) => {
       const metric = scores.find((item) => item.metric_key === key)
+      const rawScore = metric?.score_value ?? null
       return {
         key,
-        label,
-        score: metric?.score_value ?? null,
+        label: getMetricDisplayLabel(key, label),
+        score: rawScore,
+        displayScore: getMetricDisplayScore(key, rawScore),
         rationale: metric?.rationale ?? null,
       }
     })
@@ -560,13 +561,21 @@ export function ConversationDetailPage() {
               </p>
             </div>
             <div className="detail-hero-actions">
-              <Link className="secondary detail-back-link" to="/conversations">
-                Back to conversations
+              <Link className="detail-back-link detail-back-link-subtle" to="/conversations">
+                <FontAwesomeIcon icon="arrow-left" />
+                <span>Back to conversations</span>
               </Link>
-              <button type="button" className="secondary" onClick={() => void refreshLatestEvaluation()} disabled={evaluationLoading}>
-                {evaluationLoading ? 'Refreshing...' : 'Refresh latest'}
+              <button
+                type="button"
+                className="secondary detail-refresh-button"
+                title="Refresh latest evaluation"
+                onClick={() => void refreshLatestEvaluation()}
+                disabled={evaluationLoading}
+              >
+                <FontAwesomeIcon icon="arrow-rotate-right" spin={evaluationLoading} />
+                <span>{evaluationLoading ? 'Refreshing...' : 'Refresh latest'}</span>
               </button>
-              <button type="button" onClick={() => setShowEvalModal(true)} disabled={evaluationLoading}>
+              <button type="button" className="detail-primary-action" onClick={() => setShowEvalModal(true)} disabled={evaluationLoading}>
                 {evaluationLoading ? 'Running...' : 'Run evaluation'}
               </button>
             </div>
@@ -584,12 +593,12 @@ export function ConversationDetailPage() {
                 <article key={metric.key} className="detail-metric-card">
                   <small>{metric.label}</small>
                   <span className={`score-pill ${getMetricScoreTone(metric.key, metric.score)} detail-metric-value`}>
-                    {metric.score == null ? '-' : `${metric.score}/100`}
+                    {metric.displayScore == null ? '-' : `${metric.displayScore}/100`}
                   </span>
                   <div className="metric-progress-track">
                     <span
                       className={`metric-progress-bar ${getMetricScoreTone(metric.key, metric.score)}`}
-                      style={{ width: `${metric.score ?? 0}%` }}
+                      style={{ width: `${metric.displayScore ?? 0}%` }}
                     />
                   </div>
                 </article>
@@ -605,7 +614,7 @@ export function ConversationDetailPage() {
                     <h3>Evaluation breakdown</h3>
                     <p className="muted">Status: {evaluationRun?.status ?? 'unknown'}{evaluationRun?.provider_name ? ` · ${evaluationRun.provider_name}` : ''}{evaluationRun?.provider_model ? ` · ${evaluationRun.provider_model}` : ''}</p>
                   </div>
-                  {evaluationRun?.created_at ? <p className="muted detail-timestamp">Last evaluated: {new Date(evaluationRun.created_at).toLocaleString()}</p> : null}
+                  {evaluationRun?.created_at ? <p className="muted detail-timestamp">Last evaluated: {formatDateTime(evaluationRun.created_at)}</p> : null}
                 </div>
 
                 {evaluationRun?.status === 'queued' || evaluationRun?.status === 'running' ? (
@@ -627,14 +636,14 @@ export function ConversationDetailPage() {
                     <small>Why this verdict</small>
                     <h3>
                       {lowestMetric
-                        ? `${METRIC_LABELS[lowestMetric.metric_key] ?? lowestMetric.metric_key} · ${lowestMetric.score_value}/100`
+                        ? `${getMetricDisplayLabel(lowestMetric.metric_key, METRIC_LABELS[lowestMetric.metric_key] ?? lowestMetric.metric_key)} · ${getMetricDisplayScore(lowestMetric.metric_key, lowestMetric.score_value)}/100`
                         : 'No evaluated metric yet'}
                     </h3>
                     <p>{qaSummary.failureReason}</p>
                   </article>
                   <article className="qa-diagnosis-card qa-next-step-card">
                     <small>Recommended next step</small>
-                    <h3>Next action</h3>
+                    <h3>Fix the weakest behavior first</h3>
                     <p>{qaSummary.recommendedAction}</p>
                   </article>
                 </section>
@@ -686,7 +695,7 @@ export function ConversationDetailPage() {
                         <td>{metric.label}</td>
                         <td>
                           <span className={`score-pill ${getMetricScoreTone(metric.key, metric.score)}`}>
-                            {metric.score == null ? '-' : `${metric.score}/100`}
+                            {metric.displayScore == null ? '-' : `${metric.displayScore}/100`}
                           </span>
                         </td>
                         <td>{metric.rationale ?? 'No rationale available yet.'}</td>
@@ -759,7 +768,7 @@ export function ConversationDetailPage() {
                     {insights.end_reason && (
                       <div className="insight-block">
                         <h4>How the call ended</h4>
-                        <p>{insights.end_reason}</p>
+                        <p>{humanizeDiagnosticText(insights.end_reason)}</p>
                       </div>
                     )}
 
@@ -898,7 +907,7 @@ export function ConversationDetailPage() {
                           title="Double-click to jump audio here"
                         >
                           <strong>{turn.role}</strong>
-                          <p>{turn.text || '...'}</p>
+                          <p>{turn.text ? turn.text : <span className="muted">No transcript text captured</span>}</p>
                           <small>{formatClock(turn.startSec)}</small>
                         </li>
                       ))}
@@ -911,7 +920,19 @@ export function ConversationDetailPage() {
                   <div className="detail-facts-grid">
                     <article>
                       <small>Conversation ID</small>
-                      <strong>{conversation.id}</strong>
+                      <strong className="detail-conversation-id" title={conversation.id}>
+                        <span className="detail-conversation-id-text">{conversation.id}</span>
+                        <button
+                          type="button"
+                          className="detail-copy-id-button"
+                          title="Copy conversation ID"
+                          onClick={() => {
+                            void navigator.clipboard?.writeText(conversation.id)
+                          }}
+                        >
+                          <FontAwesomeIcon icon="copy" />
+                        </button>
+                      </strong>
                     </article>
                     <article>
                       <small>Provider</small>

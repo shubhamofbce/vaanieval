@@ -12,8 +12,10 @@ from app.models.evaluation import ConversationEvaluationRun
 from app.models.import_job import ImportJob, ImportJobStatus
 from app.models.job_queue import JobQueue, JobStatus
 from app.services.import_service import (
+    BACKFILL_CONVERSATION_TIMESTAMP,
     IMPORT_CONVERSATION_DETAIL,
     IMPORT_PAGE_FETCH,
+    run_backfill_conversation_timestamp,
     run_import_conversation_detail,
     run_import_page_fetch,
 )
@@ -33,6 +35,8 @@ def process_job(db, job: JobQueue) -> None:
         run_import_page_fetch(db, payload)
     elif job.type == IMPORT_CONVERSATION_DETAIL:
         run_import_conversation_detail(db, payload)
+    elif job.type == BACKFILL_CONVERSATION_TIMESTAMP:
+        run_backfill_conversation_timestamp(db, payload)
     elif job.type == EVAL_CONVERSATION_SCORES:
         run_evaluation_job(db, payload)
     else:

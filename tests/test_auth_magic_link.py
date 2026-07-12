@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from app.core.config import get_settings
 from app.db.base import Base
 from app.models import MagicLinkToken, User
-from app.services.email_service import EmailDeliveryError
+from app.services.email_service import EmailDeliveryError, build_magic_link
 from app.services.auth_service import request_magic_link
 
 
@@ -40,10 +40,11 @@ def test_magic_link_dev_autoprovisions_and_returns_token(monkeypatch) -> None:
 
 def test_magic_link_production_autoprovisions_and_sends_email(monkeypatch) -> None:
     monkeypatch.setenv("APP_ENV", "production")
-    monkeypatch.setenv("FRONTEND_APP_URL", "https://vaanieval.vercel.app")
+    monkeypatch.setenv("FRONTEND_APP_URL", "https://app-vaanieval.vercel.app")
     sent: list[tuple[str, str]] = []
 
-    def fake_send(_settings, recipient: str, token: str) -> None:
+    def fake_send(settings, recipient: str, token: str) -> None:
+        assert settings.frontend_app_url == "https://app-vaanieval.vercel.app"
         sent.append((recipient, token))
 
     monkeypatch.setattr("app.services.auth_service.send_magic_link_email", fake_send)
@@ -63,6 +64,19 @@ def test_magic_link_production_autoprovisions_and_sends_email(monkeypatch) -> No
         assert sent[0][1]
     finally:
         db.close()
+        get_settings.cache_clear()
+
+
+def test_magic_link_email_uses_product_app_url(monkeypatch) -> None:
+    monkeypatch.setenv("FRONTEND_APP_URL", "https://app-vaanieval.vercel.app/")
+    get_settings.cache_clear()
+
+    try:
+        assert (
+            build_magic_link(get_settings(), "sample token")
+            == "https://app-vaanieval.vercel.app/login?token=sample+token"
+        )
+    finally:
         get_settings.cache_clear()
 
 
