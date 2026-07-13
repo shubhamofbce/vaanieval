@@ -239,7 +239,7 @@ Set up alerts:
 **Issue: Frontend can't reach API**
 - Verify VITE_API_BASE_URL in frontend/.env.production
 - Check CORS settings in backend/app/main.py
-- Verify Vercel domain is in allowed_origins
+- Verify the deployed frontend origin (for production, `https://app.vaanieval.com`) is in `ALLOWED_ORIGINS`
 
 ## Local Development + Vercel Coexistence
 

@@ -1,18 +1,25 @@
 {
-  "version": 2,
-  "builds": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "source": "/api/v1/:path*",
+      "destination": "https://api.vaanieval.com/api/v1/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
-  "routes": [
+  "headers": [
     {
-      "src": "/api/v1/(.*)",
-      "dest": "https://ca-vaanieval-api-prod-06260116.calmmushroom-a042a3da.centralindia.azurecontainerapps.io/api/v1/$1"
-    },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "headers": { "X-Robots-Tag": "noindex, nofollow" }, "dest": "/index.html" }
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
   ]
 }

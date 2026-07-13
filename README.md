@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.vaanieval.com/"><strong>Try the deployed version</strong></a>
+  <a href="https://app.vaanieval.com/"><strong>Try the deployed version</strong></a>
 </p>
 
 <p align="center">

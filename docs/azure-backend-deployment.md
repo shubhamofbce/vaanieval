@@ -7,6 +7,9 @@ This backend deploys to Azure as one container image with two Container Apps:
 
 Both apps must share the same PostgreSQL database and secrets.
 
+The production API is available at `https://api.vaanieval.com`, with application routes under
+`https://api.vaanieval.com/api/v1`.
+
 ## Required Azure resources
 
 - Azure Container Registry
@@ -22,15 +25,15 @@ DATABASE_URL=postgresql://<user>:<password>@<host>:5432/vaanieval?sslmode=requir
 SECRET_KEY=<strong-random-value>
 CREDENTIAL_ENCRYPTION_KEY=<fernet-key>
 CRON_SECRET=<strong-random-value>
-ALLOWED_ORIGINS=https://<frontend-origin>
+ALLOWED_ORIGINS=https://app.vaanieval.com,https://www.vaanieval.com
 SESSION_COOKIE_SECURE=true
 SESSION_COOKIE_SAMESITE=none
-FRONTEND_APP_URL=https://<frontend-origin>
+FRONTEND_APP_URL=https://app.vaanieval.com
 SMTP_HOST=<smtp-host>
 SMTP_PORT=587
 SMTP_USERNAME=<smtp-username>
 SMTP_PASSWORD=<smtp-password>
-SMTP_FROM_EMAIL=<from-email>
+SMTP_FROM_EMAIL="VaaniEval <noreply@vaanieval.com>"
 SMTP_USE_TLS=true
 ELEVENLABS_API_BASE=https://api.elevenlabs.io
 VAPI_API_BASE=https://api.vapi.ai
