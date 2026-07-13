@@ -11,8 +11,8 @@ export default withMDX({
   poweredByHeader: false,
   async redirects() {
     return [
-      { source: '/login', destination: process.env.NEXT_PUBLIC_APP_URL || 'https://app-vaanieval.vercel.app/login', permanent: false },
-      { source: '/dashboard', destination: process.env.NEXT_PUBLIC_APP_URL || 'https://app-vaanieval.vercel.app/dashboard', permanent: false },
+      { source: '/login', destination: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com/login', permanent: false },
+      { source: '/dashboard', destination: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com/dashboard', permanent: false },
     ]
   },
 })

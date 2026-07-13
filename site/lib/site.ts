@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: 'VaaniEval',
   description: 'Open-source quality assurance and evaluation workspace for production voice AI agents.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://vaanieval.vercel.app',
-  appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app-vaanieval.vercel.app',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vaanieval.com',
+  appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',
   contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Design%20partner%20application&labels=design-partner',
 }
