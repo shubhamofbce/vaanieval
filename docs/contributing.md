@@ -33,6 +33,18 @@ Follow the full-stack setup in [development.md](development.md). The current sou
 4. Update docs if behavior changed.
 5. Open a PR with a clear summary and validation output.
 
+## Discussions and issues
+
+Use [GitHub Discussions](https://github.com/shubhamofbce/vaanieval/discussions)
+for questions, early proposals, evaluation design tradeoffs, and work you want
+to share with the community. Use
+[GitHub Issues](https://github.com/shubhamofbce/vaanieval/issues) when there is
+a reproducible defect or a sufficiently scoped implementation task.
+
+The [community support guide](../.github/SUPPORT.md) explains which discussion
+category to choose and what context to include. Never post credentials,
+personal information, customer names, or private conversation data.
+
 ## Required quality checks before PR
 
 ```bash
@@ -145,4 +157,3 @@ A contribution is done when:
 ## License
 
 This project is licensed under MIT. See `LICENSE`.
-

@@ -1,0 +1,66 @@
+title: "[Q&A] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask setup, usage, architecture, integration, or evaluation questions here. Maintainers or community members can mark a helpful reply as the answer.
+
+        Start with the [Quickstart](https://github.com/shubhamofbce/vaanieval/blob/main/docs/quickstart.md), [Development guide](https://github.com/shubhamofbce/vaanieval/blob/main/docs/development.md), and [Troubleshooting guide](https://github.com/shubhamofbce/vaanieval/blob/main/docs/troubleshooting.md). For a reproducible confirmed defect, open an issue instead. Never include API keys, credentials, or private conversation data.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Installation and local development
+        - Configuration and self-hosting
+        - Conversation imports
+        - Evaluation runs and metrics
+        - Dashboard and conversation review
+        - ElevenLabs integration
+        - Vapi integration
+        - Evaluator providers
+        - API and architecture
+        - Contributing
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: State the outcome you are trying to achieve and where you are blocked.
+      placeholder: I am trying to... I expected... Instead...
+    validations:
+      required: true
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What have you tried?
+      description: Include relevant documentation and sanitized commands, logs, or configuration.
+      placeholder: I followed... and ran... The relevant sanitized output is...
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Deployed VaaniEval site
+        - Local macOS
+        - Local Linux
+        - Local Windows
+        - Container or cloud deployment
+        - Not environment-specific
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: VaaniEval version
+      description: Provide a release, commit SHA, or branch when relevant.
+      placeholder: main at abc1234
+  - type: input
+    id: providers
+    attributes:
+      label: Providers involved
+      description: Name any voice or evaluator providers involved; do not include credentials.
+      placeholder: ElevenLabs and OpenAI

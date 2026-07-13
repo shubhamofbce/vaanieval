@@ -1,0 +1,58 @@
+title: "[Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are for proposals that would improve VaaniEval or its evaluation workflows. Describe the problem before prescribing the implementation so the community can explore alternatives.
+
+        Search existing discussions and the [V2 roadmap](https://github.com/shubhamofbce/vaanieval/blob/main/docs/v2-plan/roadmap.md) first. Never include API keys, credentials, or private conversation data.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Evaluation metrics and score taxonomy
+        - Conversation review
+        - Dashboard and reporting
+        - Voice provider integration
+        - Evaluator provider integration
+        - Imports, workers, and reliability
+        - API or developer experience
+        - Self-hosting and deployment
+        - Documentation and community
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: Who encounters this, and what are they unable to do today?
+      placeholder: When reviewing production voice-agent conversations, I need to...
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe what success looks like without requiring a particular implementation.
+      placeholder: A successful solution would let evaluators...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Possible approach
+      description: Share a solution, alternatives, mockups, or prior art if you have them.
+      placeholder: One possible approach is...
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Examples or evidence
+      description: Add sanitized scenarios, reproducible examples, or links that help evaluate the idea.
+      placeholder: Do not include customer names, credentials, or private call data.
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I may be able to help implement or document this idea.

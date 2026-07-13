@@ -1,0 +1,38 @@
+title: "[General] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use General for open-ended conversation about VaaniEval, voice-agent evaluation, and community coordination.
+
+        For troubleshooting, use Q&A. For a concrete product proposal, use Ideas. Never include API keys, credentials, or private conversation data.
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      description: Which part of the project is this most closely related to?
+      options:
+        - Evaluation metrics and scoring
+        - Conversation review and analytics
+        - Voice provider integrations
+        - Evaluator provider integrations
+        - Imports, workers, and reliability
+        - Self-hosting and deployment
+        - Documentation and community
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: discussion
+    attributes:
+      label: What would you like to discuss?
+      description: Share enough context for someone unfamiliar with your setup or use case to participate.
+      placeholder: Tell us what you are exploring, what prompted the discussion, and what input would help.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Relevant context
+      description: Add sanitized examples, documentation links, provider names, or related issues and discussions.
+      placeholder: Optional context and links. Remove secrets and private call data.

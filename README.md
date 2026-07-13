@@ -17,7 +17,8 @@
   <a href="docs/development.md">Development</a> |
   <a href="docs/backend-architecture.md">Architecture</a> |
   <a href="docs/metrics-and-gates.md">Metrics</a> |
-  <a href="docs/features/README.md">Feature Playbooks</a>
+  <a href="docs/features/README.md">Feature Playbooks</a> |
+  <a href="https://github.com/shubhamofbce/vaanieval/discussions">Discussions</a>
 </p>
 
 <p align="center">
@@ -247,6 +248,17 @@ Contributions are welcome. Good first areas include:
 - Documentation and examples
 
 Before opening a PR, run the relevant backend and frontend checks and include screenshots for UI changes. See [docs/contributing.md](docs/contributing.md) for the full contribution guide.
+
+## Community
+
+Join [GitHub Discussions](https://github.com/shubhamofbce/vaanieval/discussions)
+to ask setup and usage questions, compare voice-agent evaluation approaches,
+propose ideas, or share what you have built. Use
+[GitHub Issues](https://github.com/shubhamofbce/vaanieval/issues) for
+reproducible defects and scoped implementation work.
+
+See the [community support guide](.github/SUPPORT.md) for category guidance and
+safe-posting expectations.
 
 ## Roadmap
 

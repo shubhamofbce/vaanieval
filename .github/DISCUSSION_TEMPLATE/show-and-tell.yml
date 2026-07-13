@@ -1,0 +1,50 @@
+title: "[Show and tell] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share evaluation workflows, metric designs, provider adapters, dashboards, integrations, or lessons learned with VaaniEval.
+
+        Only share material you are allowed to publish. Remove credentials, personal information, customer names, and private conversation data.
+  - type: dropdown
+    id: project-type
+    attributes:
+      label: What are you sharing?
+      options:
+        - Evaluation workflow
+        - Metric or rubric
+        - Voice provider integration
+        - Evaluator integration
+        - Dashboard or analysis
+        - Deployment or developer tooling
+        - Documentation, example, or tutorial
+        - Community project
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Explain what you built or learned and who it may help.
+      placeholder: This helps voice-agent teams...
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: How it works
+      description: Describe the workflow, important design decisions, and relevant VaaniEval components.
+      placeholder: Conversations are imported from... Evaluations use... Results are reviewed in...
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links and reproducible material
+      description: Link to code, documentation, sanitized screenshots, datasets, or examples when available.
+      placeholder: https://...
+  - type: textarea
+    id: lessons
+    attributes:
+      label: Lessons and questions
+      description: What worked, what did not, and where would community feedback help?
