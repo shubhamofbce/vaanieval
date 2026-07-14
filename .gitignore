@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 .venv/
 .env
+.DS_Store
 
 # MCP server config (contains API tokens – keep off git)
 .vscode/mcp.json
