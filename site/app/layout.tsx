@@ -7,11 +7,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: { default: 'VaaniEval — Voice AI evaluation and QA', template: '%s | VaaniEval' },
+  title: { default: 'VaaniEval — Self-hosted voice-agent evaluation', template: '%s | VaaniEval' },
   description: siteConfig.description,
   alternates: { canonical: '/' },
-  openGraph: { type: 'website', siteName: 'VaaniEval', title: 'VaaniEval — Voice AI evaluation and QA', description: siteConfig.description, url: '/' },
-  twitter: { card: 'summary_large_image', title: 'VaaniEval — Voice AI evaluation and QA', description: siteConfig.description },
+  openGraph: { type: 'website', siteName: 'VaaniEval', title: 'VaaniEval — Self-hosted voice-agent evaluation', description: siteConfig.description, url: '/' },
+  twitter: { card: 'summary_large_image', title: 'VaaniEval — Self-hosted voice-agent evaluation', description: siteConfig.description },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION?.startsWith('replace-') ? undefined : process.env.GOOGLE_SITE_VERIFICATION,
     other: process.env.BING_SITE_VERIFICATION?.startsWith('replace-') ? {} : { 'msvalidate.01': process.env.BING_SITE_VERIFICATION || '' },

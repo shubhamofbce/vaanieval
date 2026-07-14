@@ -9,7 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://app.vaanieval.com/"><strong>Try the deployed version</strong></a>
+  <a href="https://www.vaanieval.com/"><strong>Visit VaaniEval</strong></a> ·
+  <a href="https://github.com/shubhamofbce/vaanieval"><strong>Star on GitHub</strong></a>
 </p>
 
 <p align="center">
@@ -119,15 +120,10 @@ For manual setup, environment variable, migrations, and troubleshooting, see the
 
 ## How It Works
 
-```mermaid
-flowchart LR
-  A["Voice provider<br>ElevenLabs / Vapi"] --> B["Backend import service"]
-  B --> C["Normalized conversations<br>transcript, media, metadata"]
-  C --> D["Worker queue"]
-  D --> E["Evaluator providers"]
-  E --> F["Metric scores<br>rationales"]
-  F --> G["Review workspace<br>dashboard analytics"]
-```
+1. Import production conversations from a supported voice provider.
+2. Normalize available transcripts, media, and metadata for review.
+3. Run evaluator-backed scores and retain rationales with each conversation.
+4. Review quality trends, then open the exact calls behind a weak result.
 
 ## Product Surface
 

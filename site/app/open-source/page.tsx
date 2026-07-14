@@ -1,3 +1,22 @@
-import type { Metadata } from 'next'; import { PageHero } from '@/components/PageHero'; import { siteConfig } from '@/lib/site'
-export const metadata:Metadata={title:'Open-source voice AI evaluation',description:'Inspect, deploy, and extend VaaniEval, an MIT-licensed evaluation workspace for production voice agents.',alternates:{canonical:'/open-source'}}
-export default function Page(){return <><PageHero eyebrow="MIT licensed" title="Open-source infrastructure for voice-agent conversation QA." description="Inspect the evaluation path, deploy the workspace yourself, and add providers behind explicit adapters."/><section className="content-shell"><h2>Built for teams that need control</h2><p>The repository includes a React workspace, FastAPI service, background worker, provider adapters, database migrations, evaluation services, tests, and deployment documentation.</p><h2>Contribute where production teams feel pain</h2><ul><li>New voice-provider adapters</li><li>Evaluation metrics and calibration datasets</li><li>Conversation review and reporting workflows</li><li>Deployment, privacy, and security improvements</li></ul><p><a className="button" href={siteConfig.githubUrl}>Explore the GitHub repository</a></p></section></>}
+import type { Metadata } from 'next'
+import { GitHubCta } from '@/components/GitHubCta'
+import { PageHero } from '@/components/PageHero'
+
+export const metadata: Metadata = {
+  title: 'Open-source self-hosted voice-agent evaluation',
+  description: 'Inspect, deploy, and extend VaaniEval: an MIT-licensed, self-hosted workspace for production voice-agent evaluation and conversation QA.',
+  alternates: { canonical: '/open-source' },
+}
+
+export default function Page() {
+  return <>
+    <PageHero eyebrow="MIT licensed · Self-hostable" title="Keep voice-agent evaluation in infrastructure you control." description="VaaniEval is an open-source workspace for importing production conversations, evaluating quality, and reviewing the evidence behind every score." />
+    <section className="content-shell">
+      <h2>What is in the repository</h2>
+      <div className="card-grid"><div><h3>Review workspace</h3><p>React interfaces for conversation review, evaluation results, trends, and provider settings.</p></div><div><h3>Evaluation service</h3><p>A FastAPI service, background worker, evaluator-provider modules, tests, and database migrations.</p></div><div><h3>Provider adapters</h3><p>Adapter-based imports for supported voice providers so provider-specific behavior remains isolated.</p></div></div>
+      <h2>A visible path from score to source</h2>
+      <p>Use the code to control how conversation data enters your environment, how evaluator providers are configured, and how your team reviews transcripts, available media, scores, and rationales. Your team remains responsible for access, retention, provider permissions, and deployment choices.</p>
+      <div className="callout"><strong>Start with the source.</strong><p>Read the setup and deployment guidance, inspect the implementation, and star the project if it is useful to your team.</p><div className="inline-links"><GitHubCta className="button button-github" event="github_star_open_source_click" /><a className="text-link" href="https://github.com/shubhamofbce/vaanieval/blob/main/DEPLOYMENT.md" target="_blank" rel="noreferrer">Read deployment guidance <span aria-hidden="true">→</span></a></div></div>
+    </section>
+  </>
+}

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { siteConfig } from '@/lib/site'
+import { GitHubCta } from './GitHubCta'
 
 export function Header() {
   return <header className="site-header"><div className="shell nav-wrap">
@@ -7,6 +7,6 @@ export function Header() {
     <nav aria-label="Main navigation">
       <Link href="/voice-ai-evaluation">Product</Link><Link href="/integrations/elevenlabs">Integrations</Link><Link href="/resources/evaluation-metrics">Resources</Link><Link href="/blog">Blog</Link><Link href="/open-source">Open source</Link>
     </nav>
-    <a className="button button-small" href={`${siteConfig.appUrl}/login`}>Open app</a>
+    <GitHubCta className="button button-small button-github" event="github_star_header_click" />
   </div></header>
 }
