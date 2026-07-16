@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { requestMagicLink, verifyMagicLink } from '../api/endpoints'
+import logo from '../assets/vaanievallogo.jpg'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -85,7 +86,7 @@ export function LoginPage() {
     <div className="login-page">
       <section className="login-hero" aria-label="VaaniEval sign in">
         <div className="login-brand">
-          <span className="login-brand-mark">V</span>
+          <img className="login-brand-mark" src={logo} alt="VaaniEval" />
           <span>VaaniEval</span>
         </div>
 

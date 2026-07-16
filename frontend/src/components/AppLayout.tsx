@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { logout } from '../api/endpoints'
+import logo from '../assets/vaanievallogo.jpg'
 
 export function AppLayout() {
   const navigate = useNavigate()
@@ -26,7 +27,8 @@ export function AppLayout() {
     <div className="app-shell">
       <aside className="app-sidebar">
         <Link to="/dashboard" className="sidebar-brand">
-          VaaniEval
+          <img src={logo} alt="VaaniEval" />
+          <span>VaaniEval</span>
         </Link>
 
         <nav className="sidebar-nav" aria-label="Primary">

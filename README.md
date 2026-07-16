@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/screenshots/twitter_banner.png" alt="VaaniEval banner" width="100%">
+  <img src="frontend/src/assets/vaanievallogo.jpg" alt="VaaniEval logo" width="180">
 </p>
 
 <h1 align="center"><a href="https://www.vaanieval.com/">VaaniEval</a></h1>

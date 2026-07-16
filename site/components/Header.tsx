@@ -2,10 +2,11 @@ import Link from 'next/link'
 import { GitHubCta } from './GitHubCta'
 import { TrackedLink } from './TrackedLink'
 import { siteConfig } from '@/lib/site'
+import logo from '../../frontend/src/assets/vaanievallogo.jpg'
 
 export function Header() {
   return <header className="site-header"><div className="shell nav-wrap">
-    <Link className="brand" href="/"><span className="brand-mark">V</span><span>VaaniEval</span></Link>
+    <Link className="brand" href="/"><img className="brand-mark" src={logo.src} alt="VaaniEval" /><span>VaaniEval</span></Link>
     <nav aria-label="Main navigation">
       <Link href="/voice-ai-evaluation">Product</Link><Link href="/integrations/elevenlabs">Integrations</Link><Link href="/resources/evaluation-metrics">Resources</Link><Link href="/blog">Blog</Link><Link href="/open-source">Open source</Link>
     </nav>

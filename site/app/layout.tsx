@@ -3,6 +3,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Analytics } from '@/components/Analytics'
 import { siteConfig } from '@/lib/site'
+import logo from '../../frontend/src/assets/vaanievallogo.jpg'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
   openGraph: { type: 'website', siteName: 'VaaniEval', title: 'VaaniEval — Self-hosted voice-agent evaluation', description: siteConfig.description, url: '/' },
   twitter: { card: 'summary_large_image', title: 'VaaniEval — Self-hosted voice-agent evaluation', description: siteConfig.description },
+  icons: { icon: logo.src },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION?.startsWith('replace-') ? undefined : process.env.GOOGLE_SITE_VERIFICATION,
     other: process.env.BING_SITE_VERIFICATION?.startsWith('replace-') ? {} : { 'msvalidate.01': process.env.BING_SITE_VERIFICATION || '' },

@@ -91,10 +91,21 @@ a:hover {
 }
 
 .sidebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-size: 1.25rem;
   font-weight: 800;
   color: #ffffff;
   padding: 2px 8px 14px;
+}
+
+.sidebar-brand img {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
 .sidebar-brand:hover {
@@ -1845,11 +1856,9 @@ button:disabled {
 .login-brand-mark {
   width: 42px;
   height: 42px;
-  display: inline-grid;
-  place-items: center;
+  display: block;
   border-radius: var(--workspace-radius);
-  background: #0f766e;
-  color: #ffffff;
+  object-fit: cover;
   box-shadow: 0 12px 24px rgba(15, 118, 110, 0.24);
 }
 
