@@ -34,6 +34,12 @@ VaaniEval helps voice-agent teams inspect real conversations, run evaluator-back
 
 > VaaniEval is currently a full-stack application, not a published Python package. The source of truth is the `backend/` FastAPI service, `frontend/` React app, and backend worker process.
 
+## Product Demo
+
+Watch the [VaaniEval product demo](https://youtu.be/6T0CatDgoEA) for a walkthrough of the conversation review and quality-evaluation workspace.
+
+[![Watch the VaaniEval product demo](https://img.youtube.com/vi/6T0CatDgoEA/hqdefault.jpg)](https://youtu.be/6T0CatDgoEA)
+
 ## Product Screenshots
 
 <p align="center">

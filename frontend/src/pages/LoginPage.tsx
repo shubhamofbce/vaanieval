@@ -98,6 +98,23 @@ export function LoginPage() {
           </p>
         </div>
 
+        <div className="login-demo" aria-labelledby="login-demo-title">
+          <div className="login-demo-heading">
+            <span className="login-eyebrow">Product demo</span>
+            <strong id="login-demo-title">See the workspace before you sign in.</strong>
+          </div>
+          <div className="login-demo-video">
+            <iframe
+              src="https://www.youtube.com/embed/6T0CatDgoEA"
+              title="VaaniEval product demo"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+        </div>
+
         <div className="login-signal-grid" aria-label="Product highlights">
           <div>
             <span><FontAwesomeIcon icon="wave-square" /></span>

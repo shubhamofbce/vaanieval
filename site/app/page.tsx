@@ -53,6 +53,24 @@ export default function Home() {
       </div>
     </section>
 
+    <section className="demo-section shell" aria-labelledby="demo-title">
+      <div className="section-intro">
+        <p className="eyebrow">Product walkthrough</p>
+        <h2 id="demo-title">See the VaaniEval review workflow in action.</h2>
+        <p className="lede-small">Watch a short product demo to see how conversations, quality scores, and supporting evidence come together in one review workspace.</p>
+      </div>
+      <div className="demo-video-frame">
+        <iframe
+          src="https://www.youtube.com/embed/6T0CatDgoEA"
+          title="VaaniEval product demo"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+      </div>
+    </section>
+
     <section className="metric-contrast"><div className="shell contrast-grid">
       <div><p className="eyebrow">The reporting gap</p><h2>Your voice platform tells you what happened. VaaniEval tells you whether it worked.</h2></div>
       <div className="contrast-cards">
