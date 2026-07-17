@@ -5,7 +5,7 @@
 <h1 align="center"><a href="https://www.vaanieval.com/">VaaniEval</a></h1>
 
 <p align="center">
-  Open-source evaluation workspace for production Voice AI agents.
+  Open-source evaluation workspace for production voice AI agents.
 </p>
 
 <p align="center">
@@ -14,11 +14,10 @@
 </p>
 
 <p align="center">
-  <a href="docs/quickstart.md">Quickstart</a> |
   <a href="docs/development.md">Development</a> |
-  <a href="docs/backend-architecture.md">Architecture</a> |
-  <a href="docs/metrics-and-gates.md">Metrics</a> |
-  <a href="docs/features/README.md">Feature Playbooks</a> |
+  <a href="docs/architecture.md">Architecture</a> |
+  <a href="DEPLOYMENT.md">Deployment</a> |
+  <a href="CONTRIBUTING.md">Contributing</a> |
   <a href="https://github.com/shubhamofbce/vaanieval/discussions">Discussions</a>
 </p>
 
@@ -32,7 +31,7 @@
 
 VaaniEval helps voice-agent teams inspect real conversations, run evaluator-backed quality checks, and turn production call data into actionable QA, product, and engineering feedback.
 
-> VaaniEval is currently a full-stack application, not a published Python package. The source of truth is the `backend/` FastAPI service, `frontend/` React app, and backend worker process.
+VaaniEval is a full-stack application, not a published Python package or supported CLI. It consists of a FastAPI backend, a queue worker, a React product app, and a Next.js public site.
 
 ## Product Demo
 
@@ -40,40 +39,20 @@ Watch the [VaaniEval product demo](https://youtu.be/6T0CatDgoEA) for a walkthrou
 
 [![Watch the VaaniEval product demo](https://img.youtube.com/vi/6T0CatDgoEA/hqdefault.jpg)](https://youtu.be/6T0CatDgoEA)
 
-## Product Screenshots
+## What VaaniEval provides
 
-<p align="center">
-  <img src="docs/assets/screenshots/dashboard-analytics.png" alt="VaaniEval dashboard" width="100%">
-</p>
-
-<p align="center">
-  <img src="docs/assets/screenshots/conversations-overview.png" alt="VaaniEval conversation list and review" width="100%">
-</p>
-
-## Why VaaniEval
-
-Most Voice AI teams outgrow pass/fail spot checks quickly. They need a repeatable way to import conversations, review evidence, score behavior, and understand where agents are improving or failing.
-
-VaaniEval gives you:
-
-- Production conversation ingestion from supported voice providers
+- Production conversation imports from supported voice providers
 - Transcript and audio review in a purpose-built conversation workspace
-- Evaluation runs with metric scores and rationales
+- Evaluator-backed scores with rationales and conversation evidence
 - Dashboard analytics for quality trends, KPIs, and agent-level drilldowns
-- Provider settings for voice platforms and evaluator models
-- Queue-backed imports and evaluations so long-running work does not block the app
+- Encrypted provider credentials and workspace-scoped data
+- Queue-backed imports and evaluations
 
-## What You Can Evaluate
+Use VaaniEval to examine task completion, resolution quality, unsupported claims, fallback behavior, and available operational signals.
 
-Use VaaniEval to review and score conversations for:
-
-- Task completion and resolution quality
-- Hallucination or unsupported claims
-- Fallback behavior and unresolved turns
-- Latency and operational quality signals
-- Agent, provider, and conversation-level trends
-
-See [Metrics and Gates](docs/metrics-and-gates.md) for the current metric model.
+<p align="center">
+  <img src="docs/assets/screenshots/dashboard-analytics.png" alt="VaaniEval quality dashboard" width="100%">
+</p>
 
 ## Quick Start
 
@@ -85,7 +64,7 @@ See [Metrics and Gates](docs/metrics-and-gates.md) for the current metric model.
 - ElevenLabs or Vapi credentials for importing conversations
 - Evaluator provider credentials, such as OpenAI, for scoring
 
-### One-command startup
+### Start the stack
 
 Windows:
 
@@ -111,9 +90,9 @@ Services:
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - Backend API docs: http://localhost:8000/docs
-- Worker: started by the dev scripts
+- Worker: started by the development scripts
 
-### First evaluation flow
+### Run an evaluation
 
 1. Open the frontend.
 2. Sign in with the local development flow.
@@ -122,24 +101,7 @@ Services:
 5. Open the Conversations workspace.
 6. Trigger an evaluation and inspect scores, rationales, transcript, and audio.
 
-For manual setup, environment variable, migrations, and troubleshooting, see the [Development Guide](docs/development.md).
-
-## How It Works
-
-1. Import production conversations from a supported voice provider.
-2. Normalize available transcripts, media, and metadata for review.
-3. Run evaluator-backed scores and retain rationales with each conversation.
-4. Review quality trends, then open the exact calls behind a weak result.
-
-## Product Surface
-
-| Area | What it does |
-| --- | --- |
-| Conversations | Review imported calls with transcript, metadata, audio playback, and evaluation context. |
-| Evaluation runs | Score conversations with evaluator-backed metrics and store rationales. |
-| Dashboard | Track KPIs, score trends, and top-agent performance. |
-| Provider settings | Connect voice providers and evaluator providers. |
-| Worker queue | Processes imports and evaluations outside the request lifecycle. |
+For manual setup, configuration, tests, and troubleshooting, see [Development](docs/development.md).
 
 ## Supported Integrations
 
@@ -148,93 +110,28 @@ For manual setup, environment variable, migrations, and troubleshooting, see the
 | ElevenLabs | Voice provider | Conversation import, agent discovery, media/transcript review |
 | Vapi | Voice provider | Conversation import and provider adapter support |
 | OpenAI | Evaluator provider | Default evaluator path |
-| Anthropic / LangChain | Evaluator provider | Backend provider modules available |
 
 Provider support is adapter-based. New voice providers should live behind backend provider adapters so provider-specific behavior stays isolated.
 
-## Tech Stack
-
-| Layer | Stack |
-| --- | --- |
-| Frontend | React, Vite, TypeScript, React Router, React Query, charting libraries, WaveSurfer |
-| Backend API | FastAPI, SQLAlchemy, Alembic, Pydantic |
-| Worker | DB-backed queue processor |
-| Local storage | SQLite by default |
-| Production storage | Designed to support managed databases such as PostgreSQL |
-
-## Screenshots
-
-### Conversations Workspace
-
-![Conversations Workspace](docs/assets/screenshots/conversations-workspace.png)
-
-### Conversation Detail
-
-![Conversation Detail](docs/assets/screenshots/conversation-detail.png)
-
-### Provider Settings
-
-![Provider Settings](docs/assets/screenshots/provider-settings.png)
-
-<details>
-<summary>More screenshots</summary>
-
-### Agents
-
-![Agents Page](docs/assets/screenshots/agents-page.png)
-
-### Import New Conversations
-
-![Import New](docs/assets/screenshots/import-new.png)
-
-### Onboarding Dashboard
-
-![Onboarding Dashboard](docs/assets/screenshots/onboarding-dashboard.png)
-
-</details>
-
-## Project Layout
+## Repository
 
 ```text
 .
-|-- backend/                 # FastAPI app, models, services, worker, migrations
-|-- frontend/                # React + Vite application
-|-- docs/                    # Architecture, setup, feature playbooks, metrics
-|-- datasets/                # Historical scenario datasets and references
-|-- tests/                   # Backend and evaluation tests
-|-- start-dev.cmd            # Windows launcher
-|-- start-dev.ps1            # Windows PowerShell launcher
-`-- start-dev.sh             # macOS/Linux launcher
+|-- backend/       # FastAPI API, worker, migrations, and provider adapters
+|-- frontend/      # Authenticated React product
+|-- site/          # Public Next.js acquisition site
+|-- datasets/      # Historical evaluation datasets
+|-- docs/          # Development and architecture guides
+|-- tests/         # Backend, provider, and evaluation tests
+`-- start-dev.*    # Local full-stack launchers
 ```
 
 ## Documentation
 
-- [Quickstart](docs/quickstart.md)
-- [Development Guide](docs/development.md)
-- [Backend Architecture](docs/backend-architecture.md)
-- [Backend API Reference](docs/cli-and-api.md)
-- [Configuration](docs/configuration.md)
-- [Metrics and Gates](docs/metrics-and-gates.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [Feature Playbooks](docs/features/README.md)
-- [V2 Plan](docs/v2-plan/README.md)
-
-## Development
-
-Run backend tests from the repository root:
-
-```bash
-pytest
-```
-
-Build the frontend:
-
-```bash
-cd frontend
-npm run build
-```
-
-See [docs/development.md](docs/development.md) for the full manual setup.
+- [Development](docs/development.md): local setup, configuration, tests, and troubleshooting
+- [Architecture](docs/architecture.md): components, data flow, queue, and security boundaries
+- [Deployment](DEPLOYMENT.md): production topology and deployment commands
+- [Contributing](CONTRIBUTING.md): contribution workflow and required checks
 
 ## Security And Privacy
 
@@ -243,21 +140,13 @@ VaaniEval is designed for production conversation review, so treat credentials a
 - Never commit real provider API keys or evaluator tokens.
 - Keep local secrets in `.env` files that are not tracked.
 - Use the backend Provider settings flow for connected provider credentials where possible.
-- Configure production database, cookie, SMTP, CORS, encryption, and cron secrets before deployment.
+- Configure production database, cookie, SMTP, CORS, and encryption secrets before deployment.
 
 If a credential is exposed, rotate it immediately.
 
 ## Contributing
 
-Contributions are welcome. Good first areas include:
-
-- New provider adapters
-- Evaluation metric improvements
-- Conversation review UX improvements
-- Import and worker reliability
-- Documentation and examples
-
-Before opening a PR, run the relevant backend and frontend checks and include screenshots for UI changes. See [docs/contributing.md](docs/contributing.md) for the full contribution guide.
+Contributions are welcome. Before opening a pull request, run the relevant checks and read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Community
 
@@ -273,13 +162,6 @@ reproducible defects and scoped implementation work.
 
 See the [community support guide](.github/SUPPORT.md) for category guidance and
 safe-posting expectations.
-
-## Roadmap
-
-- [V2 Plan Overview](docs/v2-plan/README.md)
-- [V2 Roadmap](docs/v2-plan/roadmap.md)
-- [V2 Score Taxonomy](docs/v2-plan/score-taxonomy.md)
-- [V2 Audio Scalability Plan](docs/v2-plan/audio-scalability-plan.md)
 
 ## License
 

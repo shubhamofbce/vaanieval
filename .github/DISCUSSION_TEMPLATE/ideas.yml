@@ -5,7 +5,7 @@ body:
       value: |
         Ideas are for proposals that would improve VaaniEval or its evaluation workflows. Describe the problem before prescribing the implementation so the community can explore alternatives.
 
-        Search existing discussions and the [V2 roadmap](https://github.com/shubhamofbce/vaanieval/blob/main/docs/v2-plan/roadmap.md) first. Never include API keys, credentials, or private conversation data.
+        Search existing discussions and issues first. Never include API keys, credentials, or private conversation data.
   - type: dropdown
     id: area
     attributes:

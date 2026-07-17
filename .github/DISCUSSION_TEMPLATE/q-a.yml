@@ -5,7 +5,7 @@ body:
       value: |
         Ask setup, usage, architecture, integration, or evaluation questions here. Maintainers or community members can mark a helpful reply as the answer.
 
-        Start with the [Quickstart](https://github.com/shubhamofbce/vaanieval/blob/main/docs/quickstart.md), [Development guide](https://github.com/shubhamofbce/vaanieval/blob/main/docs/development.md), and [Troubleshooting guide](https://github.com/shubhamofbce/vaanieval/blob/main/docs/troubleshooting.md). For a reproducible confirmed defect, open an issue instead. Never include API keys, credentials, or private conversation data.
+        Start with the [Development guide](https://github.com/shubhamofbce/vaanieval/blob/main/docs/development.md) and [Architecture guide](https://github.com/shubhamofbce/vaanieval/blob/main/docs/architecture.md). For a reproducible confirmed defect, open an issue instead. Never include API keys, credentials, or private conversation data.
   - type: dropdown
     id: area
     attributes:

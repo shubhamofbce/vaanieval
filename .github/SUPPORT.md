@@ -14,7 +14,7 @@ approaches, propose ideas, and share work built with VaaniEval.
 | Reproducible defect or scoped implementation task | [GitHub Issues](https://github.com/shubhamofbce/vaanieval/issues) |
 
 Before posting, search existing discussions and review the
-[documentation](../docs/index.md). Include the outcome you want, the relevant
+[development guide](../docs/development.md). Include the outcome you want, the relevant
 VaaniEval area, your version or commit when applicable, and sanitized evidence
 such as logs or examples.
 

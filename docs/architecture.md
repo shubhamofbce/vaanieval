@@ -1,39 +1,75 @@
-﻿# Architecture
+# Architecture
 
-VaaniEval is currently a full-stack app, not an installable Python package. The architecture is centered on a FastAPI backend, a React frontend, and a backend worker that processes imports and evaluations.
+VaaniEval is a full-stack workspace for importing, evaluating, and reviewing production voice-agent conversations.
 
-## High-level flow
+## Components
 
-1. Connect a voice provider account from the frontend.
-2. Discover agents and import production conversations.
-3. Normalize provider-specific conversation, transcript, media, and metadata into backend models.
-4. Queue import and evaluation jobs for the worker.
-5. Run evaluator providers against conversations and store metric scores with rationales.
-6. Surface transcripts, audio playback, scores, and aggregates in the frontend workspace.
+```mermaid
+flowchart LR
+    Site[Public Next.js site]
+    UI[React product app]
+    API[FastAPI API]
+    DB[(SQLite or PostgreSQL)]
+    Queue[DB-backed job queue]
+    Worker[Worker process]
+    Voice[Voice providers]
+    Evaluator[Evaluator providers]
 
-## Module map
+    UI --> API
+    API --> DB
+    API --> Queue
+    Worker --> Queue
+    Worker --> DB
+    Worker --> Voice
+    Worker --> Evaluator
+    API --> Voice
+```
 
-- `backend/app/main.py` FastAPI application entrypoint
-- `backend/app/api/v1/` API routes
-- `backend/app/providers/` voice provider adapters
-- `backend/app/services/` import, evaluation, auth, queue, credential, and provider services
-- `backend/app/models/` SQLAlchemy persistence models
-- `backend/app/worker.py` queue worker
-- `frontend/src/` React app, pages, components, and API client
+- `site/`: public acquisition site deployed separately from the product.
+- `frontend/`: authenticated React product.
+- `backend/app/main.py`: FastAPI application and HTTP entrypoint.
+- `backend/app/api/v1/`: workspace-scoped API routes.
+- `backend/app/services/`: auth, imports, evaluation, credentials, and queue orchestration.
+- `backend/app/providers/`: ElevenLabs and Vapi adapters.
+- `backend/app/models/`: SQLAlchemy persistence models.
+- `backend/app/worker.py`: leased queue worker with retries and dead-letter handling.
 
-## Provider strategy
+## Conversation flow
 
-Provider support is adapter-based. ElevenLabs and Vapi are supported through backend adapters so provider-specific behavior remains isolated from the rest of the app.
+1. A user connects a voice provider and discovers agents.
+2. The API creates an import job.
+3. The worker fetches provider conversations and normalizes transcripts, metadata, and media references.
+4. Evaluation jobs send conversation context to the configured evaluator.
+5. Metric scores and rationales are stored with the conversation.
+6. The product app presents conversations, evidence, scores, and dashboard aggregates.
 
-## Evaluation strategy
+## Data domains
 
-Evaluations are managed by backend services and worker jobs. Evaluator providers produce metric scores and rationales that are stored with the conversation and displayed in the review workspace and dashboard.
-
-## Data model highlights
-
-- Users, sessions, and workspace auth state
-- Provider accounts and discovered agents
-- Conversations, transcript turns, insights, and media
-- Import jobs and queue jobs
+- Users, workspaces, memberships, and sessions
+- Voice and evaluator provider accounts
+- Agents and normalized conversations
+- Transcript turns, insights, and media references
+- Import jobs, queue jobs, retries, and dead letters
 - Evaluation runs and metric scores
 
+## Integration boundaries
+
+Provider-specific behavior belongs in `backend/app/providers/`. Shared API models and persistence models must not depend on provider-native payload shapes.
+
+The API and worker must use the same database. Queue handlers must remain idempotent because jobs can be retried after a failed lease.
+
+## Security boundaries
+
+- API queries and writes are scoped to the authenticated workspace.
+- Provider credentials are encrypted before storage.
+- Production cookies require secure settings and explicit allowed origins.
+- The API and worker share secrets and database access, but only the API is public.
+- Conversation data can still be sent to configured voice and evaluator providers; self-hosting does not remove those external data flows.
+
+## Frontend conventions
+
+The canonical design tokens live in `frontend/src/index.css`. Reuse existing components and CSS variables, keep product screens compact, and validate desktop and mobile layouts.
+
+## API reference
+
+FastAPI generates the maintained OpenAPI reference at `/docs` while the backend is running.
