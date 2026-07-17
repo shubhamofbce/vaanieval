@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="280mm" height="330mm" viewBox="0 0 2800 3300" role="img" aria-labelledby="title desc">
+  <title id="title">VaaniEval dark-shirt back print</title>
+  <desc id="desc">Official VaaniEval icon above the phrase Trust, but evaluate, for black and dark-colored shirts.</desc>
+  <image x="800" y="50" width="1200" height="966" href="vaanieval-official-logo-dark-shirt.png"/>
+  <g fill="#F7F8F3" font-family="Verdana, Arial, sans-serif" font-weight="800" text-anchor="middle">
+    <text x="1400" y="1620" font-size="360" letter-spacing="-17">TRUST, BUT</text>
+    <text x="1400" y="2110" font-size="405" letter-spacing="-20">EVALUATE.</text>
+  </g>
+  <text x="1400" y="2570" font-family="Verdana, Arial, sans-serif" font-size="150" font-weight="700" text-anchor="middle">
+    <tspan fill="#00EBD6">VaaniEval</tspan><tspan fill="#F7F8F3"> · Voice Agent QA</tspan>
+  </text>
+</svg>

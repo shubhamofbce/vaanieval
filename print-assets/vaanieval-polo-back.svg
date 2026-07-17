@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="280mm" height="330mm" viewBox="0 0 2800 3300" role="img" aria-labelledby="title desc">
+  <title id="title">VaaniEval back print</title>
+  <desc id="desc">A voice waveform flows through transcript, rationale, and audio evidence into a checkmark, followed by Trust, but evaluate.</desc>
+
+  <defs>
+    <mask id="chat-cutout" maskUnits="userSpaceOnUse" x="1330" y="245" width="300" height="250">
+      <path d="M1392 270h176a42 42 0 0 1 42 42v70a42 42 0 0 1-42 42h-64l-54 48v-48h-58a42 42 0 0 1-42-42v-70a42 42 0 0 1 42-42z" fill="#FFFFFF"/>
+      <circle cx="1428" cy="347" r="13" fill="#000000"/>
+      <circle cx="1480" cy="347" r="13" fill="#000000"/>
+      <circle cx="1532" cy="347" r="13" fill="#000000"/>
+    </mask>
+    <mask id="transcript-cutout" maskUnits="userSpaceOnUse" x="1370" y="540" width="220" height="280">
+      <rect x="1395" y="565" width="170" height="230" rx="12" fill="#FFFFFF"/>
+      <g stroke="#000000" stroke-width="18" stroke-linecap="round">
+        <path d="M1430 620h100M1430 670h100M1430 720h75"/>
+      </g>
+    </mask>
+  </defs>
+
+  <!-- Voice waveform -->
+  <g fill="none" stroke="#0C706B" stroke-linecap="round" stroke-width="26">
+    <path d="M185 575v210M235 500v360M285 430v500M335 350v660M385 455v450M435 280v800M485 405v550M535 485v390M585 540v280M635 575v210M685 610v140"/>
+    <path d="M145 680h620" stroke-width="15"/>
+  </g>
+
+  <!-- Evidence flow -->
+  <g fill="none" stroke="#0C706B" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M765 680c260 0 310-350 570-350"/>
+    <path d="M765 680h570"/>
+    <path d="M765 680c260 0 310 350 570 350"/>
+    <path d="M1625 330c225 0 265 350 430 350"/>
+    <path d="M1625 680h430"/>
+    <path d="M1625 1030c225 0 265-350 430-350"/>
+  </g>
+
+  <!-- Evidence nodes -->
+  <g fill="none" stroke="#0C706B" stroke-width="24">
+    <circle cx="1480" cy="330" r="145"/>
+    <circle cx="1480" cy="680" r="145"/>
+    <circle cx="1480" cy="1030" r="145"/>
+    <circle cx="2260" cy="680" r="168" stroke="#78CDB5"/>
+  </g>
+
+  <!-- Conversation icon -->
+  <rect x="1330" y="245" width="300" height="250" fill="#1F2828" mask="url(#chat-cutout)"/>
+
+  <!-- Transcript icon -->
+  <rect x="1370" y="540" width="220" height="280" fill="#1F2828" mask="url(#transcript-cutout)"/>
+
+  <!-- Audio evidence icon -->
+  <g stroke="#1F2828" stroke-width="25" stroke-linecap="round">
+    <path d="M1388 1030v82M1434 974v194M1480 930v282M1526 980v180M1572 1020v100"/>
+  </g>
+
+  <!-- Verified check -->
+  <path d="M2165 684l70 73 134-165" fill="none" stroke="#78CDB5" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Headline -->
+  <g fill="#1F2828" font-family="Verdana, Arial, sans-serif" font-weight="800" text-anchor="middle">
+    <text x="1400" y="1780" font-size="365" letter-spacing="-18">TRUST, BUT</text>
+    <text x="1400" y="2265" font-size="405" letter-spacing="-20">EVALUATE.</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="1400" y="2670" font-family="Verdana, Arial, sans-serif" font-size="150" font-weight="700" text-anchor="middle">
+    <tspan fill="#0C706B">VaaniEval</tspan><tspan fill="#1F2828"> · Voice Agent QA</tspan>
+  </text>
+</svg>
