@@ -84,63 +84,13 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <section className="login-hero" aria-label="VaaniEval sign in">
-        <div className="login-brand">
-          <img className="login-brand-mark" src={logo} alt="VaaniEval" />
-          <span>VaaniEval</span>
-        </div>
-
-        <div className="login-hero-copy">
-          <p className="login-eyebrow">Voice AI evaluation workspace</p>
-          <h1>Understand every agent conversation before it becomes a customer issue.</h1>
-          <p>
-            Import calls, score transcripts, and track provider quality from one focused review
-            workspace.
-          </p>
-        </div>
-
-        <div className="login-demo" aria-labelledby="login-demo-title">
-          <div className="login-demo-heading">
-            <span className="login-eyebrow">Product demo</span>
-            <strong id="login-demo-title">See the workspace before you sign in.</strong>
-          </div>
-          <div className="login-demo-video">
-            <iframe
-              src="https://www.youtube.com/embed/6T0CatDgoEA"
-              title="VaaniEval product demo"
-              loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-          </div>
-        </div>
-
-        <div className="login-signal-grid" aria-label="Product highlights">
-          <div>
-            <span><FontAwesomeIcon icon="wave-square" /></span>
-            <strong>Audio review</strong>
-            <p>Replay calls with synchronized transcript context.</p>
-          </div>
-          <div>
-            <span><FontAwesomeIcon icon="chart-line" /></span>
-            <strong>Quality scoring</strong>
-            <p>Spot risk trends across agents and conversations.</p>
-          </div>
-          <div>
-            <span><FontAwesomeIcon icon="shield" /></span>
-            <strong>Workspace scoped</strong>
-            <p>Secure magic-link access with provider data separated.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="login-card" aria-label="Sign in form">
+      <section className="login-card" aria-label="Start free">
         <div className="login-card-header">
           <span className="login-card-icon"><FontAwesomeIcon icon="lock" /></span>
           <div>
-            <h2>Sign in to your workspace</h2>
-            <p>Use your work email and we will send a secure magic link.</p>
+            <p className="login-card-kicker">Free to try</p>
+            <h2>Start free with your work email</h2>
+            <p>We’ll email a secure sign-in link — no password.</p>
           </div>
         </div>
 
@@ -161,18 +111,20 @@ export function LoginPage() {
           <button className="login-primary-button" type="submit" disabled={isSending}>
             {isSending ? (
               <>
-                <FontAwesomeIcon icon="circle-notch" spin /> Sending link
+                <FontAwesomeIcon icon="circle-notch" spin /> Sending your link
               </>
             ) : (
               <>
-                <FontAwesomeIcon icon="link" /> Send magic link
+                <FontAwesomeIcon icon="link" /> Email me a sign-in link
               </>
             )}
           </button>
         </form>
 
+        <p className="login-assurance">Free to try <span>·</span> No password <span>·</span> Takes a minute</p>
+
         <div className="login-divider">
-          <span>Already have a token?</span>
+          <span>Already received a sign-in token?</span>
         </div>
 
         <button
@@ -182,12 +134,12 @@ export function LoginPage() {
           aria-expanded={isTokenPanelOpen}
         >
           <FontAwesomeIcon icon="key" />
-          {isTokenPanelOpen ? 'Hide token entry' : 'Enter magic token'}
+          {isTokenPanelOpen ? 'Hide token entry' : 'Enter sign-in token'}
         </button>
 
         {isTokenPanelOpen && (
           <form className="login-token-form" onSubmit={handleVerify}>
-            <label htmlFor="token">Magic token</label>
+            <label htmlFor="token">Sign-in token</label>
             <div className="login-input-shell">
               <FontAwesomeIcon icon="key" />
               <input
@@ -220,6 +172,39 @@ export function LoginPage() {
             <p>{error || message}</p>
           </div>
         )}
+      </section>
+
+      <section className="login-hero" aria-label="VaaniEval sign in">
+        <div className="login-brand">
+          <img className="login-brand-mark" src={logo} alt="VaaniEval" />
+          <span>VaaniEval</span>
+        </div>
+
+        <div className="login-hero-copy">
+          <p className="login-eyebrow">Voice AI evaluation workspace</p>
+          <h1>Review every voice-agent call with confidence.</h1>
+          <p>
+            See what worked, spot issues, and improve your agents with evidence from real
+            conversations.
+          </p>
+        </div>
+
+        <div className="login-demo" aria-labelledby="login-demo-title">
+          <div className="login-demo-heading">
+            <span className="login-eyebrow">Product tour</span>
+            <strong id="login-demo-title">Watch the 90-second product tour</strong>
+          </div>
+          <div className="login-demo-video">
+            <iframe
+              src="https://www.youtube.com/embed/6T0CatDgoEA"
+              title="VaaniEval product demo"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+        </div>
       </section>
     </div>
   )

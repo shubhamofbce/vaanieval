@@ -1,3 +1,11 @@
+import { hammingPost } from './posts/hamming-ai'
+import { covalPost } from './posts/coval-ai'
+import { cekuraPost } from './posts/cekura'
+import { roarkPost } from './posts/roark'
+import { braintrustPost } from './posts/braintrust'
+import { langfusePost } from './posts/langfuse'
+import { alternativesPost } from './posts/alternatives-guide'
+
 export const siteConfig = {
   name: 'VaaniEval',
   description: 'Open-source, self-hosted evaluation workspace for production voice-agent conversations.',
@@ -20,6 +28,13 @@ export type BlogPost = {
 }
 
 export const posts: BlogPost[] = [
+  hammingPost,
+  covalPost,
+  cekuraPost,
+  roarkPost,
+  braintrustPost,
+  langfusePost,
+  alternativesPost,
   {
     slug: 'evaluate-bolna-voice-agent-calls',
     title: 'How to evaluate Bolna voice-agent calls with VaaniEval',
