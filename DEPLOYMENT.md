@@ -105,5 +105,6 @@ Also verify:
 
 - `https://www.vaanieval.com` serves the public site.
 - `https://app.vaanieval.com` serves the product and remains excluded from indexing.
+- `https://api.vaanieval.com` sends `X-Robots-Tag: noindex, nofollow` on API and documentation responses.
 - API and worker logs show the same database configuration.
 - Migrations completed before imports or evaluations are started.
