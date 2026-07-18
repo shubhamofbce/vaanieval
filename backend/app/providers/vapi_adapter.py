@@ -35,7 +35,13 @@ class VapiProviderAdapter(ProviderAdapter):
             end_date=end_date,
         )
 
-    def get_conversation_detail(self, conversation_id: str, *, refresh_analysis: bool = False) -> dict[str, Any]:
+    def get_conversation_detail(
+        self,
+        conversation_id: str,
+        *,
+        refresh_analysis: bool = False,
+        agent_id: str | None = None,
+    ) -> dict[str, Any]:
         # Vapi does not currently expose a separate analysis-run endpoint in this path.
         return self._client.get_call(conversation_id)
 

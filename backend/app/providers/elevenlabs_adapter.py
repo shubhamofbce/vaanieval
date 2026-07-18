@@ -31,7 +31,13 @@ class ElevenLabsProviderAdapter(ProviderAdapter):
         # agent/date filtering in this integration path today.
         return self._client.list_conversations(cursor=cursor, page_size=page_size)
 
-    def get_conversation_detail(self, conversation_id: str, *, refresh_analysis: bool = False) -> dict[str, Any]:
+    def get_conversation_detail(
+        self,
+        conversation_id: str,
+        *,
+        refresh_analysis: bool = False,
+        agent_id: str | None = None,
+    ) -> dict[str, Any]:
         if refresh_analysis:
             return self._client.run_conversation_analysis(conversation_id)
         return self._client.get_conversation_detail(conversation_id)

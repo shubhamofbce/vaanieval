@@ -35,6 +35,7 @@ class Settings(BaseSettings):
 
     elevenlabs_api_base: str = "https://api.elevenlabs.io"
     vapi_api_base: str = "https://api.vapi.ai"
+    bolna_api_base: str = "https://api.bolna.ai"
     openai_api_base: str = "https://api.openai.com/v1"
 
     @property

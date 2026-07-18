@@ -10,7 +10,9 @@ function formatProviderName(providerName: string) {
     ? 'ElevenLabs'
     : providerName === 'vapi'
       ? 'Vapi'
-      : providerName
+      : providerName === 'bolna'
+        ? 'Bolna'
+        : providerName
 }
 
 function toDateInputValue(date: Date) {

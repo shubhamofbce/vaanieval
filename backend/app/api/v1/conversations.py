@@ -441,6 +441,7 @@ def get_conversation_insights(
         detail = adapter.get_conversation_detail(
             row.provider_conversation_id,
             refresh_analysis=refresh_analysis,
+            agent_id=row.provider_agent_id,
         )
         payload = adapter.build_insight_payload(
             conversation_id=row.id,

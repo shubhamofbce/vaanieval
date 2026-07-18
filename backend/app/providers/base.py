@@ -46,7 +46,17 @@ class ProviderAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_conversation_detail(self, conversation_id: str, *, refresh_analysis: bool = False) -> dict[str, Any]:
+    def get_conversation_detail(
+        self,
+        conversation_id: str,
+        *,
+        refresh_analysis: bool = False,
+        agent_id: str | None = None,
+    ) -> dict[str, Any]:
+        # `agent_id` is optional and only required by providers (e.g. Bolna) whose
+        # conversation-detail endpoint is nested under the owning agent. Callers should
+        # pass it when available (e.g. Conversation.provider_agent_id) so those
+        # providers can address the endpoint directly instead of resolving it.
         raise NotImplementedError
 
     @abstractmethod

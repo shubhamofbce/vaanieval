@@ -9,7 +9,7 @@ import { StatusPill } from '../components/StatusPill'
 const IMPORT_DAYS_OPTIONS = [7, 30, 60]
 
 function formatProviderName(providerName: string) {
-  return providerName === 'elevenlabs' ? 'ElevenLabs' : providerName === 'vapi' ? 'Vapi' : providerName
+  return providerName === 'elevenlabs' ? 'ElevenLabs' : providerName === 'vapi' ? 'Vapi' : providerName === 'bolna' ? 'Bolna' : providerName
 }
 
 type AgentImportState = {

@@ -37,7 +37,7 @@ def create_import_job(
     )
     if not account:
         raise ValueError("Provider account not found")
-    if account.provider_name not in {"elevenlabs", "vapi"}:
+    if account.provider_name not in {"elevenlabs", "vapi", "bolna"}:
         raise ValueError(
             f"Historical import is not supported for provider {account.provider_name}."
         )
@@ -89,10 +89,16 @@ def run_import_page_fetch(db: Session, payload: dict) -> None:
         conversation_id = item.get("conversation_id") or item.get("id")
         if not conversation_id:
             continue
+        job_payload = {"import_job_id": import_job.id, "conversation_id": conversation_id}
+        # Providers whose detail endpoint is nested under the owning agent (e.g. Bolna)
+        # need the agent id before the Conversation row exists; carry it via the job.
+        provider_agent_id = item.get("agent_id")
+        if isinstance(provider_agent_id, str) and provider_agent_id:
+            job_payload["provider_agent_id"] = provider_agent_id
         enqueue_job(
             db,
             job_type=IMPORT_CONVERSATION_DETAIL,
-            payload={"import_job_id": import_job.id, "conversation_id": conversation_id},
+            payload=job_payload,
             priority=60,
         )
 
@@ -106,6 +112,7 @@ def run_import_page_fetch(db: Session, payload: dict) -> None:
 def run_import_conversation_detail(db: Session, payload: dict) -> None:
     import_job_id = payload["import_job_id"]
     conversation_id = payload["conversation_id"]
+    provider_agent_id = payload.get("provider_agent_id")
 
     import_job = db.scalar(select(ImportJob).where(ImportJob.id == import_job_id))
     if not import_job:
@@ -119,7 +126,7 @@ def run_import_conversation_detail(db: Session, payload: dict) -> None:
         provider_name=account.provider_name,
         api_key=decrypt_secret(account.api_key),
     )
-    detail = adapter.get_conversation_detail(conversation_id)
+    detail = adapter.get_conversation_detail(conversation_id, agent_id=provider_agent_id)
     normalized_detail = adapter.normalize_conversation_detail(detail)
     provider_agent_id = normalized_detail.provider_agent_id
     language = normalized_detail.language
@@ -216,14 +223,14 @@ def run_backfill_conversation_timestamp(db: Session, payload: dict) -> None:
         return
 
     account = db.scalar(select(ProviderAccount).where(ProviderAccount.id == record.provider_account_id))
-    if not account or account.provider_name not in {"elevenlabs", "vapi"}:
+    if not account or account.provider_name not in {"elevenlabs", "vapi", "bolna"}:
         return
 
     adapter = get_provider_adapter(
         provider_name=account.provider_name,
         api_key=decrypt_secret(account.api_key),
     )
-    detail = adapter.get_conversation_detail(record.provider_conversation_id)
+    detail = adapter.get_conversation_detail(record.provider_conversation_id, agent_id=record.provider_agent_id)
     normalized_detail = adapter.normalize_conversation_detail(detail)
 
     if normalized_detail.started_at is not None:
