@@ -1,0 +1,104 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-vaanieval-prod-06260116
+  REGISTRY: acrvaanieval06260116.azurecr.io
+  IMAGE: vaanieval-backend
+  API_APP: ca-vaanieval-api-prod-06260116
+  WORKER_APP: ca-worker-06260116
+  MIGRATE_JOB: job-migrate-06260116
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image
+        run: |
+          az acr build \
+            --registry "${{ env.REGISTRY }}" \
+            --image "${{ env.IMAGE }}:latest" \
+            --image "${{ env.IMAGE }}:${{ github.sha }}" \
+            --file backend/Dockerfile \
+            backend
+
+      - name: Run database migration
+        run: |
+          az containerapp job update \
+            --name "${{ env.MIGRATE_JOB }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --image "${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}"
+
+          EXECUTION_NAME=$(az containerapp job start \
+            --name "${{ env.MIGRATE_JOB }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query name -o tsv)
+          echo "Migration execution: $EXECUTION_NAME"
+
+          for i in $(seq 1 30); do
+            STATUS=$(az containerapp job execution list \
+              --name "${{ env.MIGRATE_JOB }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --query "[?name=='$EXECUTION_NAME'].properties.status" -o tsv)
+            echo "Attempt $i: $STATUS"
+            if [ "$STATUS" == "Succeeded" ]; then
+              exit 0
+            fi
+            if [ "$STATUS" == "Failed" ]; then
+              echo "::error::Migration job failed"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "::error::Migration job timed out waiting for completion"
+          exit 1
+
+      - name: Deploy API
+        run: |
+          az containerapp update \
+            --name "${{ env.API_APP }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --image "${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}"
+
+      - name: Deploy worker
+        run: |
+          az containerapp update \
+            --name "${{ env.WORKER_APP }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --image "${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}"
+
+      - name: Verify health
+        run: |
+          sleep 15
+          for endpoint in live ready; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://api.vaanieval.com/health/$endpoint")
+            echo "health/$endpoint: $CODE"
+            if [ "$CODE" != "200" ]; then
+              echo "::error::health/$endpoint returned $CODE"
+              exit 1
+            fi
+          done

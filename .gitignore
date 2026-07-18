@@ -27,6 +27,8 @@ node_modules/
 
 *.txt
 !frontend/public/robots.txt
+!backend/requirements.txt
+!backend/requirements-dev.txt
 
 # Local database files and ad hoc CLI symlinks
 /backend.db
