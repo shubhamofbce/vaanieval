@@ -8,6 +8,10 @@ WORKDIR /app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
+    && curl -fsSL -o /tmp/audiowaveform.deb \
+        https://github.com/bbc/audiowaveform/releases/download/1.10.2/audiowaveform_1.10.2-1-13_amd64.deb \
+    && apt-get install -y --no-install-recommends /tmp/audiowaveform.deb \
+    && rm -f /tmp/audiowaveform.deb \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
