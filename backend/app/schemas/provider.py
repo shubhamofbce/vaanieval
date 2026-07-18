@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class ConnectProviderRequest(BaseModel):
@@ -19,6 +20,7 @@ class ProviderAgentResponse(BaseModel):
 class ProviderConnectionResponse(BaseModel):
     id: str
     provider_name: str
+    agent_count: int
 
 
 class ProviderConnectionListItem(BaseModel):

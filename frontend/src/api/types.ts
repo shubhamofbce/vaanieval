@@ -11,6 +11,7 @@ export type MessageResponse = {
 export type ProviderConnectionResponse = {
   id: string
   provider_name: string
+  agent_count: number
 }
 
 export type ProviderConnectionListItem = {
@@ -232,6 +233,17 @@ export type DashboardAgentSummary = {
   average_task_completion_score: number | null
 }
 
+export type DashboardReviewQueueItem = {
+  conversation_id: string
+  agent_name: string
+  timestamp: string
+  overall_score: number | null
+  weakest_metric_label: string | null
+  weakest_metric_score: number | null
+  qa_summary: string | null
+  recommended_next_step: string | null
+}
+
 export type DashboardOverviewResponse = {
   start_date: string
   end_date: string
@@ -243,4 +255,5 @@ export type DashboardOverviewResponse = {
   outcome_breakdown: DashboardOutcomeBucket[]
   trend: DashboardTrendPoint[]
   agent_breakdown: DashboardAgentSummary[]
+  review_queue: DashboardReviewQueueItem[]
 }

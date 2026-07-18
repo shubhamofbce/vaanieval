@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { createImport, getImportProgress, listAgents, setDefaultAgent } from '../api/endpoints'
 import type { ProviderAgentResponse } from '../api/types'
 import { EmptyState } from '../components/EmptyState'
-import { PageHeader } from '../components/PageHeader'
 import { StatusPill } from '../components/StatusPill'
 
 const IMPORT_DAYS_OPTIONS = [7, 30, 60]
@@ -200,15 +199,12 @@ export function AgentsPage() {
 
   return (
     <section className="page agents-page">
-      <PageHeader
-        icon="users"
-        title="Agents"
-        subtitle="Pick an agent, set defaults, and jump into filtered conversation review instantly."
-        className="provider-hero"
-      />
-
-      <div className="panel">
-        <div className="inline">
+      <div className="agents-control-row">
+        <div className="workspace-compact-heading">
+          <h1>Agents</h1>
+          <p className="muted">Manage defaults, imports, and review queues without leaving the page.</p>
+        </div>
+        <div className="agents-control-actions">
           <button type="button" onClick={() => handleLoad(true)} disabled={loading}>
             <span className="control-with-icon">
               <FontAwesomeIcon icon="arrow-rotate-right" />
@@ -223,7 +219,7 @@ export function AgentsPage() {
           </button>
         </div>
 
-        <div className="agents-toolbar">
+        <div className="agents-toolbar agents-toolbar-compact">
           <div className="agents-filter-field">
             <label htmlFor="agent-provider-filter">Provider</label>
             <select
@@ -251,16 +247,12 @@ export function AgentsPage() {
             />
           </div>
         </div>
-
-        {loading && <p className="muted">Loading agents...</p>}
-        <p className="muted">
-          <FontAwesomeIcon icon="link" /> Agents are loaded across every connected provider account in your workspace.
-        </p>
-        {error && <p className="error">{error}</p>}
       </div>
 
-      <div className="panel">
-        <h2>Your agents</h2>
+      {loading && <p className="muted">Loading agents...</p>}
+      {error && <p className="error">{error}</p>}
+
+      <div className="panel agents-list-panel">
         {agents.length === 0 ? (
           <EmptyState
             icon="headset"

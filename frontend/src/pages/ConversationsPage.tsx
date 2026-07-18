@@ -13,7 +13,6 @@ import {
   listAgents,
   listProviderConnections,
 } from '../api/endpoints'
-import { PageHeader } from '../components/PageHeader'
 import { Skeleton } from '../components/Skeleton'
 import {
   buildQaSummary,
@@ -737,16 +736,16 @@ export function ConversationsPage() {
 
   return (
     <section className="page conversations-workspace workspace-page">
-      <PageHeader
-        className="conversations-header"
-        icon="comments"
-        title="Conversations"
-        subtitle={
-          preselectedAgentId
-            ? `Showing calls for ${preselectedAgentName || 'selected agent'}.`
-            : 'Start with the calls most likely to need a fix.'
-        }
-      />
+      <div className="workspace-compact-heading">
+        <div>
+          <h1>Conversations</h1>
+          <p className="muted">
+            {preselectedAgentId
+              ? `Showing calls for ${preselectedAgentName || 'selected agent'}.`
+              : 'Start with the calls most likely to need a fix.'}
+          </p>
+        </div>
+      </div>
 
       <div className="panel conversations-toolbar">
         <div className="conversations-toolbar-primary">

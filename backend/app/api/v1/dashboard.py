@@ -18,6 +18,7 @@ from app.schemas.dashboard import (
     DashboardMetricSummary,
     DashboardOverviewResponse,
     DashboardOutcomeBucket,
+    DashboardReviewQueueItem,
     DashboardSummary,
     DashboardTrendPoint,
 )
@@ -204,6 +205,8 @@ def _build_records(
                 'required_info_capture_score': float(metric_map['required_info_capture_score'].score_value) if 'required_info_capture_score' in metric_map else None,
                 'ai_detectability_score': float(metric_map['ai_detectability_score'].score_value) if 'ai_detectability_score' in metric_map else None,
                 'confidence_by_metric': {metric.metric_key: metric.confidence for metric in metrics if metric.confidence is not None},
+                'qa_summary': latest_run.qa_summary if latest_run else None,
+                'recommended_next_step': latest_run.recommended_next_step if latest_run else None,
             }
         )
     return records
@@ -332,6 +335,35 @@ def _build_agent_breakdown(records: list[dict[str, object]]) -> list[DashboardAg
     return summaries[:8]
 
 
+def _build_review_queue(records: list[dict[str, object]]) -> list[DashboardReviewQueueItem]:
+    items: list[DashboardReviewQueueItem] = []
+    for row in records:
+        if not row['evaluated'] or row['is_success']:
+            continue
+
+        scored_metrics = [
+            (metric_key, _metric_quality_score(metric_key, float(row[metric_key])))
+            for metric_key in _METRIC_ORDER
+            if row.get(metric_key) is not None
+        ]
+        weakest_metric_key, weakest_metric_score = min(scored_metrics, key=lambda item: item[1], default=(None, None))
+        items.append(
+            DashboardReviewQueueItem(
+                conversation_id=str(row['id']),
+                agent_name=str(row['agent_name']),
+                timestamp=row['timestamp'],
+                overall_score=float(row['overall_score']) if row['overall_score'] is not None else None,
+                weakest_metric_label=_METRIC_LABELS.get(weakest_metric_key) if weakest_metric_key else None,
+                weakest_metric_score=weakest_metric_score,
+                qa_summary=str(row['qa_summary']) if row['qa_summary'] else None,
+                recommended_next_step=str(row['recommended_next_step']) if row['recommended_next_step'] else None,
+            )
+        )
+
+    items.sort(key=lambda item: (item.overall_score if item.overall_score is not None else 101, item.timestamp))
+    return items[:5]
+
+
 @router.get('', response_model=DashboardOverviewResponse)
 def get_dashboard_overview(
     workspace_id: str = Depends(get_current_workspace_id),
@@ -414,4 +446,5 @@ def get_dashboard_overview(
         outcome_breakdown=_build_outcome_breakdown(current_records),
         trend=_build_time_series(current_records, start_date=current_start_date, end_date=current_end_date),
         agent_breakdown=_build_agent_breakdown(current_records),
+        review_queue=_build_review_queue(current_records),
     )

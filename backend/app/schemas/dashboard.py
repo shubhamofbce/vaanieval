@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -75,6 +75,17 @@ class DashboardAgentSummary(BaseModel):
     average_task_completion_score: float | None = None
 
 
+class DashboardReviewQueueItem(BaseModel):
+    conversation_id: str
+    agent_name: str
+    timestamp: datetime
+    overall_score: float | None = None
+    weakest_metric_label: str | None = None
+    weakest_metric_score: float | None = None
+    qa_summary: str | None = None
+    recommended_next_step: str | None = None
+
+
 class DashboardOverviewResponse(BaseModel):
     start_date: date
     end_date: date
@@ -86,3 +97,4 @@ class DashboardOverviewResponse(BaseModel):
     outcome_breakdown: list[DashboardOutcomeBucket]
     trend: list[DashboardTrendPoint]
     agent_breakdown: list[DashboardAgentSummary]
+    review_queue: list[DashboardReviewQueueItem]

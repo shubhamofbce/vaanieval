@@ -15,9 +15,8 @@ import type { ChartOptions, TooltipItem } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { getDashboardOverview } from '../api/endpoints'
 import type { DashboardMetricSummary, DashboardOverviewResponse, DashboardTrendPoint } from '../api/types'
-import { PageHeader } from '../components/PageHeader'
 import { StatCard } from '../components/StatCard'
-import { formatDateOnly, humanizeOutcome } from '../lib/format'
+import { formatDateOnly } from '../lib/format'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, ChartTooltip, Legend)
 
@@ -229,32 +228,25 @@ export function DashboardPage() {
   const hasPreviousBaseline = overview
     ? Object.values(overview.comparison).some((item) => item.previous != null)
     : false
-  const totalOutcomes = overview?.outcome_breakdown.reduce((total, bucket) => total + bucket.count, 0) ?? 0
   const unknownOutcomeCount = overview?.outcome_breakdown.find((bucket) => bucket.outcome === 'unknown')?.count ?? 0
+  const providerOutcomeCount = Math.max(0, (summary?.conversations ?? 0) - unknownOutcomeCount)
   const sortedMetrics = overview ? [...overview.metric_summaries].sort((a, b) => (a.average_score ?? 101) - (b.average_score ?? 101)) : []
+  const hasEnoughTrendData = (summary?.conversations ?? 0) >= 10
 
   return (
     <section className="page workspace-page dashboard-page">
-      <PageHeader
-        icon="chart-line"
-        title="Dashboard"
-        subtitle="Track the calls, agents, and score areas that need review next."
-        className="dashboard-header"
-        actions={
-          <div className="dashboard-range-switcher" role="tablist" aria-label="Dashboard time range">
-            {RANGE_OPTIONS.map((option) => (
-              <button
-                key={option.key}
-                type="button"
-                className={option.key === selectedRange ? 'workspace-filter-button active' : 'workspace-filter-button'}
-                onClick={() => setSearchParams({ range: option.key })}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        }
-      />
+      <div className="dashboard-control-row">
+        <div>
+          <h1>Dashboard</h1>
+          <p className="muted">Review the calls and score areas that need action next.</p>
+        </div>
+        <label className="dashboard-period-control">
+          <span>Period</span>
+          <select value={selectedRange} onChange={(event) => setSearchParams({ range: event.target.value })} aria-label="Dashboard time range">
+            {RANGE_OPTIONS.map((option) => <option key={option.key} value={option.key}>Last {option.days} days</option>)}
+          </select>
+        </label>
+      </div>
 
       {error ? <div className="panel dashboard-alert dashboard-alert-error">{error}</div> : null}
       {loading && !overview ? <div className="panel dashboard-alert">Loading dashboard...</div> : null}
@@ -313,16 +305,59 @@ export function DashboardPage() {
                   {hasPreviousBaseline ? `, compared with ${formatDateOnly(overview.previous_start_date)} to ${formatDateOnly(overview.previous_end_date)}.` : '. No previous baseline is available for this range.'}
                 </p>
               </div>
-              <Link to="/conversations" className="dashboard-primary-action">
+              <Link to="#review-queue" className="dashboard-primary-action">
                 <FontAwesomeIcon icon="arrow-up-right-from-square" />
-                <span>Open review queue</span>
+                <span>See priority calls</span>
               </Link>
             </section>
 
-            <section className="dashboard-main-grid">
+            <section className="dashboard-review-workspace" id="review-queue">
+              <article className="panel dashboard-review-queue">
+              <div className="dashboard-panel-head">
+                <div>
+                  <small>Start here</small>
+                  <h2>Priority review queue</h2>
+                  <p className="muted">The calls most likely to improve the QA result when fixed.</p>
+                </div>
+                <Link to="/conversations" className="dashboard-table-link">
+                  Review all calls
+                </Link>
+              </div>
+              {overview.review_queue.length > 0 ? (
+                <div className="dashboard-review-grid">
+                  {overview.review_queue.map((item) => (
+                    <article key={item.conversation_id} className="dashboard-review-card">
+                      <div className="dashboard-review-card-topline">
+                        <strong>{item.agent_name}</strong>
+                        <span className="dashboard-status-chip dashboard-status-risk">{formatScoreOutOf100(item.overall_score)}</span>
+                      </div>
+                      <p className="dashboard-review-metric">
+                        {item.weakest_metric_label ?? 'Needs review'}
+                        {item.weakest_metric_score != null ? ` · ${formatScoreOutOf100(item.weakest_metric_score)}` : ''}
+                      </p>
+                      <p className="dashboard-review-summary">{item.qa_summary ?? 'Open the evaluation to review the evidence and next step.'}</p>
+                      {item.recommended_next_step ? (
+                        <p className="dashboard-review-next-step"><strong>Next fix:</strong> {item.recommended_next_step}</p>
+                      ) : null}
+                      <div className="dashboard-review-card-footer">
+                        <small className="muted">{formatDateOnly(item.timestamp)}</small>
+                        <Link to={`/conversations/${item.conversation_id}`} className="dashboard-review-link">Review call</Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="dashboard-queue-clear">
+                  <FontAwesomeIcon icon="check-circle" />
+                  <div><strong>No calls are waiting for review.</strong><span className="muted">Every evaluated call currently passes the QA gate.</span></div>
+                </div>
+              )}
+              </article>
+
               <article className="panel dashboard-summary-panel dashboard-attention-panel">
                 <div className="dashboard-panel-head">
                   <div>
+                    <small>Focus area</small>
                     <h2>Attention Drivers</h2>
                     <p className="muted">Lowest scoring evaluator dimensions first.</p>
                   </div>
@@ -331,35 +366,25 @@ export function DashboardPage() {
                   {sortedMetrics.map((metric) => <MetricScoreBar key={metric.metric_key} metric={metric} />)}
                 </div>
               </article>
+            </section>
 
-              <article className="panel dashboard-summary-panel">
+            <section className="dashboard-main-grid">
+              <article className="panel dashboard-summary-panel dashboard-data-quality-panel">
                 <div className="dashboard-panel-head">
                   <div>
-                    <h2>Outcome Context</h2>
-                    <p className="muted">Provider outcomes are delivery context, separate from the QA pass gate.</p>
+                    <h2>Data coverage</h2>
+                    <p className="muted">How complete the current evaluation and provider data is.</p>
                   </div>
                 </div>
-                <div className="dashboard-breakdown-list">
-                  {overview.outcome_breakdown.map((bucket) => {
-                    const percent = totalOutcomes ? bucket.count / totalOutcomes : 0
-                    return (
-                      <div key={bucket.outcome} className="dashboard-breakdown-row">
-                        <div className="dashboard-breakdown-labels">
-                          <span>{humanizeOutcome(bucket.outcome)}</span>
-                          <strong>{bucket.count}</strong>
-                        </div>
-                        <div className="dashboard-breakdown-bar-track">
-                          <span className="dashboard-breakdown-bar" style={{ width: `${Math.max(4, percent * 100)}%` }} />
-                        </div>
-                      </div>
-                    )
-                  })}
+                <div className="dashboard-data-coverage-grid">
+                  <div><strong>{summary.evaluated_conversations}/{summary.conversations}</strong><span>Calls evaluated</span></div>
+                  <div><strong>{providerOutcomeCount}/{summary.conversations}</strong><span>Provider outcomes available</span></div>
                 </div>
                 {unknownOutcomeCount > 0 ? (
                   <p className="dashboard-note">
-                    {unknownOutcomeCount} calls have unknown provider outcomes, so treat outcome mix as data quality context.
+                    Provider outcomes are missing for {unknownOutcomeCount} calls. This does not affect the QA pass rate.
                   </p>
-                ) : null}
+                ) : <p className="dashboard-note">Provider delivery outcome is available for every call in this range.</p>}
               </article>
             </section>
 
@@ -414,27 +439,21 @@ export function DashboardPage() {
               <div className="dashboard-panel-head">
                 <div>
                   <h2>Trends</h2>
-                  <p className="muted">Sparse ranges show a note instead of implying a trend from one point.</p>
+                  <p className="muted">Shown only once the range has enough calls to avoid overstating a small sample.</p>
                 </div>
               </div>
-              <div className="dashboard-chart-grid">
-                <TrendChart points={overview.trend} valueKey="success_rate" label="QA pass rate" color="#0f766e" formatter={(value) => `${value.toFixed(0)}%`} />
-                <TrendChart points={overview.trend} valueKey="average_overall_score" label="Quality score" color="#2563eb" formatter={(value) => value.toFixed(1)} />
-                <TrendChart points={overview.trend} valueKey="average_call_duration_seconds" label="Call duration" color="#d97706" formatter={(value) => `${value.toFixed(1)}s`} />
-              </div>
-            </section>
-
-            <section className="panel dashboard-callout-panel">
-              <div className="dashboard-panel-head">
-                <div>
-                  <h2>Review Queue</h2>
-                  <p className="muted">Start with failed QA gates, then inspect the lowest metric evidence on each call.</p>
+              {hasEnoughTrendData ? (
+                <div className="dashboard-chart-grid">
+                  <TrendChart points={overview.trend} valueKey="success_rate" label="QA pass rate" color="#0f766e" formatter={(value) => `${value.toFixed(0)}%`} />
+                  <TrendChart points={overview.trend} valueKey="average_overall_score" label="Quality score" color="#2563eb" formatter={(value) => value.toFixed(1)} />
+                  <TrendChart points={overview.trend} valueKey="average_call_duration_seconds" label="Call duration" color="#d97706" formatter={(value) => `${value.toFixed(1)}s`} />
                 </div>
-              </div>
-              <Link to="/conversations" className="action-link">
-                <FontAwesomeIcon icon="arrow-up-right-from-square" />
-                <span>Open conversations</span>
-              </Link>
+              ) : (
+                <div className="dashboard-trend-placeholder">
+                  <FontAwesomeIcon icon="chart-line" />
+                  <div><strong>Trends unlock after 10 calls in this range.</strong><span className="muted">There are {summary.conversations} calls here today, so the dashboard keeps the focus on individual fixes.</span></div>
+                </div>
+              )}
             </section>
           </>
         )

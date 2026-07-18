@@ -1,7 +1,3 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from app.api.deps import get_current_workspace_id
 from app.db.session import get_db
 from app.models.provider import ProviderAccount, ProviderAgent
@@ -13,6 +9,9 @@ from app.schemas.provider import (
     ProviderConnectionResponse,
 )
 from app.services.credentials import decrypt_secret, encrypt_secret
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -103,6 +102,15 @@ def connect_provider(
             ProviderAccount.provider_name == provider_name,
         )
     )
+    try:
+        adapter = get_provider_adapter(provider_name=provider_name, api_key=payload.api_key)
+        agents = adapter.list_agents()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Could not connect to {provider_name}: {exc}",
+        ) from exc
+
     if account:
         account.api_key = encrypt_secret(payload.api_key)
     else:
@@ -114,19 +122,15 @@ def connect_provider(
         db.add(account)
 
     db.flush()
-
-    # Keep a baseline local cache of agents so agent page is never empty after connect.
-    try:
-        adapter = get_provider_adapter(provider_name=provider_name, api_key=payload.api_key)
-        agents = adapter.list_agents()
-        _upsert_provider_agents(db, account=account, agents=agents)
-    except Exception:
-        # Connection can still be considered saved; user can retry sync later.
-        pass
+    _upsert_provider_agents(db, account=account, agents=agents)
 
     db.commit()
     db.refresh(account)
-    return ProviderConnectionResponse(id=account.id, provider_name=account.provider_name)
+    return ProviderConnectionResponse(
+        id=account.id,
+        provider_name=account.provider_name,
+        agent_count=len(agents),
+    )
 
 
 @router.post("/test", response_model=dict)
