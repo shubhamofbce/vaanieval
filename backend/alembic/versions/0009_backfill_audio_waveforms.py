@@ -1,6 +1,6 @@
 """queue waveform generation for imported recordings
 
-Revision ID: 0009_backfill_existing_audio_waveforms
+Revision ID: 0009_backfill_audio_waveforms
 Revises: 0008_audio_waveform_peaks
 Create Date: 2026-07-19 00:00:00
 """
@@ -13,7 +13,7 @@ from uuid import uuid4
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0009_backfill_existing_audio_waveforms"
+revision = "0009_backfill_audio_waveforms"
 down_revision = "0008_audio_waveform_peaks"
 branch_labels = None
 depends_on = None
