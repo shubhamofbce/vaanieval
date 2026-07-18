@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import httpx
 from app.models.conversation import AudioAsset, Conversation
+from app.models.job_queue import JobQueue, JobStatus
 from app.models.provider import ProviderAccount
 from app.providers.factory import get_provider_adapter
 from app.services.credentials import decrypt_secret
@@ -25,7 +26,20 @@ MAX_WAVEFORM_PEAKS = 4096
 
 def enqueue_audio_waveform_job(db: Session, *, conversation_id: str) -> None:
     asset = db.scalar(select(AudioAsset).where(AudioAsset.conversation_id == conversation_id))
-    if not asset or asset.waveform_status in {WAVEFORM_PENDING, WAVEFORM_READY}:
+    if not asset or asset.waveform_status == WAVEFORM_READY:
+        return
+
+    # A deployment can restart midway through a job, or an older worker can see
+    # the new job type before it has been restarted. Keep a pending asset alive,
+    # but never create a duplicate while a worker still owns a runnable job.
+    active_job = db.scalar(
+        select(JobQueue).where(
+            JobQueue.type == GENERATE_AUDIO_WAVEFORM,
+            JobQueue.payload_json.contains(conversation_id),
+            JobQueue.status.in_([JobStatus.PENDING.value, JobStatus.LEASED.value]),
+        )
+    )
+    if active_job:
         return
 
     asset.waveform_status = WAVEFORM_PENDING

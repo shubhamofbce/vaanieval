@@ -108,7 +108,7 @@ def get_audio_waveform(
 
     # Existing conversations predate the import hook. Queue them lazily the first
     # time their detail page is opened, instead of running media processing inline.
-    if not audio.waveform_status:
+    if audio.waveform_status != "ready" and audio.waveform_status != "failed":
         enqueue_audio_waveform_job(db, conversation_id=conversation.id)
         db.commit()
         return AudioWaveformResponse(status="pending", peaks=None)
