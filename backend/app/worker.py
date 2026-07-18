@@ -26,6 +26,9 @@ from app.services.queue_service import (
     mark_job_succeeded,
     recover_stale_leases,
 )
+from app.core.config import get_settings
+from app.services.reporting_service import process_reporting_alerts
+from app.services.security import utc_now
 
 
 def process_job(db, job: JobQueue) -> None:
@@ -142,6 +145,7 @@ def process_jobs_batch(db: Session, *, max_jobs: int = 10) -> dict[str, int | li
 
     # Recover stale leases first (crashed workers)
     recover_stale_leases(db, stale_after_seconds=120)
+    process_reporting_alerts(db, get_settings(), utc_now())
     db.flush()
 
     for _ in range(max_jobs):

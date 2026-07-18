@@ -16,6 +16,7 @@ import type {
   ProviderConnectionListItem,
   ProviderConnectionResponse,
   ProviderModelsResponse,
+  ReportingSettingsResponse,
 } from './types'
 
 export function requestMagicLink(email: string) {
@@ -206,4 +207,29 @@ export function getDashboardOverview(options?: { startDate?: string; endDate?: s
   }
   const query = params.toString()
   return apiRequest<DashboardOverviewResponse>(`/dashboard${query ? `?${query}` : ''}`)
+}
+
+export function getReportingSettings() {
+  return apiRequest<ReportingSettingsResponse>('/reporting/settings')
+}
+
+export function saveReportingSettings(payload: {
+  email_enabled: boolean
+  email_recipient: string | null
+  slack_enabled: boolean
+  slack_webhook_url: string | null
+  daily_digest_enabled: boolean
+  daily_delivery_hour_utc: number
+  incident_alerts_enabled: boolean
+  incident_failure_threshold: number
+  incident_min_calls: number
+}) {
+  return apiRequest<ReportingSettingsResponse>('/reporting/settings', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function testReportingDestination() {
+  return apiRequest<{ message: string }>('/reporting/test', { method: 'POST' })
 }
