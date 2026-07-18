@@ -68,9 +68,12 @@ def get_audio_metadata(
         )
 
     provider_account = db.scalar(select(ProviderAccount).where(ProviderAccount.id == conversation.provider_account_id))
+    # Vapi and Bolna recording URLs are not directly fetchable by the browser (Vapi's
+    # can expire, Bolna's require the same bearer token as the REST API), so both must
+    # always be served through the authenticated proxy stream endpoint.
     source_url = (
         f"/api/v1/media/conversations/{conversation.id}/audio/stream"
-        if provider_account and provider_account.provider_name == "vapi"
+        if provider_account and provider_account.provider_name in ("vapi", "bolna")
         else audio.source_url
     )
 
@@ -130,6 +133,33 @@ def stream_audio(
             cached_path.write_bytes(audio_bytes)
 
         return FileResponse(path=str(cached_path), media_type=media_type)
+
+    if provider_account and provider_account.provider_name == "bolna":
+        # Bolna recording URLs require the same bearer token as the REST API, so the
+        # stored source_url (if any) can't be redirected to directly; always fetch and
+        # cache the bytes through the authenticated adapter.
+        cache_dir = Path(tempfile.gettempdir()) / "vaanieval_audio_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cached_path = cache_dir / f"{conversation.id}.mp3"
+
+        if cached_path.exists():
+            return FileResponse(path=str(cached_path), media_type="audio/mpeg")
+
+        try:
+            adapter = get_provider_adapter(
+                provider_name=provider_account.provider_name,
+                api_key=decrypt_secret(provider_account.api_key),
+            )
+            audio_bytes = adapter.get_conversation_audio_bytes(conversation.provider_conversation_id)
+            if not audio_bytes:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found")
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found") from exc
+
+        cached_path.write_bytes(audio_bytes)
+        return FileResponse(path=str(cached_path), media_type="audio/mpeg")
 
     if not audio:
         cache_dir = Path(tempfile.gettempdir()) / "vaanieval_audio_cache"
