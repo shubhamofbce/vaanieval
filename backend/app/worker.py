@@ -6,9 +6,11 @@ import time
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal
+from app.models.conversation import AudioAsset
 from app.models.evaluation import ConversationEvaluationRun
 from app.models.import_job import ImportJob, ImportJobStatus
 from app.models.job_queue import JobQueue, JobStatus
+from app.services.audio_waveform_service import GENERATE_AUDIO_WAVEFORM, generate_audio_waveform
 from app.services.evaluation_service import EVAL_CONVERSATION_SCORES, run_evaluation_job
 from app.services.import_service import (
     BACKFILL_CONVERSATION_DISPLAY_NAME,
@@ -45,6 +47,8 @@ def process_job(db, job: JobQueue) -> None:
         run_backfill_conversation_timestamp(db, payload)
     elif job.type == EVAL_CONVERSATION_SCORES:
         run_evaluation_job(db, payload)
+    elif job.type == GENERATE_AUDIO_WAVEFORM:
+        generate_audio_waveform(db, payload)
     else:
         raise ValueError(f"Unsupported job type: {job.type}")
 
@@ -71,6 +75,23 @@ def _mark_eval_run_failed_from_job_payload(db, job: JobQueue, error_message: str
     run.status = "failed"
     run.error_message = error_message[:2000]
     db.flush()
+
+
+def _mark_waveform_failed_from_job_payload(db, job: JobQueue) -> None:
+    if job.type != GENERATE_AUDIO_WAVEFORM:
+        return
+    try:
+        payload = json.loads(job.payload_json)
+    except json.JSONDecodeError:
+        return
+    conversation_id = payload.get("conversation_id")
+    if not conversation_id:
+        return
+    asset = db.scalar(select(AudioAsset).where(AudioAsset.conversation_id == conversation_id))
+    if asset:
+        asset.waveform_status = "failed"
+        asset.waveform_peaks_json = None
+        db.flush()
 
 
 def _mark_import_run_failed_from_job_payload(db, job: JobQueue, error_message: str) -> None:
@@ -119,6 +140,7 @@ def worker_loop(poll_seconds: float = 1.0) -> None:
             if "job" in locals() and job is not None:
                 mark_job_failed(db, job, str(exc))
                 if job.status == JobStatus.DEAD_LETTER.value:
+                    _mark_waveform_failed_from_job_payload(db, job)
                     _mark_eval_run_failed_from_job_payload(
                         db,
                         job,
@@ -168,6 +190,7 @@ def process_jobs_batch(db: Session, *, max_jobs: int = 10) -> dict[str, int | li
                 mark_job_failed(db, job, error_msg)
 
                 if job.status == JobStatus.DEAD_LETTER.value:
+                    _mark_waveform_failed_from_job_payload(db, job)
                     _mark_eval_run_failed_from_job_payload(
                         db,
                         job,

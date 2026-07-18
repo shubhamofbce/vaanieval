@@ -75,4 +75,6 @@ class AudioAsset(Base):
     local_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     mime_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    waveform_status: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    waveform_peaks_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

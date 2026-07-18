@@ -5,6 +5,7 @@ import WaveSurfer from 'wavesurfer.js'
 import { API_BASE } from '../api/client'
 import {
   getAudioMetadata,
+  getAudioWaveform,
   getConversation,
   getConversationInsights,
   getEvalProviderCatalog,
@@ -25,6 +26,7 @@ import {
 import { formatDateTime, humanizeDiagnosticText } from '../lib/format'
 import type {
   AudioAssetResponse,
+  AudioWaveformResponse,
   ConversationDetailResponse,
   ConversationEvaluationRunResponse,
   ConversationInsightResponse,
@@ -93,6 +95,7 @@ export function ConversationDetailPage() {
   const { conversationId = '' } = useParams()
   const [conversation, setConversation] = useState<ConversationDetailResponse | null>(null)
   const [audio, setAudio] = useState<AudioAssetResponse | null>(null)
+  const [waveform, setWaveform] = useState<AudioWaveformResponse | null>(null)
   const [insights, setInsights] = useState<ConversationInsightResponse | null>(null)
   const [insightsError, setInsightsError] = useState('')
   const [evaluationRun, setEvaluationRun] = useState<ConversationEvaluationRunResponse | null>(null)
@@ -104,10 +107,11 @@ export function ConversationDetailPage() {
   const [duration, setDuration] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
-  const waveformRef = useRef<HTMLDivElement | null>(null)
+  const audioEngineRef = useRef<HTMLDivElement | null>(null)
   const waveSurferRef = useRef<WaveSurfer | null>(null)
   const subtitleListRef = useRef<HTMLUListElement | null>(null)
   const lastActiveTurnRef = useRef(-1)
+  const [audioError, setAudioError] = useState('')
 
   // Provider/Model picker state
   const [showEvalModal, setShowEvalModal] = useState(false)
@@ -170,6 +174,7 @@ export function ConversationDetailPage() {
         if (!cancelled) {
           setConversation(data)
           setAudio(metadata)
+          setWaveform(null)
           setInsights(insightsData)
           setEvaluationRun(latestEvaluation)
           setError('')
@@ -179,6 +184,7 @@ export function ConversationDetailPage() {
           setError(err instanceof Error ? err.message : 'Failed to load conversation')
           setConversation(null)
           setAudio(null)
+          setWaveform(null)
           setInsights(null)
           setInsightsError('')
           setEvaluationRun(null)
@@ -196,6 +202,31 @@ export function ConversationDetailPage() {
       cancelled = true
     }
   }, [conversationId])
+
+  useEffect(() => {
+    if (!conversationId || !audio?.source_url) {
+      return
+    }
+
+    let cancelled = false
+    let timerId: number | undefined
+    const loadWaveform = async () => {
+      const result = await getAudioWaveform(conversationId).catch(() => null)
+      if (cancelled || !result) {
+        return
+      }
+      setWaveform(result)
+      if (result.status === 'pending') {
+        timerId = window.setTimeout(() => void loadWaveform(), 2500)
+      }
+    }
+
+    void loadWaveform()
+    return () => {
+      cancelled = true
+      if (timerId) window.clearTimeout(timerId)
+    }
+  }, [audio?.source_url, conversationId])
 
   // Load available providers for evaluation
   useEffect(() => {
@@ -295,11 +326,13 @@ export function ConversationDetailPage() {
   }, [conversationId, evaluationRun])
 
   const streamUrl = useMemo(() => {
-    if (!conversationId) {
+    if (!conversationId || !audio?.source_url) {
       return ''
     }
+    // Use our authenticated proxy even when the provider supplies a direct URL.
+    // Provider URLs commonly expire or reject the browser's CORS request.
     return `${API_BASE}/media/conversations/${conversationId}/audio/stream`
-  }, [conversationId])
+  }, [audio?.source_url, conversationId])
 
   const effectiveDuration = useMemo(() => {
     if (duration > 0) {
@@ -364,17 +397,36 @@ export function ConversationDetailPage() {
     return [peaks]
   }, [effectiveDuration, turnsForPlayback])
 
+  const waveformBars = useMemo(() => {
+    const barCount = 96
+    return Array.from({ length: barCount }, (_, index) => {
+      const peaks = waveform?.peaks ?? []
+      const start = Math.floor((index / barCount) * peaks.length)
+      const end = Math.max(start + 1, Math.floor(((index + 1) / barCount) * peaks.length))
+      const peak = peaks.length > 0 ? Math.max(...peaks.slice(start, end)) : 0
+      const totalDuration = effectiveDuration > 0
+        ? effectiveDuration
+        : Math.max(...turnsForPlayback.map((turn) => turn.endSec), 1)
+      return {
+        second: (index / (barCount - 1)) * totalDuration,
+        height: Math.max(4, Math.round(peak * 100)),
+      }
+    })
+  }, [effectiveDuration, turnsForPlayback, waveform?.peaks])
+
   useEffect(() => {
-    const container = waveformRef.current
+    const container = audioEngineRef.current
     if (!container || !streamUrl) {
       return
     }
 
+    setAudioError('')
     const waveSurfer = WaveSurfer.create({
       container,
       url: streamUrl,
       peaks: waveformPeaks,
       duration: effectiveDuration > 0 ? effectiveDuration : undefined,
+      fetchParams: { credentials: 'include' },
       waveColor: '#c9d3e3',
       progressColor: '#23447a',
       cursorColor: '#1d3863',
@@ -407,6 +459,10 @@ export function ConversationDetailPage() {
     const unsubscribeFinish = waveSurfer.on('finish', () => {
       setIsPlaying(false)
     })
+    const unsubscribeError = waveSurfer.on('error', () => {
+      setIsPlaying(false)
+      setAudioError('The recording could not be loaded. Check the provider connection and try again.')
+    })
 
     return () => {
       unsubscribeTimeUpdate()
@@ -414,6 +470,7 @@ export function ConversationDetailPage() {
       unsubscribePlay()
       unsubscribePause()
       unsubscribeFinish()
+      unsubscribeError()
       waveSurfer.destroy()
       if (waveSurferRef.current === waveSurfer) {
         waveSurferRef.current = null
@@ -542,6 +599,10 @@ export function ConversationDetailPage() {
     const safeSecond = Math.min(Math.max(second, 0), total)
     waveSurfer.setTime(safeSecond)
     setCurrentTime(safeSecond)
+  }
+
+  const seekFromWaveform = (second: number) => {
+    void seekToSecond(second)
   }
 
   return (
@@ -804,15 +865,47 @@ export function ConversationDetailPage() {
               <div className="detail-rail-sticky">
                 <section className="panel detail-section detail-player-section">
                   <h3>Call player</h3>
-                  {audio ? (
+                  {audio?.source_url ? (
                     <>
                       <p className="muted">Listen and follow along with live subtitles.</p>
                       <div className="player-shell player-shell-compact">
-                        <div className="player-waveform" ref={waveformRef} aria-label="Audio waveform" />
+                        <div className="player-audio-engine" ref={audioEngineRef} aria-hidden="true" />
+                        <div
+                          className="player-waveform player-waveform-clickable"
+                          role="group"
+                          aria-label="Audio waveform. Select a bar to seek to that point in the recording."
+                        >
+                          <div className="player-waveform-bars">
+                            {waveformBars.map((bar, index) => (
+                              <button
+                                type="button"
+                                className="player-waveform-bar"
+                                key={index}
+                                onClick={() => seekFromWaveform(bar.second)}
+                                aria-label={`Seek to ${formatClock(bar.second)}`}
+                              >
+                                <span style={{ height: `${bar.height}%` }} />
+                              </button>
+                            ))}
+                          </div>
+                          <div
+                            className="player-waveform-playhead"
+                            style={{ left: `${Math.min(100, Math.max(0, (currentTime / Math.max(effectiveDuration, 1)) * 100))}%` }}
+                            aria-hidden="true"
+                          />
+                        </div>
                         <div className="player-waveform-legend" aria-hidden="true">
-                          <span>Waveform</span>
+                          <span>Click waveform to seek</span>
                           <span>{formatClock(effectiveDuration)}</span>
                         </div>
+
+                        {waveform?.status === 'pending' && (
+                          <p className="player-waveform-status" role="status">Preparing real audio waveform…</p>
+                        )}
+                        {waveform?.status === 'failed' && (
+                          <p className="player-audio-error" role="alert">The waveform could not be generated, but playback is still available.</p>
+                        )}
+                        {audioError && <p className="player-audio-error" role="alert">{audioError}</p>}
 
                         <div className="player-timeline-group">
                           <input
@@ -881,7 +974,7 @@ export function ConversationDetailPage() {
                       </div>
                     </>
                   ) : (
-                    <p className="muted">Audio not available for this conversation.</p>
+                    <p className="muted">No playable audio recording is available for this conversation.</p>
                   )}
                 </section>
 

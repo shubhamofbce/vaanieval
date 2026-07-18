@@ -1,20 +1,21 @@
-from pathlib import Path
+import json
 import tempfile
+from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import FileResponse, RedirectResponse
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from app.api.deps import get_current_workspace_id
 from app.db.session import get_db
 from app.models.conversation import AudioAsset, Conversation
 from app.models.provider import ProviderAccount
 from app.providers.factory import get_provider_adapter
-from app.schemas.media import AudioAssetResponse
+from app.schemas.media import AudioAssetResponse, AudioWaveformResponse
+from app.services.audio_waveform_service import enqueue_audio_waveform_job
 from app.services.credentials import decrypt_secret
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -84,6 +85,44 @@ def get_audio_metadata(
         duration_ms=audio.duration_ms,
         mime_type=audio.mime_type,
     )
+
+
+@router.get("/conversations/{conversation_id}/audio/waveform", response_model=AudioWaveformResponse)
+def get_audio_waveform(
+    conversation_id: str,
+    workspace_id: str = Depends(get_current_workspace_id),
+    db: Session = Depends(get_db),
+) -> AudioWaveformResponse:
+    conversation = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.workspace_id == workspace_id,
+        )
+    )
+    if not conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+
+    audio = db.scalar(select(AudioAsset).where(AudioAsset.conversation_id == conversation.id))
+    if not audio:
+        return AudioWaveformResponse(status="unavailable", peaks=None)
+
+    # Existing conversations predate the import hook. Queue them lazily the first
+    # time their detail page is opened, instead of running media processing inline.
+    if not audio.waveform_status:
+        enqueue_audio_waveform_job(db, conversation_id=conversation.id)
+        db.commit()
+        return AudioWaveformResponse(status="pending", peaks=None)
+
+    if audio.waveform_status != "ready" or not audio.waveform_peaks_json:
+        return AudioWaveformResponse(status=audio.waveform_status, peaks=None)
+
+    try:
+        peaks = json.loads(audio.waveform_peaks_json)
+    except json.JSONDecodeError:
+        return AudioWaveformResponse(status="failed", peaks=None)
+    if not isinstance(peaks, list) or not all(isinstance(peak, (int, float)) for peak in peaks):
+        return AudioWaveformResponse(status="failed", peaks=None)
+    return AudioWaveformResponse(status="ready", peaks=[float(peak) for peak in peaks])
 
 
 @router.get("/conversations/{conversation_id}/audio/stream")
@@ -194,7 +233,22 @@ def stream_audio(
         return FileResponse(path=str(file_path), media_type=audio.mime_type or "audio/mpeg")
 
     if audio.source_url:
-        return RedirectResponse(url=audio.source_url)
+        # Do not redirect the browser to the provider URL. Some providers reject
+        # browser-origin requests, and signed recording URLs can expire between the
+        # conversation import and playback. Caching also lets FileResponse satisfy
+        # byte-range requests used for seeking.
+        suffix = _guess_audio_suffix(audio.source_url)
+        cache_dir = Path(tempfile.gettempdir()) / "vaanieval_audio_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cached_path = cache_dir / f"{conversation.id}{suffix}"
+
+        if not cached_path.exists():
+            cached_path.write_bytes(_download_remote_audio_bytes(audio.source_url))
+
+        return FileResponse(
+            path=str(cached_path),
+            media_type=audio.mime_type or _guess_media_type_from_suffix(suffix),
+        )
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No stream source available")
 

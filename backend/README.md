@@ -30,6 +30,10 @@ cp .env.example .env
 alembic upgrade head
 ```
 
+Install `audiowaveform` to generate the real, clickable audio peaks used by the
+call player. On macOS: `brew install audiowaveform`. Set `AUDIOWAVEFORM_BINARY`
+in `.env` when the binary is not on `PATH`.
+
 On Windows, activate the environment with `.\.venv\Scripts\Activate.ps1` and copy the environment file with `Copy-Item .env.example .env`.
 
 ## Run

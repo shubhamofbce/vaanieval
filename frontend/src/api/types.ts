@@ -118,6 +118,11 @@ export type AudioAssetResponse = {
   mime_type: string | null
 }
 
+export type AudioWaveformResponse = {
+  status: 'pending' | 'ready' | 'failed' | 'unavailable'
+  peaks: number[] | null
+}
+
 export type EvalProviderResponse = {
   id: string
   provider_name: string

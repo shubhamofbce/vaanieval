@@ -7,3 +7,8 @@ class AudioAssetResponse(BaseModel):
     local_path: str | None
     duration_ms: int | None
     mime_type: str | None
+
+
+class AudioWaveformResponse(BaseModel):
+    status: str
+    peaks: list[float] | None

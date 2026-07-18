@@ -1,6 +1,7 @@
 import { apiRequest } from './client'
 import type {
   AudioAssetResponse,
+  AudioWaveformResponse,
   AuthResponse,
   DashboardOverviewResponse,
   ConversationEvaluationRunResponse,
@@ -154,6 +155,10 @@ export function getConversationInsights(conversationId: string, refreshAnalysis 
 
 export function getAudioMetadata(conversationId: string) {
   return apiRequest<AudioAssetResponse>(`/media/conversations/${conversationId}/audio`)
+}
+
+export function getAudioWaveform(conversationId: string) {
+  return apiRequest<AudioWaveformResponse>(`/media/conversations/${conversationId}/audio/waveform`)
 }
 
 export function connectEvalProvider(apiKey: string, providerName = 'openai', modelName = 'gpt-4.1-mini') {

@@ -4076,15 +4076,17 @@ audio {
   height: 72px;
   min-height: 72px;
   border-radius: var(--workspace-radius);
-  background:
-    linear-gradient(180deg, rgba(16, 24, 40, 0.05), rgba(16, 24, 40, 0.02)),
-    #edf2f8;
+  background: #10213c;
   overflow: hidden;
 }
 
-.player-waveform>div {
+.player-audio-engine {
   position: absolute;
-  inset: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .player-waveform-legend {
@@ -4097,12 +4099,85 @@ audio {
   text-transform: uppercase;
 }
 
-.player-waveform ::part(wave) {
-  filter: saturate(0.95);
+.player-waveform-clickable {
+  border: 1px solid #1e3659;
+  cursor: crosshair;
 }
 
-.player-waveform ::part(progress) {
-  filter: drop-shadow(0 0 10px rgba(35, 68, 122, 0.2));
+.player-waveform-bars {
+  position: absolute;
+  inset: 9px 10px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.player-waveform-bar {
+  flex: 1 1 0;
+  align-self: stretch;
+  min-width: 1px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-waveform-bar span {
+  display: block;
+  width: 100%;
+  min-height: 4px;
+  border-radius: 999px;
+  background: #8ba2c2;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.player-waveform-bar:hover span,
+.player-waveform-bar:focus-visible span {
+  background: #ffffff;
+  transform: scaleX(1.4);
+}
+
+.player-waveform-bar:focus-visible {
+  outline: none;
+}
+
+.player-waveform-playhead {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-1px);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18), 0 0 12px rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+
+.player-waveform-playhead::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffffff;
+  transform: translateX(-50%);
+}
+
+.player-audio-error {
+  margin: 0;
+  color: #a53a39;
+  font-size: 0.84rem;
+}
+
+.player-waveform-status {
+  margin: 0;
+  color: #526782;
+  font-size: 0.84rem;
 }
 
 .player-timeline-group {

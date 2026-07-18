@@ -5,6 +5,7 @@ from app.models.import_job import ImportJob, ImportJobStatus
 from app.models.job_queue import JobQueue, JobStatus
 from app.models.provider import ProviderAccount
 from app.providers.factory import get_provider_adapter
+from app.services.audio_waveform_service import enqueue_audio_waveform_job
 from app.services.credentials import decrypt_secret
 from app.services.evaluation_service import enqueue_evaluation_job
 from app.services.queue_service import enqueue_job
@@ -202,6 +203,8 @@ def run_import_conversation_detail(db: Session, payload: dict) -> None:
             asset.source_url = audio_url
         else:
             db.add(AudioAsset(conversation_id=record.id, source_url=audio_url, mime_type="audio/mpeg"))
+        db.flush()
+        enqueue_audio_waveform_job(db, conversation_id=record.id)
 
     # Best-effort: if an external evaluator is configured, queue scoring for this conversation.
     try:
