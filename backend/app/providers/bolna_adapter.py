@@ -199,15 +199,21 @@ def _within_bounds(item: dict[str, Any], start_bound: str | None, end_bound: str
 def _normalize_date_bound(raw_value: str | None, *, is_end: bool) -> str | None:
     if not raw_value:
         return None
+
+    # Detect bare date input (e.g. "2026-07-18") explicitly instead of relying on
+    # datetime.fromisoformat() to raise ValueError: on Python 3.11+ that call now
+    # happily parses date-only strings as midnight, which would silently turn an
+    # "end date" bound into the start of that day (excluding same-day results)
+    # instead of applying the intended end-of-day time.max.
     try:
-        parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
-    except ValueError:
-        try:
-            parsed_date = date.fromisoformat(raw_value)
-        except ValueError:
-            return None
+        parsed_date = date.fromisoformat(raw_value)
         parsed_time = time.max if is_end else time.min
         parsed = datetime.combine(parsed_date, parsed_time)
+    except ValueError:
+        try:
+            parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
 
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
