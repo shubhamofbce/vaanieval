@@ -40,7 +40,7 @@ export default function Home() {
           </div>
           <GitHubCta className="text-link hero-star-link" event="github_star_hero_click">Star <span aria-hidden="true">→</span></GitHubCta>
         </div>
-        <p className="microcopy">MIT licensed · Self-hostable · ElevenLabs and Vapi imports</p>
+        <p className="microcopy">MIT licensed · Self-hostable · ElevenLabs, Vapi, and Bolna imports</p>
       </div>
       <div className="hero-illustration-gif">
         <img
