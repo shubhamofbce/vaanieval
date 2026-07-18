@@ -24,6 +24,7 @@ export async function generateMetadata({
       title: p.title,
       description: p.description,
       publishedTime: p.publishedAt,
+      modifiedTime: p.updatedAt,
       url: `/blog/${p.slug}`
     }
   };
@@ -291,6 +292,7 @@ export default async function Page({
     headline: p.title,
     description: p.description,
     datePublished: p.publishedAt,
+    dateModified: p.updatedAt || p.publishedAt,
     author: { '@type': 'Organization', name: 'VaaniEval' },
     publisher: { '@type': 'Organization', name: 'VaaniEval' },
     mainEntityOfPage: `${siteConfig.url}/blog/${p.slug}`
@@ -303,7 +305,8 @@ export default async function Page({
         <h1>{p.title}</h1>
         <p className="lede">{p.description}</p>
         <div className="article-meta">
-          <time>{p.publishedAt}</time>
+          <time dateTime={p.publishedAt}>{p.publishedAt}</time>
+          {p.updatedAt && <><span>·</span><span>Updated <time dateTime={p.updatedAt}>{p.updatedAt}</time></span></>}
           <span>·</span>
           <span>{p.readingTime}</span>
         </div>
