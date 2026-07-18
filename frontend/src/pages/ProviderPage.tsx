@@ -20,6 +20,7 @@ import type {
 const providerDisplayName = (providerName: string) => {
   if (providerName === 'elevenlabs') return 'ElevenLabs'
   if (providerName === 'vapi') return 'Vapi'
+  if (providerName === 'bolna') return 'Bolna'
   if (providerName === 'openai') return 'OpenAI'
   return providerName
 }
@@ -200,7 +201,7 @@ export function ProviderPage() {
           {providerConnections.length === 0 ? (
             <div className="integration-empty-state">
               <strong>No voice platforms connected</strong>
-              <span>Connect Vapi or ElevenLabs to start importing conversations.</span>
+              <span>Connect Vapi, ElevenLabs, or Bolna to start importing conversations.</span>
             </div>
           ) : providerConnections.map((connection) => {
             const state = connectionState[connection.id]
@@ -236,7 +237,7 @@ export function ProviderPage() {
               <button type="button" className="button-link" onClick={() => { setShowConnectForm(false); setManagedConnectionId(''); setApiKey('') }}>Cancel</button>
             </div>
             {!managedConnection && <div className="provider-choice-row">
-              {['elevenlabs', 'vapi'].map((name) => <button key={name} type="button" className={providerName === name ? 'provider-choice active' : 'provider-choice'} onClick={() => setProviderName(name)}>{providerDisplayName(name)}</button>)}
+              {['elevenlabs', 'vapi', 'bolna'].map((name) => <button key={name} type="button" className={providerName === name ? 'provider-choice active' : 'provider-choice'} onClick={() => setProviderName(name)}>{providerDisplayName(name)}</button>)}
             </div>}
             <label htmlFor="apiKey">{managedConnection ? 'New API key' : `${providerDisplayName(providerName)} API key`}</label>
             <input id="apiKey" type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} required placeholder="Paste API key" autoComplete="off" />

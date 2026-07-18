@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 router = APIRouter()
 
-SUPPORTED_PROVIDER_NAMES = {"elevenlabs", "vapi"}
+SUPPORTED_PROVIDER_NAMES = {"elevenlabs", "vapi", "bolna"}
 
 
 def _resolve_account(

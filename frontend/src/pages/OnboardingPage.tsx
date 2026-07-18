@@ -14,7 +14,7 @@ const SETUP_STEPS: Array<{
     number: '1',
     icon: 'plug',
     title: 'Connect your voice provider',
-    description: 'Add your ElevenLabs or Vapi account so VaaniEval can read your agents and calls.',
+    description: 'Add your ElevenLabs, Vapi, or Bolna account so VaaniEval can read your agents and calls.',
     link: '/settings/provider',
     action: 'Manage providers',
   },

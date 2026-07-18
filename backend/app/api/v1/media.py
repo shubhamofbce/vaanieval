@@ -48,7 +48,10 @@ def get_audio_metadata(
                     provider_name=provider_account.provider_name,
                     api_key=decrypt_secret(provider_account.api_key),
                 )
-                detail = adapter.get_conversation_detail(conversation.provider_conversation_id)
+                detail = adapter.get_conversation_detail(
+                    conversation.provider_conversation_id,
+                    agent_id=conversation.provider_agent_id,
+                )
                 source_url = adapter.extract_audio_url(detail)
                 has_audio = bool(source_url or detail.get("has_audio"))
             except Exception:  # noqa: BLE001

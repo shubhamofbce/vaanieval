@@ -38,7 +38,9 @@ function formatProviderName(providerName: string) {
     ? 'ElevenLabs'
     : providerName === 'vapi'
       ? 'Vapi'
-      : providerName
+      : providerName === 'bolna'
+        ? 'Bolna'
+        : providerName
 }
 
 function looksLikeOpaqueId(value: string | null | undefined) {
