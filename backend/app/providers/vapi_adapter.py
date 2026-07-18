@@ -3,7 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from app.providers.base import ProviderAdapter, ProviderAgentInfo, ProviderConversationDetail
+from app.providers.base import (
+    ProviderAdapter,
+    ProviderAgentInfo,
+    ProviderConversationDetail,
+    clean_conversation_display_name,
+)
 from app.services.vapi_client import VapiClient
 
 
@@ -48,7 +53,13 @@ class VapiProviderAdapter(ProviderAdapter):
     def normalize_conversation_detail(self, detail: dict[str, Any]) -> ProviderConversationDetail:
         started_at = _parse_datetime(detail.get("startedAt") or detail.get("started_at") or detail.get("createdAt"))
         ended_at = _parse_datetime(detail.get("endedAt") or detail.get("ended_at"))
+        analysis = detail.get("analysis") if isinstance(detail.get("analysis"), dict) else {}
         return ProviderConversationDetail(
+            display_name=_display_name(
+                detail.get("name"),
+                analysis.get("summary"),
+                detail.get("summary"),
+            ),
             provider_agent_id=detail.get("assistantId") or detail.get("assistant", {}).get("id"),
             language=_extract_language(detail),
             outcome=_extract_outcome(detail),
@@ -278,6 +289,14 @@ def _extract_end_ms(message: dict[str, Any], started_ms: int | None) -> int | No
         if duration_value >= 1000:
             return started_ms + duration_value
         return started_ms + int(duration * 1000)
+    return None
+
+
+def _display_name(*values: object) -> str | None:
+    for value in values:
+        display_name = clean_conversation_display_name(value)
+        if display_name:
+            return display_name
     return None
 
 

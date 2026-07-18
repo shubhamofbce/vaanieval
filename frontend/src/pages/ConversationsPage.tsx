@@ -88,7 +88,7 @@ function formatConversationTitle(createdAt: string) {
 }
 
 function getConversationDisplayName(row: ConversationListItem) {
-  return row.provider_agent_name || formatConversationTitle(getConversationDisplayDate(row))
+  return row.display_name || row.provider_agent_name || formatConversationTitle(getConversationDisplayDate(row))
 }
 
 function getConversationDisplayDate(row: ConversationListItem) {

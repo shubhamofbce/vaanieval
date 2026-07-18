@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-import json
-
-from sqlalchemy import and_, delete, select
-from sqlalchemy.orm import Session
-
 from app.models.conversation import AudioAsset, Conversation, ConversationTurn
 from app.models.import_job import ImportJob, ImportJobStatus
 from app.models.job_queue import JobQueue, JobStatus
@@ -13,10 +8,13 @@ from app.providers.factory import get_provider_adapter
 from app.services.credentials import decrypt_secret
 from app.services.evaluation_service import enqueue_evaluation_job
 from app.services.queue_service import enqueue_job
+from sqlalchemy import and_, delete, select
+from sqlalchemy.orm import Session
 
 IMPORT_PAGE_FETCH = "import_page_fetch"
 IMPORT_CONVERSATION_DETAIL = "import_conversation_detail"
 BACKFILL_CONVERSATION_TIMESTAMP = "backfill_conversation_timestamp"
+BACKFILL_CONVERSATION_DISPLAY_NAME = "backfill_conversation_display_name"
 
 
 def create_import_job(
@@ -135,6 +133,7 @@ def run_import_conversation_detail(db: Session, payload: dict) -> None:
     ended_at = normalized_detail.ended_at
     turns = normalized_detail.turns
     audio_url = normalized_detail.audio_url
+    display_name = normalized_detail.display_name
 
     record = db.scalar(
         select(Conversation).where(
@@ -149,6 +148,7 @@ def run_import_conversation_detail(db: Session, payload: dict) -> None:
             workspace_id=import_job.workspace_id,
             provider_account_id=account.id,
             provider_conversation_id=conversation_id,
+            display_name=display_name,
             provider_agent_id=provider_agent_id,
             language=language,
             outcome=outcome,
@@ -158,6 +158,7 @@ def run_import_conversation_detail(db: Session, payload: dict) -> None:
         db.add(record)
         db.flush()
     else:
+        record.display_name = display_name
         record.provider_agent_id = provider_agent_id
         record.language = language
         record.outcome = outcome
@@ -239,6 +240,24 @@ def run_backfill_conversation_timestamp(db: Session, payload: dict) -> None:
         record.ended_at = normalized_detail.ended_at
 
 
+def run_backfill_conversation_display_name(db: Session, payload: dict) -> None:
+    conversation_id = payload["conversation_id"]
+    record = db.scalar(select(Conversation).where(Conversation.id == conversation_id))
+    if not record or record.display_name:
+        return
+
+    account = db.scalar(select(ProviderAccount).where(ProviderAccount.id == record.provider_account_id))
+    if not account or account.provider_name not in {"elevenlabs", "vapi", "bolna"}:
+        return
+
+    adapter = get_provider_adapter(
+        provider_name=account.provider_name,
+        api_key=decrypt_secret(account.api_key),
+    )
+    detail = adapter.get_conversation_detail(record.provider_conversation_id, agent_id=record.provider_agent_id)
+    record.display_name = adapter.normalize_conversation_detail(detail).display_name
+
+
 def queue_depth_for_import(db: Session, import_job_id: str) -> dict[str, int]:
     rows = db.scalars(
         select(JobQueue).where(
@@ -273,4 +292,3 @@ def cancel_import(db: Session, import_job_id: str) -> ImportJob | None:
     db.commit()
     db.refresh(job)
     return job
-

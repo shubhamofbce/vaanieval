@@ -2,10 +2,6 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from statistics import mean
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func, or_
-from sqlalchemy.orm import Session
-
 from app.api.deps import get_current_workspace_id
 from app.db.session import get_db
 from app.models.conversation import Conversation, ConversationTurn
@@ -20,6 +16,9 @@ from app.schemas.conversations import (
     ConversationTurnItem,
 )
 from app.services.credentials import decrypt_secret
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -266,6 +265,7 @@ def list_conversations(
         stmt = stmt.where(
             or_(
                 Conversation.provider_conversation_id.ilike(pattern),
+                Conversation.display_name.ilike(pattern),
                 Conversation.provider_agent_id.ilike(pattern),
                 ProviderAccount.provider_name.ilike(pattern),
                 Conversation.language.ilike(pattern),
@@ -345,6 +345,7 @@ def list_conversations(
             provider_account_id=row.provider_account_id,
             provider_name=provider_name_by_account_id.get(row.provider_account_id, "unknown"),
             provider_conversation_id=row.provider_conversation_id,
+            display_name=row.display_name,
             provider_agent_id=row.provider_agent_id,
             provider_agent_name=provider_agent_name_by_key.get(
                 (row.provider_account_id, row.provider_agent_id or "")
@@ -391,6 +392,7 @@ def get_conversation_detail(
             or "unknown"
         ),
         provider_conversation_id=row.provider_conversation_id,
+        display_name=row.display_name,
         provider_agent_id=row.provider_agent_id,
         provider_agent_name=_get_provider_agent_name(
             db,

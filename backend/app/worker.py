@@ -4,31 +4,32 @@ import json
 import socket
 import time
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
+from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models.evaluation import ConversationEvaluationRun
 from app.models.import_job import ImportJob, ImportJobStatus
 from app.models.job_queue import JobQueue, JobStatus
+from app.services.evaluation_service import EVAL_CONVERSATION_SCORES, run_evaluation_job
 from app.services.import_service import (
+    BACKFILL_CONVERSATION_DISPLAY_NAME,
     BACKFILL_CONVERSATION_TIMESTAMP,
     IMPORT_CONVERSATION_DETAIL,
     IMPORT_PAGE_FETCH,
+    run_backfill_conversation_display_name,
     run_backfill_conversation_timestamp,
     run_import_conversation_detail,
     run_import_page_fetch,
 )
-from app.services.evaluation_service import EVAL_CONVERSATION_SCORES, run_evaluation_job
 from app.services.queue_service import (
     lease_next_job,
     mark_job_failed,
     mark_job_succeeded,
     recover_stale_leases,
 )
-from app.core.config import get_settings
 from app.services.reporting_service import process_reporting_alerts
 from app.services.security import utc_now
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 def process_job(db, job: JobQueue) -> None:
@@ -38,6 +39,8 @@ def process_job(db, job: JobQueue) -> None:
         run_import_page_fetch(db, payload)
     elif job.type == IMPORT_CONVERSATION_DETAIL:
         run_import_conversation_detail(db, payload)
+    elif job.type == BACKFILL_CONVERSATION_DISPLAY_NAME:
+        run_backfill_conversation_display_name(db, payload)
     elif job.type == BACKFILL_CONVERSATION_TIMESTAMP:
         run_backfill_conversation_timestamp(db, payload)
     elif job.type == EVAL_CONVERSATION_SCORES:

@@ -3,7 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from app.providers.base import ProviderAdapter, ProviderAgentInfo, ProviderConversationDetail
+from app.providers.base import (
+    ProviderAdapter,
+    ProviderAgentInfo,
+    ProviderConversationDetail,
+    clean_conversation_display_name,
+)
 from app.services.elevenlabs_client import ElevenLabsClient
 
 
@@ -44,6 +49,7 @@ class ElevenLabsProviderAdapter(ProviderAdapter):
 
     def normalize_conversation_detail(self, detail: dict[str, Any]) -> ProviderConversationDetail:
         metadata = detail.get("metadata", {}) if isinstance(detail.get("metadata"), dict) else {}
+        analysis = detail.get("analysis", {}) if isinstance(detail.get("analysis"), dict) else {}
         started_at = _parse_unix_datetime(metadata.get("start_time_unix_secs")) or _parse_datetime(
             detail.get("start_time") or detail.get("started_at") or detail.get("created_at")
         )
@@ -53,6 +59,12 @@ class ElevenLabsProviderAdapter(ProviderAdapter):
             ended_at = started_at + timedelta(seconds=duration)
 
         return ProviderConversationDetail(
+            display_name=_display_name(
+                analysis.get("call_summary_title"),
+                detail.get("call_summary_title"),
+                analysis.get("transcript_summary"),
+                detail.get("transcript_summary"),
+            ),
             provider_agent_id=detail.get("agent_id") or detail.get("agent", {}).get("agent_id"),
             language=detail.get("language"),
             outcome=detail.get("outcome"),
@@ -165,3 +177,11 @@ def _parse_unix_datetime(value: object) -> datetime | None:
     if timestamp > 1_000_000_000_000:
         timestamp = timestamp / 1000
     return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+
+
+def _display_name(*values: object) -> str | None:
+    for value in values:
+        display_name = clean_conversation_display_name(value)
+        if display_name:
+            return display_name
+    return None
