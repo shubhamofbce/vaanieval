@@ -58,6 +58,18 @@ def get_audio_metadata(
             except Exception:  # noqa: BLE001
                 has_audio = False
 
+        # Historical imports may predate AudioAsset persistence. Store a
+        # provider-discovered recording the first time it is requested so the
+        # waveform worker can generate peaks on the next client request.
+        if has_audio:
+            audio = AudioAsset(
+                conversation_id=conversation.id,
+                source_url=source_url,
+                mime_type="audio/mpeg",
+            )
+            db.add(audio)
+            db.commit()
+
         return AudioAssetResponse(
             conversation_id=conversation.id,
             source_url=(

@@ -89,17 +89,17 @@ def _get_cached_audio_path(db: Session, conversation: Conversation, asset: Audio
         return cached_path
 
     account = db.scalar(select(ProviderAccount).where(ProviderAccount.id == conversation.provider_account_id))
-    if account and account.provider_name == "bolna":
+    if asset.source_url:
+        with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+            response = client.get(asset.source_url)
+            response.raise_for_status()
+            audio_bytes = response.content
+    elif account:
         adapter = get_provider_adapter(
             provider_name=account.provider_name,
             api_key=decrypt_secret(account.api_key),
         )
         audio_bytes = adapter.get_conversation_audio_bytes(conversation.provider_conversation_id)
-    elif asset.source_url:
-        with httpx.Client(timeout=60.0, follow_redirects=True) as client:
-            response = client.get(asset.source_url)
-            response.raise_for_status()
-            audio_bytes = response.content
     else:
         raise ValueError("Audio source is unavailable")
 
