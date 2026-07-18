@@ -52,6 +52,7 @@ export type ConversationListItem = {
   provider_account_id: string
   provider_name: string
   provider_conversation_id: string
+  display_name: string | null
   provider_agent_id: string | null
   provider_agent_name: string | null
   language: string | null
@@ -81,6 +82,7 @@ export type ConversationDetailResponse = {
   id: string
   provider_name: string
   provider_conversation_id: string
+  display_name: string | null
   provider_agent_id: string | null
   provider_agent_name: string | null
   language: string | null

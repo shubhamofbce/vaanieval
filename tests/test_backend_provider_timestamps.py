@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 from app.db.base import Base
 from app.models import Conversation, ProviderAccount, Workspace
 from app.providers.base import ProviderConversationDetail
+from app.providers.bolna_adapter import BolnaProviderAdapter
 from app.providers.elevenlabs_adapter import ElevenLabsProviderAdapter
 from app.providers.vapi_adapter import VapiProviderAdapter
 from app.services.import_service import run_backfill_conversation_timestamp
@@ -60,6 +61,20 @@ def test_elevenlabs_normalize_falls_back_to_iso_conversation_time() -> None:
     assert normalized.ended_at.isoformat() == "2026-07-10T03:06:02.767000+00:00"
 
 
+def test_elevenlabs_normalize_uses_provider_call_summary_title() -> None:
+    adapter = ElevenLabsProviderAdapter.__new__(ElevenLabsProviderAdapter)
+
+    normalized = adapter.normalize_conversation_detail(
+        {
+            "agent_id": "agent-1",
+            "analysis": {"call_summary_title": "  Hotel   Reservation  "},
+            "transcript": [],
+        }
+    )
+
+    assert normalized.display_name == "Hotel Reservation"
+
+
 def test_vapi_normalize_falls_back_to_created_at_when_started_at_is_missing() -> None:
     adapter = VapiProviderAdapter.__new__(VapiProviderAdapter)
     detail = {
@@ -73,6 +88,50 @@ def test_vapi_normalize_falls_back_to_created_at_when_started_at_is_missing() ->
 
     assert normalized.started_at is not None
     assert normalized.started_at.isoformat() == "2026-07-10T03:05:02.767000+00:00"
+
+
+def test_vapi_normalize_prefers_call_name_then_analysis_summary() -> None:
+    adapter = VapiProviderAdapter.__new__(VapiProviderAdapter)
+
+    named = adapter.normalize_conversation_detail(
+        {"name": "Appointment confirmation", "artifact": {"messages": []}}
+    )
+    summarized = adapter.normalize_conversation_detail(
+        {"name": "", "analysis": {"summary": "Appointment was confirmed."}, "artifact": {"messages": []}}
+    )
+
+    assert named.display_name == "Appointment confirmation"
+    assert summarized.display_name == "Appointment was confirmed."
+
+
+def test_provider_display_name_is_whitespace_normalized_and_bounded() -> None:
+    adapter = VapiProviderAdapter.__new__(VapiProviderAdapter)
+    long_name = "  ".join(["appointment"] * 30)
+
+    normalized = adapter.normalize_conversation_detail(
+        {"name": long_name, "artifact": {"messages": []}}
+    )
+
+    assert normalized.display_name is not None
+    assert len(normalized.display_name) <= 160
+    assert normalized.display_name.endswith("…")
+
+
+def test_bolna_normalize_uses_explicit_title_or_summary_extracted_data() -> None:
+    adapter = BolnaProviderAdapter.__new__(BolnaProviderAdapter)
+
+    explicit = adapter.normalize_conversation_detail({"title": "Follow-up call", "transcript": ""})
+    extracted = adapter.normalize_conversation_detail(
+        {
+            "transcript": "",
+            "extracted_data": {
+                "General": {"Call Summary": {"subjective": "Customer confirmed Friday."}}
+            },
+        }
+    )
+
+    assert explicit.display_name == "Follow-up call"
+    assert extracted.display_name == "Customer confirmed Friday."
 
 
 def test_backfill_conversation_timestamp_updates_missing_started_at(monkeypatch) -> None:
@@ -98,7 +157,7 @@ def test_backfill_conversation_timestamp_updates_missing_started_at(monkeypatch)
         db.commit()
 
         class FakeAdapter:
-            def get_conversation_detail(self, conversation_id: str) -> dict:
+            def get_conversation_detail(self, conversation_id: str, *, agent_id: str | None = None) -> dict:
                 assert conversation_id == "call-1"
                 return {"id": conversation_id}
 

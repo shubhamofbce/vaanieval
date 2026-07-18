@@ -4,7 +4,12 @@ import json
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 
-from app.providers.base import ProviderAdapter, ProviderAgentInfo, ProviderConversationDetail
+from app.providers.base import (
+    ProviderAdapter,
+    ProviderAgentInfo,
+    ProviderConversationDetail,
+    clean_conversation_display_name,
+)
 from app.services.bolna_client import BolnaClient
 
 
@@ -65,6 +70,7 @@ class BolnaProviderAdapter(ProviderAdapter):
             ended_at = started_at + timedelta(seconds=duration_seconds)
 
         return ProviderConversationDetail(
+            display_name=_extract_display_name(detail),
             provider_agent_id=detail.get("agent_id"),
             language=None,
             outcome=detail.get("status") if isinstance(detail.get("status"), str) else None,
@@ -232,3 +238,43 @@ def _decode_offset(cursor: str | None) -> int:
         return 0
     offset = payload.get("offset") if isinstance(payload, dict) else None
     return offset if isinstance(offset, int) and offset >= 0 else 0
+
+
+def _extract_display_name(detail: dict[str, Any]) -> str | None:
+    # Bolna's execution schema has no canonical title field. Prefer an explicit
+    # provider-supplied label, then a summary value deliberately configured in
+    # extracted_data. Never derive a label from context_details: that commonly
+    # contains recipient data from a batch upload.
+    for key in ("name", "title", "call_title", "summary", "call_summary"):
+        value = detail.get(key)
+        if isinstance(value, str) and value.strip():
+            return _clean_display_name(value)
+
+    extracted_data = detail.get("extracted_data")
+    if isinstance(extracted_data, dict):
+        return _find_summary_value(extracted_data)
+    return None
+
+
+def _find_summary_value(value: object, *, summary_context: bool = False) -> str | None:
+    if not isinstance(value, dict):
+        return None
+    for key, nested in value.items():
+        key_normalized = str(key).strip().lower().replace("_", " ")
+        is_summary_key = summary_context or any(token in key_normalized for token in ("summary", "title", "subject"))
+        if is_summary_key and isinstance(nested, str) and nested.strip():
+            return _clean_display_name(nested)
+        if isinstance(nested, dict):
+            if is_summary_key:
+                for value_key in ("title", "summary", "subjective", "value", "text"):
+                    candidate = nested.get(value_key)
+                    if isinstance(candidate, str) and candidate.strip():
+                        return _clean_display_name(candidate)
+            found = _find_summary_value(nested, summary_context=is_summary_key)
+            if found:
+                return found
+    return None
+
+
+def _clean_display_name(value: str) -> str:
+    return clean_conversation_display_name(value) or ""

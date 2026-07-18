@@ -8,6 +8,7 @@ class ConversationListItem(BaseModel):
     provider_account_id: str
     provider_name: str
     provider_conversation_id: str
+    display_name: str | None
     provider_agent_id: str | None
     provider_agent_name: str | None
     language: str | None
@@ -37,6 +38,7 @@ class ConversationDetailResponse(BaseModel):
     id: str
     provider_name: str
     provider_conversation_id: str
+    display_name: str | None
     provider_agent_id: str | None
     provider_agent_name: str | None
     language: str | None

@@ -1,10 +1,9 @@
 from datetime import datetime
 from uuid import uuid4
 
+from app.db.base import Base
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.db.base import Base
 
 
 class Conversation(Base):
@@ -25,6 +24,7 @@ class Conversation(Base):
         ForeignKey("provider_accounts.id", ondelete="CASCADE"), index=True
     )
     provider_conversation_id: Mapped[str] = mapped_column(String(128), index=True)
+    display_name: Mapped[str | None] = mapped_column(String(280), nullable=True)
     provider_agent_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     language: Mapped[str | None] = mapped_column(String(32), nullable=True)
     outcome: Mapped[str | None] = mapped_column(String(50), nullable=True)

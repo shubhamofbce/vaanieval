@@ -5,6 +5,21 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+MAX_CONVERSATION_DISPLAY_NAME_LENGTH = 160
+
+
+def clean_conversation_display_name(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = " ".join(value.split())
+    if not normalized:
+        return None
+    if len(normalized) <= MAX_CONVERSATION_DISPLAY_NAME_LENGTH:
+        return normalized
+
+    truncated = normalized[: MAX_CONVERSATION_DISPLAY_NAME_LENGTH - 1].rsplit(" ", 1)[0].rstrip()
+    return f"{truncated or normalized[: MAX_CONVERSATION_DISPLAY_NAME_LENGTH - 1]}…"
+
 
 @dataclass
 class ProviderAgentInfo:
@@ -21,6 +36,7 @@ class ProviderConversationDetail:
     ended_at: datetime | None
     turns: list[dict[str, Any]]
     audio_url: str | None
+    display_name: str | None = None
 
 
 class ProviderAdapter(ABC):

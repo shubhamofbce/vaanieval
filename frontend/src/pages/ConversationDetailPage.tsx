@@ -79,7 +79,7 @@ function getConversationDisplayName(conversation: ConversationDetailResponse | n
     return 'Conversation review'
   }
 
-  return conversation.provider_agent_name || pickAgentDisplayName(assistantName) || 'Conversation review'
+  return conversation.display_name || conversation.provider_agent_name || pickAgentDisplayName(assistantName) || 'Conversation review'
 }
 
 function formatCallDate(unixSeconds: number | null) {
