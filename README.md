@@ -65,7 +65,7 @@ Use VaaniEval to examine task completion, resolution quality, unsupported claims
 - Python 3.11+
 - Node.js 20+ and npm
 - Git
-- ElevenLabs or Vapi credentials for importing conversations
+- ElevenLabs, Vapi, or Bolna credentials for importing conversations
 - Evaluator provider credentials, such as OpenAI, for scoring
 
 ### Start the stack
@@ -113,6 +113,7 @@ For manual setup, configuration, tests, and troubleshooting, see [Development](d
 | --- | --- | --- |
 | ElevenLabs | Voice provider | Conversation import, agent discovery, media/transcript review |
 | Vapi | Voice provider | Conversation import and provider adapter support |
+| Bolna | Voice provider | Conversation import, agent discovery, transcript and call-recording review |
 | OpenAI | Evaluator provider | Default evaluator path |
 
 Provider support is adapter-based. New voice providers should live behind backend provider adapters so provider-specific behavior stays isolated.

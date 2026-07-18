@@ -89,6 +89,7 @@ SMTP_FROM_EMAIL="VaaniEval <noreply@vaanieval.com>"
 SMTP_USE_TLS=true
 ELEVENLABS_API_BASE=https://api.elevenlabs.io
 VAPI_API_BASE=https://api.vapi.ai
+BOLNA_API_BASE=https://api.bolna.ai
 OPENAI_API_BASE=https://api.openai.com/v1
 ```
 
