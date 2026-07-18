@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { API_BASE } from '../api/client'
 import {
   getAudioMetadata,
+  getAudioWaveform,
   getConversation,
   getConversationInsights,
   getLatestConversationEvaluation,
@@ -26,6 +27,7 @@ import {
 import { formatDateTime, humanizeDiagnosticText, humanizeOutcome } from '../lib/format'
 import type {
   AudioAssetResponse,
+  AudioWaveformResponse,
   ConversationEvaluationRunResponse,
   ConversationDetailResponse,
   ConversationInsightResponse,
@@ -161,6 +163,7 @@ export function ConversationsPage() {
   const [selectedId, setSelectedId] = useState('')
   const [detail, setDetail] = useState<ConversationDetailResponse | null>(null)
   const [audio, setAudio] = useState<AudioAssetResponse | null>(null)
+  const [waveform, setWaveform] = useState<AudioWaveformResponse | null>(null)
   const [insights, setInsights] = useState<ConversationInsightResponse | null>(null)
   const [insightsError, setInsightsError] = useState('')
   const [evaluationRun, setEvaluationRun] = useState<ConversationEvaluationRunResponse | null>(null)
@@ -367,6 +370,7 @@ export function ConversationsPage() {
     if (!selectedId) {
       setDetail(null)
       setAudio(null)
+      setWaveform(null)
       setInsights(null)
       setInsightsError('')
       setEvaluationRun(null)
@@ -397,6 +401,7 @@ export function ConversationsPage() {
         if (!cancelled) {
           setDetail(conversationData)
           setAudio(audioData)
+          setWaveform(null)
           setInsights(insightsData)
           setEvaluationRun(latestEvaluation)
         }
@@ -404,6 +409,7 @@ export function ConversationsPage() {
         if (!cancelled) {
           setDetail(null)
           setAudio(null)
+          setWaveform(null)
           setInsights(null)
           setInsightsError('')
           setEvaluationRun(null)
@@ -423,6 +429,33 @@ export function ConversationsPage() {
       cancelled = true
     }
   }, [selectedId])
+
+  useEffect(() => {
+    if (!selectedId || !audio?.source_url) {
+      return
+    }
+
+    let cancelled = false
+    let timerId: number | undefined
+    const loadWaveform = async () => {
+      const result = await getAudioWaveform(selectedId).catch(() => null)
+      if (cancelled || !result) {
+        return
+      }
+      setWaveform(result)
+      if (result.status === 'pending') {
+        timerId = window.setTimeout(() => void loadWaveform(), 2500)
+      }
+    }
+
+    void loadWaveform()
+    return () => {
+      cancelled = true
+      if (timerId) {
+        window.clearTimeout(timerId)
+      }
+    }
+  }, [audio?.source_url, selectedId])
 
   const streamUrl = useMemo(() => {
     if (!selectedId) {
@@ -504,25 +537,22 @@ export function ConversationsPage() {
 
   const waveformBars = useMemo(() => {
     const barCount = 96
-    const bars = Array.from({ length: barCount }, () => 0.08)
-    const total = effectiveDuration > 0 ? effectiveDuration : 1
+    const peaks = waveform?.peaks ?? []
+    if (peaks.length === 0) {
+      return []
+    }
 
-    turnsForPlayback.forEach((turn) => {
-      const startIndex = Math.max(0, Math.floor((turn.startSec / total) * barCount))
-      const endIndex = Math.min(barCount - 1, Math.ceil((turn.endSec / total) * barCount))
-      for (let index = startIndex; index <= endIndex; index += 1) {
-        const densityBoost = Math.min(0.16, (turn.text.length / 220) * 0.16)
-        const roleBoost = turn.role === 'agent' ? 0.16 : 0.1
-        bars[index] = Math.max(bars[index], 0.2 + densityBoost + roleBoost)
+    return Array.from({ length: barCount }, (_, index) => {
+      const start = Math.floor((index / barCount) * peaks.length)
+      const end = Math.max(start + 1, Math.floor(((index + 1) / barCount) * peaks.length))
+      const peak = Math.max(...peaks.slice(start, end))
+      return {
+        id: index,
+        second: (index / (barCount - 1)) * Math.max(effectiveDuration, 1),
+        height: Math.max(4, Math.round(peak * 100)),
       }
     })
-
-    return bars.map((value, index) => ({
-      id: index,
-      height: Math.min(1, value),
-      isPlayed: (index / barCount) * total <= currentTime,
-    }))
-  }, [currentTime, effectiveDuration, turnsForPlayback])
+  }, [effectiveDuration, waveform?.peaks])
 
   useEffect(() => {
     if (activeTurnIndex < 0 || lastActiveTurnRef.current === activeTurnIndex) {
@@ -1184,15 +1214,41 @@ export function ConversationsPage() {
                     </audio>
 
                     <div className="player-shell">
-                      <div className="player-waveform" aria-hidden="true">
-                        {waveformBars.map((bar) => (
-                          <span
-                            key={bar.id}
-                            className={`player-wave-bar ${bar.isPlayed ? 'is-played' : ''}`}
-                            style={{ height: `${Math.max(8, Math.round(bar.height * 48))}px` }}
-                          />
-                        ))}
+                      <div
+                        className="player-waveform player-waveform-clickable"
+                        role="group"
+                        aria-label="Audio waveform. Select a bar to seek to that point in the recording."
+                      >
+                        <div className="player-waveform-bars">
+                          {waveformBars.map((bar) => (
+                            <button
+                              type="button"
+                              className="player-waveform-bar"
+                              key={bar.id}
+                              onClick={() => void seekToSecond(bar.second)}
+                              aria-label={`Seek to ${formatClock(bar.second)}`}
+                            >
+                              <span style={{ height: `${bar.height}%` }} />
+                            </button>
+                          ))}
+                        </div>
+                        <div
+                          className="player-waveform-playhead"
+                          style={{ left: `${Math.min(100, Math.max(0, (currentTime / Math.max(effectiveDuration, 1)) * 100))}%` }}
+                          aria-hidden="true"
+                        />
                       </div>
+
+                      <div className="player-waveform-legend" aria-hidden="true">
+                        <span>Click waveform to seek</span>
+                        <span>{formatClock(effectiveDuration)}</span>
+                      </div>
+                      {waveform?.status === 'pending' && (
+                        <p className="player-waveform-status" role="status">Preparing real audio waveform…</p>
+                      )}
+                      {waveform?.status === 'failed' && (
+                        <p className="player-audio-error" role="alert">The waveform could not be generated, but playback is still available.</p>
+                      )}
 
                       <div className="player-timeline-group">
                         <input
