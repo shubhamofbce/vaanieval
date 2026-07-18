@@ -4618,3 +4618,67 @@ audio {
   min-width: 240px;
   display: inline-flex;
 }
+
+/* Reporting settings */
+.settings-form {
+  display: grid;
+  gap: 16px;
+  max-width: 780px;
+}
+
+.settings-section {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-section h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.settings-section label:not(.toggle-row) {
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.settings-section input[type='email'],
+.settings-section input[type='url'],
+.settings-section input[type='number'] {
+  width: 100%;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.form-message {
+  border-radius: var(--workspace-radius);
+  padding: 10px 14px;
+  font-size: 0.9rem;
+}
+
+.form-message.error { background: #fff1f2; color: #b42318; }
+.form-message.success { background: #ecfdf3; color: #027a48; }
+
+@media (max-width: 640px) {
+  .settings-grid { grid-template-columns: 1fr; }
+  .settings-actions { justify-content: stretch; }
+  .settings-actions .button { flex: 1; }
+}

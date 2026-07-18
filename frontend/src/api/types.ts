@@ -257,3 +257,18 @@ export type DashboardOverviewResponse = {
   agent_breakdown: DashboardAgentSummary[]
   review_queue: DashboardReviewQueueItem[]
 }
+
+export type ReportingSettingsResponse = {
+  email_enabled: boolean
+  email_recipient: string | null
+  slack_enabled: boolean
+  slack_webhook_configured: boolean
+  daily_digest_enabled: boolean
+  daily_delivery_hour_utc: number
+  incident_alerts_enabled: boolean
+  incident_failure_threshold: number
+  incident_min_calls: number
+  incident_active: boolean
+  last_daily_digest_date: string | null
+  updated_at: string | null
+}

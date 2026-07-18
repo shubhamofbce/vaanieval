@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { ProviderPage } from './pages/ProviderPage'
+import { ReportingSettingsPage } from './pages/ReportingSettingsPage'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/settings/provider" element={<ProviderPage />} />
           <Route path="/settings/agents" element={<AgentsPage />} />
+          <Route path="/settings/reporting" element={<ReportingSettingsPage />} />
           <Route path="/imports/new" element={<ImportNewPage />} />
           <Route path="/imports/:importJobId" element={<ImportProgressPage />} />
           <Route path="/conversations" element={<ConversationsPage />} />

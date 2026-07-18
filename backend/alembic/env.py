@@ -20,6 +20,7 @@ from app.models import (  # noqa: F401
     Membership,
     ProviderAccount,
     ProviderAgent,
+    ReportingSettings,
     ToolEvent,
     User,
     Workspace,

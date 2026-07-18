@@ -18,6 +18,7 @@ export function AppLayout() {
     { to: '/settings/agents', icon: 'users', label: 'Agents' },
     { to: '/imports/new', icon: 'file-import', label: 'Imports' },
     { to: '/settings/provider', icon: 'plug', label: 'Providers' },
+    { to: '/settings/reporting', icon: 'bell', label: 'Reporting' },
   ]
 
   async function handleLogout() {
