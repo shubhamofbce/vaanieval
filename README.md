@@ -31,6 +31,10 @@
 
 VaaniEval helps voice-agent teams inspect real conversations, run evaluator-backed quality checks, and turn production call data into actionable QA, product, and engineering feedback.
 
+<p align="center">
+  <img src="docs/assets/screenshots/vaanieval-scores.gif" alt="VaaniEval Voice AI Evaluator in Action" width="100%">
+</p>
+
 VaaniEval is a full-stack application, not a published Python package or supported CLI. It consists of a FastAPI backend, a queue worker, a React product app, and a Next.js public site.
 
 ## Product Demo

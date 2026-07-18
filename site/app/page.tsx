@@ -42,14 +42,11 @@ export default function Home() {
         </div>
         <p className="microcopy">MIT licensed · Self-hostable · ElevenLabs and Vapi imports</p>
       </div>
-      <div className="hero-illustration" role="img" aria-label="Abstract illustration of a production voice conversation becoming evidence-led quality signals">
-        <div className="illustration-orbit illustration-orbit-one" /><div className="illustration-orbit illustration-orbit-two" />
-        <div className="voice-card"><span className="illustration-label">Production conversation</span><svg viewBox="0 0 240 78" aria-hidden="true"><path d="M2 39h13l8-18 10 43 12-53 11 56 13-29 12 13 11-42 12 54 11-19 12 7 12-35 11 44 12-18 13 15 10-33 12 23 12-10 12 7h13" /></svg><div className="voice-card-footer"><span className="live-dot" />Evidence captured</div></div>
-        <div className="signal-path"><span /><i /></div>
-        <div className="evaluation-core"><span className="core-ring core-ring-one" /><span className="core-ring core-ring-two" /><div className="core-mark">✓</div><strong>Evaluate</strong><small>with context</small></div>
-        <div className="quality-panel"><span className="illustration-label">Quality signals</span><div><span>Task completion</span><i><b /></i></div><div><span>Intent understanding</span><i><b /></i></div><div><span>Evidence review</span><i><b /></i></div></div>
-        <div className="evidence-chip chip-transcript">Transcript</div><div className="evidence-chip chip-rationale">Rationale</div><div className="evidence-chip chip-audio">Audio</div>
-        <p>From real conversation to reviewable quality evidence</p>
+      <div className="hero-illustration-gif">
+        <img
+          src="https://raw.githubusercontent.com/shubhamofbce/vaanieval/main/docs/assets/screenshots/vaanieval-scores.gif"
+          alt="VaaniEval voice AI evaluation workspace showcasing overall score ring gauge, evaluation metrics, and audio transcript review"
+        />
       </div>
     </section>
 
