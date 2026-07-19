@@ -51,10 +51,15 @@ def update_reporting_settings(
 ):
     if payload.email_enabled and not payload.email_recipient:
         raise HTTPException(status_code=422, detail="An email recipient is required when email is enabled")
-    if payload.slack_enabled and not payload.slack_webhook_url:
-        raise HTTPException(status_code=422, detail="A Slack webhook URL is required when Slack is enabled")
     config = _get_or_create(db, workspace_id)
+    # Webhook URLs are deliberately excluded from GET responses. Treat an omitted
+    # URL as "keep the saved secret", so users can change other settings without
+    # needing to re-enter it each time.
+    if payload.slack_enabled and not (payload.slack_webhook_url or config.slack_webhook_url):
+        raise HTTPException(status_code=422, detail="A Slack webhook URL is required when Slack is enabled")
     for field, value in payload.model_dump().items():
+        if field == "slack_webhook_url" and value is None:
+            continue
         setattr(config, field, str(value) if field == "slack_webhook_url" and value else value)
     db.commit()
     db.refresh(config)

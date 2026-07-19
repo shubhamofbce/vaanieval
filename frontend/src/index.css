@@ -4826,53 +4826,47 @@ audio {
 }
 
 /* Reporting settings */
-.settings-form {
-  display: grid;
-  gap: 16px;
-  max-width: 780px;
-}
-
-.settings-section {
-  display: grid;
-  gap: 14px;
-}
-
-.settings-section h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.settings-section label:not(.toggle-row) {
-  display: grid;
-  gap: 6px;
-  font-size: 0.86rem;
-  font-weight: 600;
-}
-
-.settings-section input[type='email'],
-.settings-section input[type='url'],
-.settings-section input[type='number'] {
-  width: 100%;
-}
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
-
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.settings-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
+.reporting-form { display: grid; gap: 18px; max-width: 980px; padding-bottom: 36px; }
+.reporting-status { display: grid; grid-template-columns: 1.2fr repeat(2, 1fr); gap: 12px; }
+.reporting-status-card { min-height: 130px; display: grid; align-content: start; gap: 5px; padding: 18px; border: 1px solid var(--workspace-border); border-radius: var(--workspace-radius); background: var(--workspace-card); box-shadow: 0 1px 2px rgba(15, 23, 42, .03); }
+.reporting-status-card.is-ready { grid-template-columns: 32px 1fr; background: #f0fdf9; border-color: #a7f3d0; }
+.reporting-status-card.needs-attention { grid-template-columns: 32px 1fr; background: #fffbeb; border-color: #fde68a; }
+.reporting-status-card.is-incident { background: #fff1f2; border-color: #fecdd3; }
+.reporting-status-icon { display: grid; place-items: center; width: 28px; height: 28px; margin-top: 2px; border-radius: 50%; color: #047857; background: #d1fae5; }
+.needs-attention .reporting-status-icon { color: #b45309; background: #fef3c7; }
+.eyebrow { display: block; color: var(--workspace-text-secondary); font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.reporting-status-card strong { font-size: 1rem; color: var(--workspace-ink); }
+.reporting-status-card p, .reporting-section-heading p, .destination-card p, .reporting-test-row p, .field-explainer, .destination-off, .section-paused { margin: 0; color: var(--workspace-text-secondary); font-size: .84rem; line-height: 1.45; }
+.reporting-section { display: grid; gap: 20px; padding: 24px; }
+.reporting-section-heading { display: flex; justify-content: space-between; align-items: start; gap: 20px; }
+.reporting-section h2 { margin: 3px 0 5px; font-size: 1.14rem; color: var(--workspace-ink); }
+.destination-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.destination-card { display: grid; gap: 16px; padding: 18px; border: 1px solid var(--workspace-border); border-radius: var(--workspace-radius); background: #fbfdfc; }
+.destination-card.is-enabled { background: #fff; border-color: #86cfc7; box-shadow: inset 3px 0 0 var(--workspace-primary); }
+.destination-card-heading { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 11px; }
+.destination-card-heading h3 { margin: 0 0 2px; font-size: .96rem; }
+.destination-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; color: #0f766e; background: #ccfbf1; }
+.destination-icon.slack { color: #7c3aed; background: #ede9fe; }
+.field-label { display: grid; gap: 7px; color: #334155; font-size: .83rem; font-weight: 700; }
+.field-label input, .field-label select { width: 100%; margin: 0; }
+.field-label small { color: var(--workspace-text-secondary); font-size: .76rem; font-weight: 400; line-height: 1.35; }
+.destination-off { padding: 11px 12px; border-radius: 6px; background: #f1f5f9; }
+.switch { position: relative; display: inline-flex; flex: none; cursor: pointer; }
+.switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.switch > span:not(.sr-only) { width: 38px; height: 22px; display: block; border-radius: 999px; background: #cbd5e1; transition: background .15s ease; }
+.switch > span:not(.sr-only)::after { content: ''; display: block; width: 16px; height: 16px; margin: 3px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(15, 23, 42, .24); transition: transform .15s ease; }
+.switch input:checked + span { background: var(--workspace-primary); }
+.switch input:checked + span::after { transform: translateX(16px); }
+.switch input:focus-visible + span { outline: none; box-shadow: var(--workspace-focus-ring); }
+.section-switch { margin-top: 4px; }
+.reporting-test-row { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 16px 0 0; border-top: 1px solid var(--workspace-border); }
+.reporting-test-row strong { display: block; margin-bottom: 3px; font-size: .9rem; }
+.reporting-control-row, .incident-controls { display: grid; grid-template-columns: minmax(190px, .7fr) 1.3fr; gap: 20px; align-items: end; padding: 16px; border-radius: var(--workspace-radius); background: #f8fafc; }
+.incident-controls { grid-template-columns: minmax(160px, .7fr) minmax(160px, .7fr) 1.25fr; }
+.field-explainer { padding-bottom: 7px; }
+.section-paused { padding: 15px; border-radius: var(--workspace-radius); background: #f8fafc; }
+.reporting-footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; color: var(--workspace-text-secondary); font-size: .8rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .form-message {
   border-radius: var(--workspace-radius);
@@ -4884,7 +4878,9 @@ audio {
 .form-message.success { background: #ecfdf3; color: #027a48; }
 
 @media (max-width: 640px) {
-  .settings-grid { grid-template-columns: 1fr; }
-  .settings-actions { justify-content: stretch; }
-  .settings-actions .button { flex: 1; }
+  .reporting-status, .destination-list, .reporting-control-row, .incident-controls { grid-template-columns: 1fr; }
+  .reporting-section { padding: 18px; }
+  .reporting-section-heading { gap: 12px; }
+  .reporting-test-row, .reporting-footer { align-items: stretch; flex-direction: column; }
+  .reporting-test-row .button, .reporting-footer .button { width: 100%; }
 }
