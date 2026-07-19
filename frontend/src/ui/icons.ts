@@ -15,6 +15,7 @@ import {
   faComments,
   faCopy,
   faDownload,
+  faEnvelope,
   faEllipsisVertical,
   faExclamationTriangle,
   faFileImport,
@@ -49,7 +50,7 @@ import {
   faWaveSquare,
   faXmarkCircle,
 } from '@fortawesome/free-solid-svg-icons'
-import { faSoundcloud } from '@fortawesome/free-brands-svg-icons'
+import { faSlack, faSoundcloud } from '@fortawesome/free-brands-svg-icons'
 
 library.add(
   faHouse,
@@ -84,6 +85,7 @@ library.add(
   faLink,
   faHeadset,
   faDownload,
+  faEnvelope,
   faFileLines,
   faVolumeHigh,
   faWaveSquare,
@@ -99,6 +101,7 @@ library.add(
   faTableCellsLarge,
   faTriangleExclamation,
   faSoundcloud,
+  faSlack,
   faCopy,
   faEllipsisVertical,
 )

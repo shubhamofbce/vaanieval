@@ -4865,6 +4865,13 @@ audio {
 .incident-controls { grid-template-columns: minmax(160px, .7fr) minmax(160px, .7fr) 1.25fr; }
 .field-explainer { padding-bottom: 7px; }
 .section-paused { padding: 15px; border-radius: var(--workspace-radius); background: #f8fafc; }
+.reporting-coming-soon { position: relative; overflow: hidden; background: linear-gradient(135deg, #fbfdfc 0%, #f8fafc 100%); }
+.reporting-coming-soon::after { content: 'COMING SOON'; position: absolute; top: 19px; right: -31px; padding: 4px 35px; transform: rotate(38deg); color: #475569; background: #e2e8f0; font-size: .61rem; font-weight: 800; letter-spacing: .08em; }
+.coming-soon-switch { cursor: not-allowed; filter: blur(1.4px); opacity: .55; pointer-events: none; }
+.coming-soon-message { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; padding: 17px; border: 1px dashed #b7c6d4; border-radius: var(--workspace-radius); background: rgba(255, 255, 255, .78); }
+.coming-soon-message strong { display: block; margin-bottom: 4px; color: #334155; font-size: .9rem; }
+.coming-soon-message p { margin: 0; color: var(--workspace-text-secondary); font-size: .84rem; line-height: 1.5; }
+.coming-soon-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; color: #64748b; background: #e2e8f0; }
 .reporting-footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; color: var(--workspace-text-secondary); font-size: .8rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
