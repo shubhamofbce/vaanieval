@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-AGPL_v3-blue.svg"></a>
   <a href="backend/requirements.txt"><img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-blue.svg"></a>
   <a href="backend/README.md"><img alt="Backend" src="https://img.shields.io/badge/Backend-FastAPI-009688.svg"></a>
   <a href="frontend/package.json"><img alt="Frontend" src="https://img.shields.io/badge/Frontend-React%20%2B%20Vite-00bcd4.svg"></a>
@@ -170,4 +170,4 @@ safe-posting expectations.
 
 ## License
 
-VaaniEval is licensed under the [MIT License](LICENSE).
+VaaniEval is licensed under the [GNU Affero General Public License v3.0](LICENSE).
