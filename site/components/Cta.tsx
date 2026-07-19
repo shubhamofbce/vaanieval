@@ -1,4 +1,4 @@
-import { TrackedLink } from './TrackedLink'
+import { BookingButton } from './BookingButton'
 import { GitHubCta } from './GitHubCta'
 
-export function Cta() { return <section className="cta shell"><div><p className="eyebrow">Open-source voice-agent evaluation</p><h2>Inspect the calls behind your agent’s quality score.</h2><p>Star the project, self-host the workspace, or help shape the next evaluation capabilities as a design partner.</p></div><div className="cta-actions"><GitHubCta className="button button-light" event="github_star_final_click" /><TrackedLink className="cta-link" href="/design-partners" event="design_partner_cta_click">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink></div></section> }
+export function Cta() { return <section className="cta shell"><div><p className="eyebrow">Talk through your QA workflow</p><h2>See how VaaniEval fits your voice-agent operation.</h2><p>Book a focused walkthrough of the evaluation workspace, or inspect and self-host the open-source project.</p></div><div className="cta-actions"><BookingButton className="button button-light" event="calendar_booking_final_cta_open">Book a demo</BookingButton><GitHubCta className="cta-link" event="github_star_final_click">View on GitHub <span aria-hidden="true">→</span></GitHubCta></div></section> }

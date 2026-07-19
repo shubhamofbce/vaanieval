@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://calendar.app.google/5cNH8hB13LoC39Qk7"><strong>Book a demo</strong></a> ·
   <a href="https://www.vaanieval.com/"><strong>Visit VaaniEval</strong></a> ·
   <a href="https://github.com/shubhamofbce/vaanieval"><strong>Star on GitHub</strong></a>
 </p>

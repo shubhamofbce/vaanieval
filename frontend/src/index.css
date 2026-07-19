@@ -2148,6 +2148,119 @@ button:disabled {
   line-height: 1.7;
 }
 
+.login-booking-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 13px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 16px 32px rgba(15, 118, 110, 0.22);
+  cursor: pointer;
+}
+
+.login-booking-button:hover {
+  background: #115e59;
+  transform: translateY(-1px);
+}
+
+.booking-dialog {
+  width: min(960px, calc(100% - 32px));
+  max-width: none;
+  height: min(820px, calc(100dvh - 32px));
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.35);
+}
+
+.booking-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.booking-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+.booking-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px 0;
+}
+
+.booking-dialog-header .login-eyebrow {
+  margin-bottom: 4px;
+}
+
+.booking-dialog-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.booking-dialog-close {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.booking-dialog-close:hover {
+  background: #f0fdfa;
+}
+
+.booking-dialog-copy {
+  flex: none;
+  margin: 8px 24px 16px;
+  color: #64748b;
+}
+
+.booking-frame {
+  min-height: 480px;
+  flex: 1;
+  border-block: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.booking-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.booking-fallback {
+  flex: none;
+  margin: 10px 24px;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.booking-fallback a {
+  color: #0f766e;
+  font-weight: 750;
+  text-decoration: underline;
+}
+
 .login-demo {
   max-width: 620px;
   margin-top: auto;
@@ -2433,6 +2546,34 @@ button:disabled {
 
   .login-card-header h2 {
     font-size: 1.45rem;
+  }
+
+  .booking-dialog {
+    width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+  }
+
+  .booking-dialog-header {
+    padding: 18px 16px 0;
+  }
+
+  .booking-dialog-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .booking-dialog-copy {
+    margin: 8px 16px 12px;
+    font-size: 0.88rem;
+  }
+
+  .booking-frame {
+    min-height: 0;
+  }
+
+  .booking-fallback {
+    margin: 8px 16px;
+    font-size: 0.75rem;
   }
 }
 

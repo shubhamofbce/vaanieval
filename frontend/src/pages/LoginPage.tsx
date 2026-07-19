@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { requestMagicLink, verifyMagicLink } from '../api/endpoints'
+import { BookingButton } from '../components/BookingButton'
 import logo from '../assets/vaanievallogo.jpg'
 
 export function LoginPage() {
@@ -187,6 +188,7 @@ export function LoginPage() {
             See what worked, spot issues, and improve your agents with evidence from real
             conversations.
           </p>
+          <BookingButton />
         </div>
 
         <div className="login-demo" aria-labelledby="login-demo-title">

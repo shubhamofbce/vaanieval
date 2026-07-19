@@ -12,6 +12,8 @@ export const siteConfig = {
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vaanieval.com',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',
+  bookingUrl: 'https://calendar.app.google/5cNH8hB13LoC39Qk7',
+  bookingEmbedUrl: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ09AykNKTGy837qj-lPF91WJRGj7HnV-EYy_sK9iSDwuPFQCoJiR_JsONSysO4_9BdP6_eq40rb?gv=true',
   contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Design%20partner%20application&labels=design-partner',
   integrationRequestUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Integration%20request&body=%23%23%20Integration%20request%0A%0AWhich%20provider%20or%20platform%20would%20you%20like%20VaaniEval%20to%20support%3F%0A%0AWhat%20conversation%20data%20or%20workflow%20should%20it%20support%3F%0A%0APlease%20do%20not%20include%20credentials%2C%20private%20call%20data%2C%20or%20other%20sensitive%20information.',
 }

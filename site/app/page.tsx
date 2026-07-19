@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Cta } from '@/components/Cta'
+import { BookingButton } from '@/components/BookingButton'
 import { GitHubCta } from '@/components/GitHubCta'
 import { TrackedLink } from '@/components/TrackedLink'
 import { siteConfig } from '@/lib/site'
@@ -35,8 +36,8 @@ export default function Home() {
         <p className="lede">Import real production calls, evaluate the outcomes platform dashboards miss, and keep every score connected to the conversation evidence behind it.</p>
         <div className="hero-actions">
           <div className="hero-primary-actions">
-            <TrackedLink className="button" href={siteConfig.appUrl} event="hosted_app_hero_click">Try the app</TrackedLink>
-            <Link className="button button-secondary" href="/design-partners">Design partner</Link>
+            <BookingButton event="calendar_booking_hero_open">Book a demo</BookingButton>
+            <TrackedLink className="button button-secondary" href={siteConfig.appUrl} event="hosted_app_hero_click">Try the app</TrackedLink>
           </div>
           <GitHubCta className="text-link hero-star-link" event="github_star_hero_click">Star <span aria-hidden="true">→</span></GitHubCta>
         </div>

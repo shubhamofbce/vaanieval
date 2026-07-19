@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { GitHubCta } from './GitHubCta'
+import { BookingButton } from './BookingButton'
 import { TrackedLink } from './TrackedLink'
 import { siteConfig } from '@/lib/site'
 import logo from '../../frontend/src/assets/vaanievallogo.jpg'
@@ -11,8 +11,8 @@ export function Header() {
       <Link href="/voice-ai-evaluation">Product</Link><Link href="/integrations/elevenlabs">Integrations</Link><Link href="/resources/evaluation-metrics">Resources</Link><Link href="/blog">Blog</Link><Link href="/open-source">Open source</Link>
     </nav>
     <div className="header-actions">
-      <GitHubCta className="button button-small button-github header-github-button" event="github_star_header_click">Star</GitHubCta>
-      <TrackedLink className="button button-small header-try-button" href={siteConfig.appUrl} event="hosted_app_header_click">Try now</TrackedLink>
+      <TrackedLink className="button button-small button-secondary header-try-button" href={siteConfig.appUrl} event="hosted_app_header_click">Try now</TrackedLink>
+      <BookingButton className="button button-small header-booking-button" event="calendar_booking_header_open">Book a demo</BookingButton>
     </div>
   </div></header>
 }
