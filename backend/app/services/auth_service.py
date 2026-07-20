@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import timezone
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -27,6 +27,7 @@ class VerifiedSession:
     session_token: str
     user: User
     workspace: Workspace
+    session_expires_at: datetime
 
 
 @dataclass
@@ -108,14 +109,19 @@ def verify_magic_link(db: Session, token: str) -> VerifiedSession | None:
     session_row = AuthSession(
         user_id=user.id,
         session_token_hash=hash_token(session_token),
-        expires_at=expires_in_hours(settings.session_ttl_hours),
+        expires_at=expires_in_hours(settings.session_ttl_days * 24),
     )
 
     token_row.consumed_at = now
     db.add(session_row)
     db.commit()
 
-    return VerifiedSession(session_token=session_token, user=user, workspace=workspace)
+    return VerifiedSession(
+        session_token=session_token,
+        user=user,
+        workspace=workspace,
+        session_expires_at=session_row.expires_at,
+    )
 
 
 def revoke_session(db: Session, raw_session_token: str) -> None:

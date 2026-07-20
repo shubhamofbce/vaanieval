@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { createImport, listAgents } from '../api/endpoints'
 import type { ProviderAgentResponse } from '../api/types'
 import { PageHeader } from '../components/PageHeader'
+import { usePersistedState } from '../lib/persistence'
 
 function formatProviderName(providerName: string) {
   return providerName === 'elevenlabs'
@@ -38,12 +39,12 @@ const IMPORT_QUICK_RANGES = [
 export function ImportNewPage() {
   const navigate = useNavigate()
   const [agents, setAgents] = useState<ProviderAgentResponse[]>([])
-  const [providerName, setProviderName] = useState('')
-  const [agentId, setAgentId] = useState('')
+  const [providerName, setProviderName] = usePersistedState('import:provider', '')
+  const [agentId, setAgentId] = usePersistedState('import:agent', '')
   const defaultRange = useMemo(() => getLastNDaysRange(7), [])
-  const [startDate, setStartDate] = useState(defaultRange.start)
-  const [endDate, setEndDate] = useState(defaultRange.end)
-  const [pageSize, setPageSize] = useState(50)
+  const [startDate, setStartDate] = usePersistedState('import:start-date', defaultRange.start)
+  const [endDate, setEndDate] = usePersistedState('import:end-date', defaultRange.end)
+  const [pageSize, setPageSize] = usePersistedState('import:page-size', 50)
   const [error, setError] = useState('')
   const [loadingAgents, setLoadingAgents] = useState(true)
 
@@ -308,4 +309,3 @@ export function ImportNewPage() {
     </section>
   )
 }
-

@@ -16,6 +16,7 @@ import type {
   EvalProviderResponse,
   ProviderConnectionListItem,
 } from '../api/types'
+import { usePersistedState } from '../lib/persistence'
 
 const providerDisplayName = (providerName: string) => {
   if (providerName === 'elevenlabs') return 'ElevenLabs'
@@ -29,9 +30,9 @@ export function ProviderPage() {
   const [providerConnections, setProviderConnections] = useState<ProviderConnectionListItem[]>([])
   const [agentCountByAccount, setAgentCountByAccount] = useState<Record<string, number>>({})
   const [connectionState, setConnectionState] = useState<Record<string, 'checked' | 'attention'>>({})
-  const [showConnectForm, setShowConnectForm] = useState(false)
+  const [showConnectForm, setShowConnectForm] = usePersistedState('provider:connect-panel-open', false)
   const [managedConnectionId, setManagedConnectionId] = useState('')
-  const [providerName, setProviderName] = useState('elevenlabs')
+  const [providerName, setProviderName] = usePersistedState('provider:selected-provider', 'elevenlabs')
   const [apiKey, setApiKey] = useState('')
   const [isSavingProvider, setIsSavingProvider] = useState(false)
   const [isRefreshingId, setIsRefreshingId] = useState('')
@@ -40,10 +41,10 @@ export function ProviderPage() {
 
   const [evalCatalog, setEvalCatalog] = useState<EvalProviderCatalogResponse[]>([])
   const [configuredEvalProviders, setConfiguredEvalProviders] = useState<EvalProviderResponse[]>([])
-  const [evalProviderName, setEvalProviderName] = useState('openai')
-  const [evalModelName, setEvalModelName] = useState('gpt-4o-mini')
+  const [evalProviderName, setEvalProviderName] = usePersistedState('provider:eval-provider', 'openai')
+  const [evalModelName, setEvalModelName] = usePersistedState('provider:eval-model', 'gpt-4o-mini')
   const [evalApiKey, setEvalApiKey] = useState('')
-  const [showEvalForm, setShowEvalForm] = useState(false)
+  const [showEvalForm, setShowEvalForm] = usePersistedState('provider:eval-panel-open', false)
   const [evalResult, setEvalResult] = useState('')
   const [evalError, setEvalError] = useState('')
   const [evalSaving, setEvalSaving] = useState(false)

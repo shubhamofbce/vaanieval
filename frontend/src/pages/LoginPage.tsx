@@ -1,12 +1,13 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { requestMagicLink, verifyMagicLink } from '../api/endpoints'
 import { BookingButton } from '../components/BookingButton'
 import logo from '../assets/vaanievallogo.jpg'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const tokenFromUrl = searchParams.get('token')
   const autoVerifyToken = useRef<string | null>(null)
@@ -17,6 +18,19 @@ export function LoginPage() {
   const [isSending, setIsSending] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [isTokenPanelOpen, setIsTokenPanelOpen] = useState(Boolean(tokenFromUrl))
+
+  const returnTo = (() => {
+    const stateValue = (location.state as { from?: unknown } | null)?.from
+    const candidate = typeof stateValue === 'string' ? stateValue : (() => {
+      try { return window.localStorage.getItem('vaanieval:auth:return-to') } catch { return null }
+    })()
+    return candidate && candidate.startsWith('/') && !candidate.startsWith('//') && !candidate.startsWith('/login') ? candidate : '/onboarding'
+  })()
+
+  function completeLogin() {
+    try { window.localStorage.removeItem('vaanieval:auth:return-to') } catch { /* optional browser convenience */ }
+    navigate(returnTo, { replace: true })
+  }
 
   useEffect(() => {
     if (!tokenFromUrl || autoVerifyToken.current === tokenFromUrl) {
@@ -31,13 +45,13 @@ export function LoginPage() {
     setIsVerifying(true)
 
     verifyMagicLink(tokenFromUrl)
-      .then(() => navigate('/onboarding'))
+      .then(completeLogin)
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Token verification failed')
         setMessage('We could not complete sign-in from that link. Paste a fresh token below.')
       })
       .finally(() => setIsVerifying(false))
-  }, [navigate, tokenFromUrl])
+  }, [tokenFromUrl])
 
   const tokenAvailable = token.trim().length > 0
 
@@ -75,7 +89,7 @@ export function LoginPage() {
     setIsVerifying(true)
     try {
       await verifyMagicLink(token)
-      navigate('/onboarding')
+      completeLogin()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Token verification failed')
     } finally {

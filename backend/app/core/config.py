@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     secret_key: str = "change-me-in-prod"
     credential_encryption_key: str | None = None
     magic_link_token_ttl_minutes: int = 15
-    session_ttl_hours: int = 24
+    # Persistent browser sessions. Kept configurable for deployments that need a
+    # shorter policy, while making the default match the product sign-in promise.
+    session_ttl_days: int = 30
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"

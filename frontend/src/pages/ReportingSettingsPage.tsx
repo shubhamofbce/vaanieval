@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { PageHeader } from '../components/PageHeader'
 import { getReportingSettings, saveReportingSettings, testReportingDestination } from '../api/endpoints'
 import type { ReportingSettingsResponse } from '../api/types'
+import { usePersistedState } from '../lib/persistence'
 
 type FormState = {
   email_enabled: boolean
@@ -43,6 +44,11 @@ function formatLocalDeliveryHour(hourUtc: number) {
 
 export function ReportingSettingsPage() {
   const [form, setForm] = useState<FormState>(emptyState)
+  const [localOptions, setLocalOptions] = usePersistedState('reporting:unsaved-options', {
+    email_enabled: false, email_recipient: '', slack_enabled: false,
+    daily_digest_enabled: true, daily_delivery_hour_utc: 9,
+    incident_failure_threshold: 20, incident_min_calls: 10,
+  })
   const [settings, setSettings] = useState<ReportingSettingsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -55,7 +61,7 @@ export function ReportingSettingsPage() {
       try {
         const result = await getReportingSettings()
         setSettings(result)
-        setForm((current) => ({ ...current, ...result, email_recipient: result.email_recipient ?? '', incident_alerts_enabled: false }))
+        setForm((current) => ({ ...current, ...result, ...localOptions, email_recipient: localOptions.email_recipient || result.email_recipient || '', incident_alerts_enabled: false }))
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load reporting settings')
       } finally {
@@ -63,6 +69,19 @@ export function ReportingSettingsPage() {
       }
     })()
   }, [])
+
+  useEffect(() => {
+    setForm((current) => ({ ...current, ...localOptions, incident_alerts_enabled: false }))
+  }, [localOptions])
+
+  useEffect(() => {
+    // Deliberately omit Slack webhook URLs: they are secrets, even while unsaved.
+    setLocalOptions({
+      email_enabled: form.email_enabled, email_recipient: form.email_recipient, slack_enabled: form.slack_enabled,
+      daily_digest_enabled: form.daily_digest_enabled, daily_delivery_hour_utc: form.daily_delivery_hour_utc,
+      incident_failure_threshold: form.incident_failure_threshold, incident_min_calls: form.incident_min_calls,
+    })
+  }, [form.email_enabled, form.email_recipient, form.slack_enabled, form.daily_digest_enabled, form.daily_delivery_hour_utc, form.incident_failure_threshold, form.incident_min_calls, setLocalOptions])
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))

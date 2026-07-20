@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { usePersistedState } from '../lib/persistence'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { API_BASE } from '../api/client'
 import {
@@ -152,17 +153,17 @@ export function ConversationsPage() {
   const [total, setTotal] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = usePersistedState('conversations:query', '')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [providerFilter, setProviderFilter] = useState('all')
-  const [agentFilter, setAgentFilter] = useState('all')
-  const [scoreFilter, setScoreFilter] = useState('all')
-  const [languageFilter, setLanguageFilter] = useState('all')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [qaInboxFilter, setQaInboxFilter] = useState<QaInboxFilter>('attention')
-  const [selectedId, setSelectedId] = useState('')
+  const [providerFilter, setProviderFilter] = usePersistedState('conversations:provider-filter', 'all')
+  const [agentFilter, setAgentFilter] = usePersistedState('conversations:agent-filter', 'all')
+  const [scoreFilter, setScoreFilter] = usePersistedState('conversations:score-filter', 'all')
+  const [languageFilter, setLanguageFilter] = usePersistedState('conversations:language-filter', 'all')
+  const [dateFrom, setDateFrom] = usePersistedState('conversations:date-from', '')
+  const [dateTo, setDateTo] = usePersistedState('conversations:date-to', '')
+  const [filtersOpen, setFiltersOpen] = usePersistedState('conversations:filters-open', false)
+  const [qaInboxFilter, setQaInboxFilter] = usePersistedState<QaInboxFilter>('conversations:qa-inbox-filter', 'attention')
+  const [selectedId, setSelectedId] = usePersistedState('conversations:selected-id', '')
   const [detail, setDetail] = useState<ConversationDetailResponse | null>(null)
   const [audio, setAudio] = useState<AudioAssetResponse | null>(null)
   const [waveform, setWaveform] = useState<AudioWaveformResponse | null>(null)
@@ -204,8 +205,8 @@ export function ConversationsPage() {
   const [duration, setDuration] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
-  const [detailTab, setDetailTab] = useState<DetailTab>('score')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [detailTab, setDetailTab] = usePersistedState<DetailTab>('conversations:detail-tab', 'score')
+  const [currentPage, setCurrentPage] = usePersistedState('conversations:page', 1)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const subtitleListRef = useRef<HTMLUListElement | null>(null)
   const lastActiveTurnRef = useRef(-1)

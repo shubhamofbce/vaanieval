@@ -1,9 +1,12 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { getEvaluationRun, listAgents, listConversations, listRubrics, publishRubric, saveRubricDraft, testRubricOnConversation } from '../api/endpoints'
 import { formatDateTime } from '../lib/format'
 import type { ConversationEvaluationRunResponse, ConversationListItem, ProviderAgentResponse, RubricVersionResponse } from '../api/types'
+import { readScopedState, usePersistedState } from '../lib/persistence'
+import { getMe } from '../api/endpoints'
 
 const emptyDraft = (providerAgentId: string | null, version: number, previous?: RubricVersionResponse): RubricVersionResponse => ({
   id: null, provider_agent_id: providerAgentId, name: previous?.name ?? 'Evaluation rubric', version, status: 'draft', is_active: false,
@@ -27,13 +30,14 @@ const metricLabels: Record<string, string> = {
 }
 
 export function RubricsPage() {
+  const { data: identity } = useQuery({ queryKey: ['me'], queryFn: getMe, retry: false })
   const [agents, setAgents] = useState<ProviderAgentResponse[]>([])
-  const [target, setTarget] = useState('')
+  const [target, setTarget] = usePersistedState('rubrics:target', '')
   const [history, setHistory] = useState<RubricVersionResponse[]>([])
-  const [draft, setDraft] = useState<RubricVersionResponse | null>(null)
-  const [activeMetric, setActiveMetric] = useState<typeof fields[number][0]>('task_completion_instructions')
-  const [conversationId, setConversationId] = useState('')
-  const [testAgentId, setTestAgentId] = useState('')
+  const [draft, setDraft, clearLocalDraft] = usePersistedState<RubricVersionResponse | null>('rubrics:local-draft', null)
+  const [activeMetric, setActiveMetric] = usePersistedState<typeof fields[number][0]>('rubrics:active-metric', 'task_completion_instructions')
+  const [conversationId, setConversationId] = usePersistedState('rubrics:test-conversation', '')
+  const [testAgentId, setTestAgentId] = usePersistedState('rubrics:test-agent', '')
   const [testConversations, setTestConversations] = useState<ConversationListItem[]>([])
   const [testLoading, setTestLoading] = useState(false)
   const [testRun, setTestRun] = useState<ConversationEvaluationRunResponse | null>(null)
@@ -47,7 +51,11 @@ export function RubricsPage() {
     const rows = await listRubrics(targetAgentId)
     setHistory(rows)
     const latestPublished = rows.find((row) => row.status === 'published')
-    setDraft(rows.find((row) => row.status === 'draft') ?? emptyDraft(targetAgentId ?? null, (latestPublished?.version ?? 0) + 1, latestPublished))
+    const serverDraft = rows.find((row) => row.status === 'draft') ?? emptyDraft(targetAgentId ?? null, (latestPublished?.version ?? 0) + 1, latestPublished)
+    const localDraft = identity ? readScopedState<RubricVersionResponse>('rubrics:local-draft', identity.user_id, identity.workspace_id) : null
+    const localMatchesTarget = localDraft && (localDraft.provider_agent_id ?? '') === (targetAgentId ?? '')
+    const localIsNewer = localMatchesTarget && Date.parse(localDraft.updated_at ?? '') > Date.parse(serverDraft.updated_at ?? '')
+    setDraft(localIsNewer ? localDraft : serverDraft)
   }
 
   useEffect(() => {
@@ -81,7 +89,7 @@ export function RubricsPage() {
       const saved = await saveRubricDraft({ provider_agent_id: draft.provider_agent_id, name: draft.name,
         task_completion_instructions: draft.task_completion_instructions, intent_understanding_instructions: draft.intent_understanding_instructions,
         required_info_capture_instructions: draft.required_info_capture_instructions, ai_detectability_instructions: draft.ai_detectability_instructions })
-      setDraft(saved); await load(target || undefined); setDraft(saved); setMessage(`Draft v${saved.version} saved.`)
+      setDraft(saved); await load(target || undefined); setDraft(saved); clearLocalDraft(); setMessage(`Draft v${saved.version} saved.`)
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not save draft') } finally { setSaving(false) }
   }
 
@@ -91,6 +99,7 @@ export function RubricsPage() {
     try {
       const published = await publishRubric(draft.id)
       await load(target || undefined)
+      clearLocalDraft()
       setMessage(`${published.name} v${published.version} is now active. Its criteria are ready to edit as the next draft.`)
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not publish rubric') } finally { setSaving(false) }
   }
@@ -119,8 +128,8 @@ export function RubricsPage() {
     </header>
     {loading || !draft ? <div className="panel">Loading your rubric workspace…</div> : <form className="rubric-editor" onSubmit={save}>
       <section className="panel rubric-editor-main"><div className="rubric-editor-heading"><div><span className="eyebrow">Configuration</span><h2>Build your evaluation rubric</h2><p>Use plain language. The evaluator sees the transcript, call outcome, language, and agent ID.</p></div><label className="rubric-target"><span>Apply to</span><select value={target} onChange={(event) => void changeTarget(event.target.value)}><option value="">Workspace default</option>{agents.map((agent) => <option key={agent.id} value={agent.provider_agent_id}>{agent.name}</option>)}</select></label></div>
-        <label className="rubric-name"><span>Rubric name</span><input value={draft.name} maxLength={120} onChange={(event) => setDraft({ ...draft, name: event.target.value })} required /></label>
-        <div className="rubric-guided-editor"><div className="rubric-metric-nav" role="tablist" aria-label="Rubric metrics">{fields.map(([key, label], index) => <button key={key} type="button" role="tab" aria-selected={activeMetric === key} className={activeMetric === key ? 'active' : ''} onClick={() => setActiveMetric(key)}><span>{index + 1}</span>{label}</button>)}</div>{fields.filter(([key]) => key === activeMetric).map(([key, label, question, helper]) => <div className="rubric-metric-panel" key={key} role="tabpanel"><span className="eyebrow">Metric {fields.findIndex(([field]) => field === key) + 1} of {fields.length}</span><h3>{label}</h3><p className="rubric-metric-question">{question}</p><label><span>Evaluation guidance</span><textarea rows={6} maxLength={2000} value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} /><small>{helper} · You can edit the VaaniEval default above.</small></label><div className="rubric-metric-controls">{fields.findIndex(([field]) => field === key) > 0 && <button type="button" className="button secondary" onClick={() => setActiveMetric(fields[fields.findIndex(([field]) => field === key) - 1][0])}>Back</button>}{fields.findIndex(([field]) => field === key) < fields.length - 1 && <button type="button" className="button secondary" onClick={() => setActiveMetric(fields[fields.findIndex(([field]) => field === key) + 1][0])}>Next metric</button>}</div></div>)}</div>
+        <label className="rubric-name"><span>Rubric name</span><input value={draft.name} maxLength={120} onChange={(event) => setDraft({ ...draft, name: event.target.value, updated_at: new Date().toISOString() })} required /></label>
+        <div className="rubric-guided-editor"><div className="rubric-metric-nav" role="tablist" aria-label="Rubric metrics">{fields.map(([key, label], index) => <button key={key} type="button" role="tab" aria-selected={activeMetric === key} className={activeMetric === key ? 'active' : ''} onClick={() => setActiveMetric(key)}><span>{index + 1}</span>{label}</button>)}</div>{fields.filter(([key]) => key === activeMetric).map(([key, label, question, helper]) => <div className="rubric-metric-panel" key={key} role="tabpanel"><span className="eyebrow">Metric {fields.findIndex(([field]) => field === key) + 1} of {fields.length}</span><h3>{label}</h3><p className="rubric-metric-question">{question}</p><label><span>Evaluation guidance</span><textarea rows={6} maxLength={2000} value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value, updated_at: new Date().toISOString() })} /><small>{helper} · You can edit the VaaniEval default above.</small></label><div className="rubric-metric-controls">{fields.findIndex(([field]) => field === key) > 0 && <button type="button" className="button secondary" onClick={() => setActiveMetric(fields[fields.findIndex(([field]) => field === key) - 1][0])}>Back</button>}{fields.findIndex(([field]) => field === key) < fields.length - 1 && <button type="button" className="button secondary" onClick={() => setActiveMetric(fields[fields.findIndex(([field]) => field === key) + 1][0])}>Next metric</button>}</div></div>)}</div>
         <p className="rubric-guardrail"><FontAwesomeIcon icon="circle-info" /> Your instructions guide evaluation evidence only. VaaniEval keeps the score range, metric names, and JSON contract fixed.</p>
       </section>
       <aside className="rubric-side"><section className="panel rubric-actions"><span className="eyebrow">Draft v{draft.version}</span><h2>Ready when you are</h2><p>Save as you work. Publishing affects only future evaluations; completed calls never change silently.</p><button className="button secondary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save draft'}</button><button className="button primary" type="button" onClick={() => void publish()} disabled={saving || !draft.id}>Publish rubric</button>{!draft.id && <small>Save your draft before publishing.</small>}</section>

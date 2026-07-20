@@ -5,6 +5,7 @@ import { createImport, getImportProgress, listAgents, setDefaultAgent } from '..
 import type { ProviderAgentResponse } from '../api/types'
 import { EmptyState } from '../components/EmptyState'
 import { StatusPill } from '../components/StatusPill'
+import { usePersistedState } from '../lib/persistence'
 
 const IMPORT_DAYS_OPTIONS = [7, 30, 60]
 
@@ -21,11 +22,11 @@ type AgentImportState = {
 export function AgentsPage() {
   const navigate = useNavigate()
   const [agents, setAgents] = useState<ProviderAgentResponse[]>([])
-  const [providerFilter, setProviderFilter] = useState('all')
-  const [nameFilter, setNameFilter] = useState('')
+  const [providerFilter, setProviderFilter] = usePersistedState('agents:provider-filter', 'all')
+  const [nameFilter, setNameFilter] = usePersistedState('agents:name-filter', '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null)
+  const [expandedAgentId, setExpandedAgentId] = usePersistedState<string | null>('agents:expanded-agent', null)
   const [importDaysByAgentId, setImportDaysByAgentId] = useState<Record<string, number>>({})
   const [importStateByAgentId, setImportStateByAgentId] = useState<Record<string, AgentImportState>>({})
   const importTimersRef = useRef<Record<string, number>>({})

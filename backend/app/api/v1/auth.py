@@ -42,7 +42,11 @@ def verify_link(
         value=verified.session_token,
         httponly=True,
         samesite=settings.session_cookie_samesite,
-        secure=settings.session_cookie_secure,
+        # Session cookies must never be sent over HTTP in production. Local
+        # development remains usable without TLS.
+        secure=settings.is_production,
+        max_age=settings.session_ttl_days * 24 * 60 * 60,
+        expires=verified.session_expires_at,
     )
 
     return AuthResponse(
@@ -67,7 +71,7 @@ def logout(
     response.delete_cookie(
         "session_token",
         samesite=settings.session_cookie_samesite,
-        secure=settings.session_cookie_secure,
+        secure=settings.is_production,
     )
     return MessageResponse(message="Logged out")
 

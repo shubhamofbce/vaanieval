@@ -16,7 +16,9 @@ export function RequireAuth() {
   }
 
   if (isError || !data) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+    const from = `${location.pathname}${location.search}${location.hash}`
+    try { window.localStorage.setItem('vaanieval:auth:return-to', from) } catch { /* optional browser convenience */ }
+    return <Navigate to="/login" replace state={{ from }} />
   }
 
   return <Outlet />
