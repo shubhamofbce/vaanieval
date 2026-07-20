@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useEffect, useState } from 'react'
 import { logout } from '../api/endpoints'
 import logo from '../assets/vaanievallogo.jpg'
+import { ChatwootWidget, openChatwootSupport } from './ChatwootWidget'
 
 export function AppLayout() {
   const navigate = useNavigate()
@@ -63,6 +64,16 @@ export function AppLayout() {
           ))}
         </nav>
 
+        <button
+          className="sidebar-support"
+          type="button"
+          onClick={openChatwootSupport}
+          title={sidebarCollapsed ? 'Help & feedback' : undefined}
+        >
+          <FontAwesomeIcon icon="headset" />
+          <span>Help & feedback</span>
+        </button>
+
         <button className="sidebar-logout" onClick={handleLogout} type="button" title={sidebarCollapsed ? 'Logout' : undefined}>
           <FontAwesomeIcon icon="link" />
           <span>Logout</span>
@@ -72,6 +83,7 @@ export function AppLayout() {
       <main className="content">
         <Outlet />
       </main>
+      <ChatwootWidget />
     </div>
   )
 }

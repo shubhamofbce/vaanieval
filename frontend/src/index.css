@@ -145,6 +145,7 @@ a:hover {
 
 .sidebar-collapsed .sidebar-brand > span,
 .sidebar-collapsed .sidebar-link > span,
+.sidebar-collapsed .sidebar-support > span,
 .sidebar-collapsed .sidebar-logout > span {
   display: none;
 }
@@ -154,6 +155,7 @@ a:hover {
 }
 
 .sidebar-collapsed .sidebar-link,
+.sidebar-collapsed .sidebar-support,
 .sidebar-collapsed .sidebar-logout {
   width: 100%;
   justify-content: center;
@@ -165,12 +167,13 @@ a:hover {
 }
 
 .sidebar-collapsed .sidebar-link svg,
+.sidebar-collapsed .sidebar-support svg,
 .sidebar-collapsed .sidebar-logout svg {
   pointer-events: none;
 }
 
+.sidebar-support,
 .sidebar-logout {
-  margin-top: auto;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--workspace-radius);
   background: rgba(255, 255, 255, 0.06);
@@ -181,6 +184,11 @@ a:hover {
   color: #e7f0ff;
 }
 
+.sidebar-support {
+  margin-top: auto;
+}
+
+.sidebar-support:hover,
 .sidebar-logout:hover {
   background: rgba(20, 184, 166, 0.16);
 }
@@ -4570,6 +4578,7 @@ audio {
     flex: 0 0 auto;
   }
 
+  .sidebar-support,
   .sidebar-logout {
     margin-top: 0;
     align-self: flex-start;
@@ -4581,6 +4590,7 @@ audio {
 
   .sidebar-collapsed .sidebar-brand > span,
   .sidebar-collapsed .sidebar-link > span,
+  .sidebar-collapsed .sidebar-support > span,
   .sidebar-collapsed .sidebar-logout > span {
     display: inline;
   }
@@ -4590,6 +4600,7 @@ audio {
   }
 
   .sidebar-collapsed .sidebar-link,
+  .sidebar-collapsed .sidebar-support,
   .sidebar-collapsed .sidebar-logout {
     width: auto;
     justify-content: flex-start;
