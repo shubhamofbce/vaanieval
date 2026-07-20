@@ -18,7 +18,7 @@ export default function Page() {
       <div className="card-grid"><div><h3>Agent discovery</h3><p>Find available ElevenLabs agents before selecting conversations to import.</p></div><div><h3>Conversation evidence</h3><p>Review normalized transcripts, provider metadata, and available media in one workspace.</p></div><div><h3>Evaluation results</h3><p>Run evaluator-backed scores and retain the rationale alongside each conversation.</p></div></div>
       <h2>Look beyond provider activity</h2>
       <p>Call duration and conversation volume are useful operational context. VaaniEval adds reviewable quality signals such as task completion, intent understanding, and required-information capture, so teams can inspect whether a call achieved the right outcome.</p>
-      <div className="callout"><strong>Run the workflow in your environment.</strong><p>VaaniEval is open source and self-hostable. Your team controls the deployment, provider permissions, evaluator configuration, retention, and access policies.</p><Link className="text-link" href="/open-source">Explore self-hosting and source code <span aria-hidden="true">→</span></Link></div>
+      <div className="callout"><strong>Run the workflow in your environment.</strong><p>VaaniEval can be self-hosted with prior written permission. Authorized deployments control provider permissions, evaluator configuration, retention, and access policies.</p><Link className="text-link" href="/open-source">Review source and license terms <span aria-hidden="true">→</span></Link></div>
       <IntegrationStatus currentProvider="ElevenLabs" />
     </section>
     <Cta />
