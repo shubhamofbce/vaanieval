@@ -36,6 +36,8 @@ import type {
 
 const SPEED_OPTIONS = [1, 1.2, 1.5, 2]
 const SUBTITLE_SYNC_LEAD_SECONDS = 0.2
+// Leave the waveform implementation in place while we use the browser's reliable audio controls.
+const SHOW_WAVEFORM = false
 const METRIC_LABELS: Record<string, string> = {
   task_completion_score: 'Task Completion',
   intent_understanding_score: 'Intent Understanding',
@@ -107,6 +109,7 @@ export function ConversationDetailPage() {
   const [duration, setDuration] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackRate, setPlaybackRate] = useState(1)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioEngineRef = useRef<HTMLDivElement | null>(null)
   const waveSurferRef = useRef<WaveSurfer | null>(null)
   const subtitleListRef = useRef<HTMLUListElement | null>(null)
@@ -345,7 +348,9 @@ export function ConversationDetailPage() {
   }, [audio?.duration_ms, duration, insights?.duration_seconds])
 
   useEffect(() => {
-    waveSurferRef.current?.setPlaybackRate(playbackRate, true)
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate
+    }
   }, [playbackRate])
 
   const turnsForPlayback = useMemo(() => {
@@ -414,13 +419,17 @@ export function ConversationDetailPage() {
     })
   }, [effectiveDuration, turnsForPlayback, waveform?.peaks])
 
+  // Preserved for the waveform fix; it is deliberately disabled for the demo.
   useEffect(() => {
+    if (!SHOW_WAVEFORM) {
+      return
+    }
+
     const container = audioEngineRef.current
     if (!container || !streamUrl) {
       return
     }
 
-    setAudioError('')
     const waveSurfer = WaveSurfer.create({
       container,
       url: streamUrl,
@@ -441,36 +450,7 @@ export function ConversationDetailPage() {
     })
 
     waveSurferRef.current = waveSurfer
-
-    const unsubscribeTimeUpdate = waveSurfer.on('timeupdate', (nextTime) => {
-      setCurrentTime(nextTime)
-    })
-    const unsubscribeReady = waveSurfer.on('ready', (nextDuration) => {
-      setDuration(nextDuration)
-      setCurrentTime(0)
-      setIsPlaying(false)
-    })
-    const unsubscribePlay = waveSurfer.on('play', () => {
-      setIsPlaying(true)
-    })
-    const unsubscribePause = waveSurfer.on('pause', () => {
-      setIsPlaying(false)
-    })
-    const unsubscribeFinish = waveSurfer.on('finish', () => {
-      setIsPlaying(false)
-    })
-    const unsubscribeError = waveSurfer.on('error', () => {
-      setIsPlaying(false)
-      setAudioError('The recording could not be loaded. Check the provider connection and try again.')
-    })
-
     return () => {
-      unsubscribeTimeUpdate()
-      unsubscribeReady()
-      unsubscribePlay()
-      unsubscribePause()
-      unsubscribeFinish()
-      unsubscribeError()
       waveSurfer.destroy()
       if (waveSurferRef.current === waveSurfer) {
         waveSurferRef.current = null
@@ -513,22 +493,25 @@ export function ConversationDetailPage() {
   }, [activeTurnIndex])
 
   const togglePlayback = async () => {
-    const waveSurfer = waveSurferRef.current
-    if (!waveSurfer) {
+    const audioElement = audioRef.current
+    if (!audioElement) {
       return
     }
-
-    await waveSurfer.playPause().catch(() => undefined)
+    if (audioElement.paused) {
+      await audioElement.play().catch(() => undefined)
+    } else {
+      audioElement.pause()
+    }
   }
 
   const shiftPlayback = (seconds: number) => {
-    const waveSurfer = waveSurferRef.current
-    if (!waveSurfer) {
+    const audioElement = audioRef.current
+    if (!audioElement) {
       return
     }
-    const total = effectiveDuration > 0 ? effectiveDuration : waveSurfer.getDuration() || 0
-    const next = Math.min(Math.max(waveSurfer.getCurrentTime() + seconds, 0), total || Number.MAX_SAFE_INTEGER)
-    waveSurfer.setTime(next)
+    const total = effectiveDuration > 0 ? effectiveDuration : audioElement.duration || 0
+    const next = Math.min(Math.max(audioElement.currentTime + seconds, 0), total || Number.MAX_SAFE_INTEGER)
+    audioElement.currentTime = next
     setCurrentTime(next)
   }
 
@@ -590,14 +573,14 @@ export function ConversationDetailPage() {
   }
 
   const seekToSecond = async (second: number) => {
-    const waveSurfer = waveSurferRef.current
-    if (!waveSurfer) {
+    const audioElement = audioRef.current
+    if (!audioElement) {
       return
     }
 
-    const total = effectiveDuration > 0 ? effectiveDuration : waveSurfer.getDuration() || Number.MAX_SAFE_INTEGER
+    const total = effectiveDuration > 0 ? effectiveDuration : audioElement.duration || Number.MAX_SAFE_INTEGER
     const safeSecond = Math.min(Math.max(second, 0), total)
-    waveSurfer.setTime(safeSecond)
+    audioElement.currentTime = safeSecond
     setCurrentTime(safeSecond)
   }
 
@@ -869,6 +852,28 @@ export function ConversationDetailPage() {
                     <>
                       <p className="muted">Listen and follow along with live subtitles.</p>
                       <div className="player-shell player-shell-compact">
+                        <audio
+                          ref={audioRef}
+                          controls
+                          preload="metadata"
+                          crossOrigin="use-credentials"
+                          src={streamUrl}
+                          onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+                          onLoadedMetadata={(event) => {
+                            const nextDuration = Number.isFinite(event.currentTarget.duration)
+                              ? event.currentTarget.duration
+                              : (audio.duration_ms ?? 0) / 1000
+                            setDuration(nextDuration)
+                            setAudioError('')
+                          }}
+                          onPlay={() => setIsPlaying(true)}
+                          onPause={() => setIsPlaying(false)}
+                          onEnded={() => setIsPlaying(false)}
+                          onError={() => setAudioError('The recording could not be loaded. Check the provider connection and try again.')}
+                        >
+                          <track kind="captions" />
+                        </audio>
+                        {SHOW_WAVEFORM && <>
                         <div className="player-audio-engine" ref={audioEngineRef} aria-hidden="true" />
                         <div
                           className="player-waveform player-waveform-clickable"
@@ -894,15 +899,16 @@ export function ConversationDetailPage() {
                             aria-hidden="true"
                           />
                         </div>
-                        <div className="player-waveform-legend" aria-hidden="true">
-                          <span>Click waveform to seek</span>
-                          <span>{formatClock(effectiveDuration)}</span>
-                        </div>
+                          <div className="player-waveform-legend" aria-hidden="true">
+                            <span>Click waveform to seek</span>
+                            <span>{formatClock(effectiveDuration)}</span>
+                          </div>
+                        </>}
 
-                        {waveform?.status === 'pending' && (
+                        {SHOW_WAVEFORM && waveform?.status === 'pending' && (
                           <p className="player-waveform-status" role="status">Preparing real audio waveform…</p>
                         )}
-                        {waveform?.status === 'failed' && (
+                        {SHOW_WAVEFORM && waveform?.status === 'failed' && (
                           <p className="player-audio-error" role="alert">The waveform could not be generated, but playback is still available.</p>
                         )}
                         {audioError && <p className="player-audio-error" role="alert">{audioError}</p>}
@@ -917,7 +923,9 @@ export function ConversationDetailPage() {
                             onChange={(event) => {
                               const nextValue = Number(event.target.value)
                               setCurrentTime(nextValue)
-                              waveSurferRef.current?.setTime(nextValue)
+                              if (audioRef.current) {
+                                audioRef.current.currentTime = nextValue
+                              }
                             }}
                           />
                           <div className="player-time-row">

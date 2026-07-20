@@ -70,6 +70,8 @@ function pickAgentDisplayName(...candidates: Array<string | null | undefined>) {
 
 const SPEED_OPTIONS = [1, 1.2, 1.5, 2]
 const SUBTITLE_SYNC_LEAD_SECONDS = 0.2
+// Leave the waveform implementation in place while we use the browser's reliable audio controls.
+const SHOW_WAVEFORM = false
 const CONVERSATIONS_PAGE_SIZE = 10
 const METRIC_LABELS: Record<string, string> = {
   task_completion_score: 'Task Completion',
@@ -1196,6 +1198,7 @@ export function ConversationsPage() {
                         <p className="muted">Listen and follow along with live subtitles.</p>
                     <audio
                       ref={audioRef}
+                      controls
                       preload="metadata"
                       crossOrigin="use-credentials"
                       src={streamUrl}
@@ -1214,6 +1217,7 @@ export function ConversationsPage() {
                     </audio>
 
                     <div className="player-shell">
+                      {SHOW_WAVEFORM && <>
                       <div
                         className="player-waveform player-waveform-clickable"
                         role="group"
@@ -1249,6 +1253,7 @@ export function ConversationsPage() {
                       {waveform?.status === 'failed' && (
                         <p className="player-audio-error" role="alert">The waveform could not be generated, but playback is still available.</p>
                       )}
+                      </>}
 
                       <div className="player-timeline-group">
                         <input
