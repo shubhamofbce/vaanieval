@@ -94,5 +94,10 @@ class ProviderAdapter(ABC):
     ) -> dict[str, Any]:
         raise NotImplementedError
 
-    def get_conversation_audio_bytes(self, conversation_id: str) -> bytes | None:
+    def get_conversation_audio_bytes(
+        self,
+        conversation_id: str,
+        *,
+        agent_id: str | None = None,
+    ) -> bytes | None:
         return None

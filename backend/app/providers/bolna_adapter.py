@@ -138,10 +138,17 @@ class BolnaProviderAdapter(ProviderAdapter):
             "quality_signals": quality_signals,
         }
 
-    def get_conversation_audio_bytes(self, conversation_id: str) -> bytes | None:
+    def get_conversation_audio_bytes(
+        self,
+        conversation_id: str,
+        *,
+        agent_id: str | None = None,
+    ) -> bytes | None:
         # Recording URLs require the same bearer token used for the REST API, so we
         # cannot redirect the browser directly at them; fetch and proxy the bytes.
-        detail = self._client.get_execution(execution_id=conversation_id, agent_id=None)
+        # Supplying the persisted agent id avoids an account-wide execution scan and
+        # makes playback reliable for accounts with multiple agents.
+        detail = self._client.get_execution(execution_id=conversation_id, agent_id=agent_id)
         recording_url = self.extract_audio_url(detail)
         if not recording_url:
             return None

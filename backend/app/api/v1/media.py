@@ -54,7 +54,13 @@ def get_audio_metadata(
                     agent_id=conversation.provider_agent_id,
                 )
                 source_url = adapter.extract_audio_url(detail)
-                has_audio = bool(source_url or detail.get("has_audio"))
+                # ElevenLabs' detail response may report has_audio=false (or omit
+                # audio_url) even though its authenticated conversation /audio
+                # endpoint serves the recording. Expose the proxy for that provider
+                # and let the stream route make the authoritative request.
+                has_audio = bool(source_url or detail.get("has_audio")) or (
+                    provider_account.provider_name == "elevenlabs"
+                )
             except Exception:  # noqa: BLE001
                 has_audio = False
 
@@ -81,12 +87,12 @@ def get_audio_metadata(
         )
 
     provider_account = db.scalar(select(ProviderAccount).where(ProviderAccount.id == conversation.provider_account_id))
-    # Vapi and Bolna recording URLs are not directly fetchable by the browser (Vapi's
-    # can expire, Bolna's require the same bearer token as the REST API), so both must
-    # always be served through the authenticated proxy stream endpoint.
+    # Provider recording URLs are not directly fetchable by the browser: Vapi URLs can
+    # expire, Bolna requires its bearer token, and ElevenLabs may only expose its
+    # authenticated /audio endpoint. Always use the proxy for these providers.
     source_url = (
         f"/api/v1/media/conversations/{conversation.id}/audio/stream"
-        if provider_account and provider_account.provider_name in ("vapi", "bolna")
+        if provider_account and provider_account.provider_name in ("elevenlabs", "vapi", "bolna")
         else audio.source_url
     )
 
@@ -181,7 +187,7 @@ def stream_audio(
 
         if not cached_path.exists():
             audio_bytes = _download_remote_audio_bytes(source_url)
-            cached_path.write_bytes(audio_bytes)
+            _write_cached_audio(cached_path, audio_bytes)
 
         return FileResponse(path=str(cached_path), media_type=media_type)
 
@@ -201,7 +207,10 @@ def stream_audio(
                 provider_name=provider_account.provider_name,
                 api_key=decrypt_secret(provider_account.api_key),
             )
-            audio_bytes = adapter.get_conversation_audio_bytes(conversation.provider_conversation_id)
+            audio_bytes = adapter.get_conversation_audio_bytes(
+                conversation.provider_conversation_id,
+                agent_id=conversation.provider_agent_id,
+            )
             if not audio_bytes:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found")
         except HTTPException:
@@ -209,7 +218,40 @@ def stream_audio(
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found") from exc
 
-        cached_path.write_bytes(audio_bytes)
+        _write_cached_audio(cached_path, audio_bytes)
+        return FileResponse(path=str(cached_path), media_type="audio/mpeg")
+
+    # ElevenLabs conversation details can advertise ``has_audio`` without exposing
+    # an audio URL. In that case get_audio_metadata persists an AudioAsset with no
+    # source URL, so this fallback must be evaluated even when ``audio`` exists.
+    if (
+        provider_account
+        and provider_account.provider_name == "elevenlabs"
+        and (not audio or (not audio.local_path and not audio.source_url))
+    ):
+        cache_dir = Path(tempfile.gettempdir()) / "vaanieval_audio_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cached_path = cache_dir / f"{conversation.id}.mp3"
+        if cached_path.exists():
+            return FileResponse(path=str(cached_path), media_type="audio/mpeg")
+
+        try:
+            adapter = get_provider_adapter(
+                provider_name=provider_account.provider_name,
+                api_key=decrypt_secret(provider_account.api_key),
+            )
+            audio_bytes = adapter.get_conversation_audio_bytes(
+                conversation.provider_conversation_id,
+                agent_id=conversation.provider_agent_id,
+            )
+            if not audio_bytes:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found")
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found") from exc
+
+        _write_cached_audio(cached_path, audio_bytes)
         return FileResponse(path=str(cached_path), media_type="audio/mpeg")
 
     if not audio:
@@ -228,13 +270,16 @@ def stream_audio(
                 provider_name=provider_account.provider_name,
                 api_key=decrypt_secret(provider_account.api_key),
             )
-            audio_bytes = adapter.get_conversation_audio_bytes(conversation.provider_conversation_id)
+            audio_bytes = adapter.get_conversation_audio_bytes(
+                conversation.provider_conversation_id,
+                agent_id=conversation.provider_agent_id,
+            )
             if not audio_bytes:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found")
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found") from exc
 
-        cached_path.write_bytes(audio_bytes)
+        _write_cached_audio(cached_path, audio_bytes)
 
         return FileResponse(path=str(cached_path), media_type="audio/mpeg")
 
@@ -255,7 +300,7 @@ def stream_audio(
         cached_path = cache_dir / f"{conversation.id}{suffix}"
 
         if not cached_path.exists():
-            cached_path.write_bytes(_download_remote_audio_bytes(audio.source_url))
+            _write_cached_audio(cached_path, _download_remote_audio_bytes(audio.source_url))
 
         return FileResponse(
             path=str(cached_path),
@@ -273,6 +318,22 @@ def _download_remote_audio_bytes(source_url: str) -> bytes:
             return response.content
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audio not found") from exc
+
+
+def _write_cached_audio(cached_path: Path, audio_bytes: bytes) -> None:
+    """Atomically publish a complete cache file for concurrent stream requests."""
+    with tempfile.NamedTemporaryFile(
+        dir=cached_path.parent,
+        prefix=f".{cached_path.name}.",
+        delete=False,
+    ) as temporary_file:
+        temporary_file.write(audio_bytes)
+        temporary_path = Path(temporary_file.name)
+
+    try:
+        temporary_path.replace(cached_path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
 
 
 def _guess_audio_suffix(source_url: str) -> str:

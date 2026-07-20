@@ -154,7 +154,14 @@ class ElevenLabsProviderAdapter(ProviderAdapter):
             "quality_signals": quality_signals,
         }
 
-    def get_conversation_audio_bytes(self, conversation_id: str) -> bytes | None:
+    def get_conversation_audio_bytes(
+        self,
+        conversation_id: str,
+        *,
+        agent_id: str | None = None,
+    ) -> bytes | None:
+        # ElevenLabs exposes recording bytes from a dedicated authenticated endpoint.
+        # Conversation detail may only contain ``has_audio`` and no reusable URL.
         return self._client.get_conversation_audio_bytes(conversation_id)
 
 
