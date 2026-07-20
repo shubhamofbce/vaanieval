@@ -16,6 +16,7 @@ from app.schemas.conversations import (
     ConversationTurnItem,
 )
 from app.services.credentials import decrypt_secret
+from app.services.import_service import enqueue_conversation_display_name_backfill
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -361,6 +362,11 @@ def list_conversations(
         for row in paginated_rows
     ]
 
+    for row in paginated_rows:
+        if not row.display_name:
+            enqueue_conversation_display_name_backfill(db, conversation_id=row.id)
+    db.commit()
+
     return ConversationListResponse(items=items, total=total)
 
 
@@ -378,6 +384,10 @@ def get_conversation_detail(
     )
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+
+    if not row.display_name:
+        enqueue_conversation_display_name_backfill(db, conversation_id=row.id)
+        db.commit()
 
     turns = db.scalars(
         select(ConversationTurn)

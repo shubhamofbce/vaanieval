@@ -11,11 +11,16 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.db.base import Base
 from app.models import Conversation, ProviderAccount, Workspace
+from app.models.job_queue import JobQueue, JobStatus
 from app.providers.base import ProviderConversationDetail
 from app.providers.bolna_adapter import BolnaProviderAdapter
 from app.providers.elevenlabs_adapter import ElevenLabsProviderAdapter
 from app.providers.vapi_adapter import VapiProviderAdapter
-from app.services.import_service import run_backfill_conversation_timestamp
+from app.services.import_service import (
+    BACKFILL_CONVERSATION_DISPLAY_NAME,
+    enqueue_conversation_display_name_backfill,
+    run_backfill_conversation_timestamp,
+)
 
 
 def _session() -> Session:
@@ -186,5 +191,70 @@ def test_backfill_conversation_timestamp_updates_missing_started_at(monkeypatch)
         assert conversation.started_at.isoformat() == "2026-07-10T03:05:02"
         assert conversation.ended_at is not None
         assert conversation.ended_at.isoformat() == "2026-07-10T03:06:02"
+    finally:
+        db.close()
+
+
+def test_enqueue_display_name_backfill_queues_job_for_conversation_without_name() -> None:
+    db = _session()
+
+    try:
+        workspace = Workspace(name="Test workspace")
+        db.add(workspace)
+        db.flush()
+        account = ProviderAccount(
+            workspace_id=workspace.id,
+            provider_name="vapi",
+            api_key="encrypted",
+        )
+        db.add(account)
+        db.flush()
+        conversation = Conversation(
+            workspace_id=workspace.id,
+            provider_account_id=account.id,
+            provider_conversation_id="call-1",
+        )
+        db.add(conversation)
+        db.commit()
+
+        enqueue_conversation_display_name_backfill(db, conversation_id=conversation.id)
+        db.commit()
+
+        jobs = db.query(JobQueue).filter(JobQueue.type == BACKFILL_CONVERSATION_DISPLAY_NAME).all()
+        assert len(jobs) == 1
+        assert conversation.id in jobs[0].payload_json
+        assert jobs[0].status == JobStatus.PENDING.value
+    finally:
+        db.close()
+
+
+def test_enqueue_display_name_backfill_does_not_duplicate_pending_job() -> None:
+    db = _session()
+
+    try:
+        workspace = Workspace(name="Test workspace")
+        db.add(workspace)
+        db.flush()
+        account = ProviderAccount(
+            workspace_id=workspace.id,
+            provider_name="vapi",
+            api_key="encrypted",
+        )
+        db.add(account)
+        db.flush()
+        conversation = Conversation(
+            workspace_id=workspace.id,
+            provider_account_id=account.id,
+            provider_conversation_id="call-1",
+        )
+        db.add(conversation)
+        db.commit()
+
+        enqueue_conversation_display_name_backfill(db, conversation_id=conversation.id)
+        enqueue_conversation_display_name_backfill(db, conversation_id=conversation.id)
+        db.commit()
+
+        jobs = db.query(JobQueue).filter(JobQueue.type == BACKFILL_CONVERSATION_DISPLAY_NAME).all()
+        assert len(jobs) == 1
     finally:
         db.close()

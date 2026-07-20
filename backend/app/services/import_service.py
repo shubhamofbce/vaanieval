@@ -243,6 +243,35 @@ def run_backfill_conversation_timestamp(db: Session, payload: dict) -> None:
         record.ended_at = normalized_detail.ended_at
 
 
+def enqueue_conversation_display_name_backfill(db: Session, *, conversation_id: str) -> None:
+    """Queue a display-name backfill for a conversation that doesn't have one yet.
+
+    Providers sometimes haven't finished analysis (e.g. Vapi's ``analysis.summary``,
+    ElevenLabs' ``analysis.call_summary_title``, Bolna's ``summary``) at the time a
+    conversation is first imported, so ``display_name`` can still be null afterwards.
+    This lazily re-fetches the provider detail once so the UI stops falling back to
+    the agent name. Dedupes against any job for this conversation that hasn't
+    finished yet, mirroring the audio waveform enqueue pattern.
+    """
+    active_job = db.scalar(
+        select(JobQueue).where(
+            JobQueue.type == BACKFILL_CONVERSATION_DISPLAY_NAME,
+            JobQueue.payload_json.contains(conversation_id),
+            JobQueue.status.in_([JobStatus.PENDING.value, JobStatus.LEASED.value]),
+        )
+    )
+    if active_job:
+        return
+
+    enqueue_job(
+        db,
+        job_type=BACKFILL_CONVERSATION_DISPLAY_NAME,
+        payload={"conversation_id": conversation_id},
+        priority=90,
+        max_attempts=3,
+    )
+
+
 def run_backfill_conversation_display_name(db: Session, payload: dict) -> None:
     conversation_id = payload["conversation_id"]
     record = db.scalar(select(Conversation).where(Conversation.id == conversation_id))
