@@ -1,12 +1,12 @@
 """add versioned evaluation rubrics
 
-Revision ID: 0010_versioned_evaluation_rubrics
+Revision ID: 0010_versioned_rubrics
 Revises: 0009_backfill_audio_waveforms
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0010_versioned_evaluation_rubrics"
+revision = "0010_versioned_rubrics"
 down_revision = "0009_backfill_audio_waveforms"
 branch_labels = None
 depends_on = None
