@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Full-stack evaluation platform for voice AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [
   { name = "Voice Agent Team" }
 ]
@@ -80,4 +80,3 @@ addopts = [
   "--cov-report=term-missing",
   "--cov-fail-under=90"
 ]
-

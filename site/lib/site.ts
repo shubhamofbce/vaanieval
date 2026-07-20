@@ -8,7 +8,7 @@ import { alternativesPost } from './posts/alternatives-guide'
 
 export const siteConfig = {
   name: 'VaaniEval',
-  description: 'Open-source, self-hosted evaluation workspace for production voice-agent conversations.',
+  description: 'Source-available evaluation workspace for production voice-agent conversations.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vaanieval.com',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',
@@ -194,8 +194,8 @@ export const posts: BlogPost[] = [
       '- Queue retries, failed jobs, and provider rate limits are observable.',
       '## When self-hosting is a good fit',
       'Self-hosting is most useful when a team needs direct control over deployment and data architecture and has the engineering capacity to operate the stack. A managed path may be more practical when speed and low operational overhead matter more than infrastructure control.',
-      'VaaniEval is MIT licensed, so teams can inspect the implementation and adapt provider or evaluation behavior to their workflow. That flexibility also means the operator owns the resulting changes and should test them against representative conversations.',
-      '[Explore the open-source VaaniEval architecture](/open-source)',
+      'VaaniEval source is available for inspection. Commercial or noncommercial use, modification, and deployment require prior written permission, and authorized operators should test changes against representative conversations.',
+      '[Explore the source-available VaaniEval architecture](/open-source)',
       '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
       '[Help shape the self-hosted workflow as a design partner](/design-partners)',
     ],

@@ -31,7 +31,7 @@ export default function Home() {
   return <>
     <section className="hero hero-repositioned shell">
       <div className="hero-copy">
-        <p className="eyebrow">Open-source · Self-hosted voice-agent evaluation</p>
+        <p className="eyebrow">Source available · Voice-agent evaluation</p>
         <h1>Know how your voice agents perform—on infrastructure you control.</h1>
         <p className="lede">Import real production calls, evaluate the outcomes platform dashboards miss, and keep every score connected to the conversation evidence behind it.</p>
         <div className="hero-actions">
@@ -41,7 +41,7 @@ export default function Home() {
           </div>
           <GitHubCta className="text-link hero-star-link" event="github_star_hero_click">Star <span aria-hidden="true">→</span></GitHubCta>
         </div>
-        <p className="microcopy">MIT licensed · Self-hostable · ElevenLabs, Vapi, and Bolna imports</p>
+        <p className="microcopy">Proprietary license · Permission required to use · ElevenLabs, Vapi, and Bolna imports</p>
       </div>
       <div className="hero-illustration-gif">
         <img
@@ -84,7 +84,7 @@ export default function Home() {
     </section>
 
     <section className="section shell run-options">
-      <div className="section-intro"><p className="eyebrow">Choose your path</p><h2>Choose how to run VaaniEval.</h2><p className="lede-small">Start in the hosted workspace or deploy the MIT-licensed project in infrastructure your team manages.</p></div>
+      <div className="section-intro"><p className="eyebrow">Choose your path</p><h2>Choose how to run VaaniEval.</h2><p className="lede-small">Start in the hosted workspace or request permission to deploy the source-available project in infrastructure your team manages.</p></div>
       <div className="run-options-grid">
         <article>
           <p className="card-kicker">Hosted app</p>
@@ -95,9 +95,9 @@ export default function Home() {
         <article>
           <p className="card-kicker">Self-hosted</p>
           <h3>Deploy it in your own infrastructure.</h3>
-          <p>Inspect and deploy the MIT-licensed project when your team needs to manage the environment directly.</p>
+          <p>Inspect the source and request written permission before deploying the project in infrastructure your team manages.</p>
           <div className="inline-links">
-            <Link className="text-link" href="/open-source">Explore the open-source project <span aria-hidden="true">→</span></Link>
+            <Link className="text-link" href="/open-source">Review source and license terms <span aria-hidden="true">→</span></Link>
             <GitHubCta className="text-link" event="github_star_run_choice_click">View the repository <span aria-hidden="true">→</span></GitHubCta>
             <a className="text-link" href="https://github.com/shubhamofbce/vaanieval/blob/main/DEPLOYMENT.md" target="_blank" rel="noreferrer">Read deployment guidance <span aria-hidden="true">→</span></a>
           </div>
@@ -106,7 +106,7 @@ export default function Home() {
     </section>
 
     <section className="section split deployment-section shell">
-      <div><p className="eyebrow">Deploy where you work</p><h2>Run the evaluation loop in infrastructure you control.</h2><p className="lede-small">VaaniEval is MIT-licensed and self-hostable. Choose the environment, database, voice-provider connection, and evaluator provider that fit your team’s workflow.</p><div className="inline-links"><Link className="text-link" href="/open-source">Explore the open-source project <span aria-hidden="true">→</span></Link><a className="text-link" href="https://github.com/shubhamofbce/vaanieval/blob/main/DEPLOYMENT.md">Read deployment guidance <span aria-hidden="true">→</span></a></div></div>
+      <div><p className="eyebrow">Deploy where you work</p><h2>Run the evaluation loop in infrastructure you control.</h2><p className="lede-small">VaaniEval can be self-hosted with prior written permission. Choose the environment, database, voice-provider connection, and evaluator provider that fit your team’s workflow.</p><div className="inline-links"><Link className="text-link" href="/open-source">Review source and license terms <span aria-hidden="true">→</span></Link><a className="text-link" href="mailto:shubham@vaanieval.com">Request permission <span aria-hidden="true">→</span></a></div></div>
       <ol className="steps steps-four"><li><span>1</span><div><b>Import real calls</b><p>Bring in production conversations from supported providers.</p></div></li><li><span>2</span><div><b>Evaluate behavior</b><p>Score the parts of a call that define its quality.</p></div></li><li><span>3</span><div><b>Inspect evidence</b><p>Review transcript, available audio, and evaluator rationale together.</p></div></li><li><span>4</span><div><b>Improve and verify</b><p>Check new conversations after an agent change.</p></div></li></ol>
     </section>
 
