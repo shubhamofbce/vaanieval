@@ -18,6 +18,7 @@ import type {
   ProviderConnectionResponse,
   ProviderModelsResponse,
   ReportingSettingsResponse,
+  RubricVersionResponse,
 } from './types'
 
 export function requestMagicLink(email: string) {
@@ -186,12 +187,14 @@ export function runConversationEvaluation(
   conversationId: string,
   providerName = 'openai',
   modelName?: string,
+  rubricVersionId?: string,
 ) {
   const params = new URLSearchParams()
   params.append('provider_name', providerName)
   if (modelName) {
     params.append('model_name', modelName)
   }
+  if (rubricVersionId) params.append('rubric_version_id', rubricVersionId)
   return apiRequest<ConversationEvaluationRunResponse>(
     `/evaluations/conversations/${conversationId}/run?${params.toString()}`,
     { method: 'POST' },
@@ -200,6 +203,27 @@ export function runConversationEvaluation(
 
 export function getLatestConversationEvaluation(conversationId: string) {
   return apiRequest<ConversationEvaluationRunResponse>(`/evaluations/conversations/${conversationId}/latest`)
+}
+
+export function getEvaluationRun(evaluationRunId: string) {
+  return apiRequest<ConversationEvaluationRunResponse>(`/evaluations/runs/${evaluationRunId}`)
+}
+
+export function listRubrics(providerAgentId?: string) {
+  const query = providerAgentId ? `?provider_agent_id=${encodeURIComponent(providerAgentId)}` : ''
+  return apiRequest<RubricVersionResponse[]>(`/evaluations/rubrics${query}`)
+}
+
+export function saveRubricDraft(payload: Omit<RubricVersionResponse, 'id' | 'version' | 'status' | 'is_active' | 'created_at' | 'updated_at' | 'published_at'>) {
+  return apiRequest<RubricVersionResponse>('/evaluations/rubrics/draft', { method: 'PUT', body: JSON.stringify(payload) })
+}
+
+export function publishRubric(rubricId: string) {
+  return apiRequest<RubricVersionResponse>(`/evaluations/rubrics/${rubricId}/publish`, { method: 'POST' })
+}
+
+export function testRubricOnConversation(rubricId: string, conversationId: string) {
+  return apiRequest<ConversationEvaluationRunResponse>(`/evaluations/rubrics/${rubricId}/test/conversations/${conversationId}`, { method: 'POST' })
 }
 
 export function getDashboardOverview(options?: { startDate?: string; endDate?: string }) {

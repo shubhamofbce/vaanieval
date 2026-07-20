@@ -72,10 +72,10 @@ export function ProviderPage() {
       return counts
     }, {}))
   }
-
   useEffect(() => {
     void loadConnections().catch((err) => setError(err instanceof Error ? err.message : 'Failed to load connections'))
   }, [])
+
 
   useEffect(() => {
     let cancelled = false

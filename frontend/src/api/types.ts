@@ -163,9 +163,29 @@ export type ConversationEvaluationRunResponse = {
   failure_reason: string | null
   recommended_next_step: string | null
   supporting_evidence: string | null
+  rubric_version_id: string | null
+  rubric_name: string | null
+  rubric_version: number | null
+  is_test: boolean
   created_at: string
   updated_at: string
   metrics: ConversationMetricScoreResponse[]
+}
+
+export type RubricVersionResponse = {
+  id: string | null
+  provider_agent_id: string | null
+  name: string
+  version: number
+  status: string
+  is_active: boolean
+  task_completion_instructions: string
+  intent_understanding_instructions: string
+  required_info_capture_instructions: string
+  ai_detectability_instructions: string
+  created_at: string | null
+  updated_at: string | null
+  published_at: string | null
 }
 
 export type DashboardMetricSummary = {

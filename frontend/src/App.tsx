@@ -11,6 +11,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { ProviderPage } from './pages/ProviderPage'
 import { ReportingSettingsPage } from './pages/ReportingSettingsPage'
+import { RubricsPage } from './pages/RubricsPage'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/settings/provider" element={<ProviderPage />} />
           <Route path="/settings/agents" element={<AgentsPage />} />
           <Route path="/settings/reporting" element={<ReportingSettingsPage />} />
+          <Route path="/rubrics" element={<RubricsPage />} />
           <Route path="/imports/new" element={<ImportNewPage />} />
           <Route path="/imports/:importJobId" element={<ImportProgressPage />} />
           <Route path="/conversations" element={<ConversationsPage />} />

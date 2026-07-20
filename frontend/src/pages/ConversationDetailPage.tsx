@@ -656,7 +656,7 @@ export function ConversationDetailPage() {
                 <div className="detail-section-header">
                   <div>
                     <h3>Evaluation breakdown</h3>
-                    <p className="muted">Status: {evaluationRun?.status ?? 'unknown'}{evaluationRun?.provider_name ? ` · ${evaluationRun.provider_name}` : ''}{evaluationRun?.provider_model ? ` · ${evaluationRun.provider_model}` : ''}</p>
+                    <p className="muted">Status: {evaluationRun?.status ?? 'unknown'}{evaluationRun?.provider_name ? ` · ${evaluationRun.provider_name}` : ''}{evaluationRun?.provider_model ? ` · ${evaluationRun.provider_model}` : ''}{evaluationRun?.rubric_name ? ` · ${evaluationRun.rubric_name} v${evaluationRun.rubric_version ?? 0}` : ''}</p>
                   </div>
                   {evaluationRun?.created_at ? <p className="muted detail-timestamp">Last evaluated: {formatDateTime(evaluationRun.created_at)}</p> : null}
                 </div>
