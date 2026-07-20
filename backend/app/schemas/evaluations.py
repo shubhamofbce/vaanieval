@@ -38,6 +38,32 @@ class RunEvaluationRequest(BaseModel):
     model_name: str | None = Field(
         default=None, description="Optional model override (e.g., 'gpt-4o'). Uses provider default if omitted."
     )
+    rubric_version_id: str | None = None
+
+
+class RubricDraftRequest(BaseModel):
+    provider_agent_id: str | None = None
+    name: str = Field(default="Evaluation rubric", min_length=1, max_length=120)
+    task_completion_instructions: str = Field(default="", max_length=2000)
+    intent_understanding_instructions: str = Field(default="", max_length=2000)
+    required_info_capture_instructions: str = Field(default="", max_length=2000)
+    ai_detectability_instructions: str = Field(default="", max_length=2000)
+
+
+class RubricVersionResponse(BaseModel):
+    id: str | None = None
+    provider_agent_id: str | None = None
+    name: str
+    version: int
+    status: str
+    is_active: bool = False
+    task_completion_instructions: str
+    intent_understanding_instructions: str
+    required_info_capture_instructions: str
+    ai_detectability_instructions: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    published_at: datetime | None = None
 
 
 class ConversationMetricScoreResponse(BaseModel):
@@ -60,6 +86,10 @@ class ConversationEvaluationRunResponse(BaseModel):
     failure_reason: str | None = None
     recommended_next_step: str | None = None
     supporting_evidence: str | None = None
+    rubric_version_id: str | None = None
+    rubric_name: str | None = None
+    rubric_version: int | None = None
+    is_test: bool = False
     created_at: datetime
     updated_at: datetime
     metrics: list[ConversationMetricScoreResponse]

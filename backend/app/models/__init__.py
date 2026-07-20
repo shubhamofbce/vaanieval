@@ -4,6 +4,7 @@ from app.models.evaluation import (
     ConversationEvaluationRun,
     ConversationMetricScore,
     EvalProviderAccount,
+    EvaluationRubricVersion,
 )
 from app.models.import_job import ImportJob, ImportJobStatus
 from app.models.job_queue import DeadLetterJob, JobAttempt, JobQueue, JobStatus
@@ -21,6 +22,7 @@ __all__ = [
     "ConversationEvaluationRun",
     "ConversationMetricScore",
     "EvalProviderAccount",
+    "EvaluationRubricVersion",
     "ImportJob",
     "ImportJobStatus",
     "DeadLetterJob",

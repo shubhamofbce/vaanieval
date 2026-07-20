@@ -13,6 +13,7 @@ from app.models.evaluation import (
     ConversationMetricScore,
     EvalProviderAccount,
 )
+from app.services.rubric_service import resolve_active_rubric, rubric_snapshot
 from app.services.credentials import decrypt_secret
 from app.services.eval_providers import create_provider, get_provider_catalog_entry
 from app.services.queue_service import enqueue_job
@@ -36,6 +37,8 @@ def enqueue_evaluation_job(
     conversation_id: str,
     provider_name: str = "openai",
     model_name: str | None = None,
+    rubric_version_id: str | None = None,
+    is_test: bool = False,
 ) -> ConversationEvaluationRun:
     """Enqueue an evaluation job for a conversation.
 
@@ -65,12 +68,34 @@ def enqueue_evaluation_job(
     if model_to_use not in provider_entry.models:
         raise ValueError(f"Model '{model_to_use}' is not supported for provider '{provider_name}'")
 
+    conversation = db.scalar(select(Conversation).where(
+        Conversation.id == conversation_id, Conversation.workspace_id == workspace_id
+    ))
+    if not conversation:
+        raise ValueError("Conversation not found")
+    from app.models.evaluation import EvaluationRubricVersion
+    rubric = None
+    if rubric_version_id:
+        rubric = db.scalar(select(EvaluationRubricVersion).where(
+            EvaluationRubricVersion.id == rubric_version_id,
+            EvaluationRubricVersion.workspace_id == workspace_id,
+        ))
+        if not rubric:
+            raise ValueError("Rubric version not found")
+    else:
+        rubric = resolve_active_rubric(db, workspace_id, conversation.provider_agent_id)
+    snapshot = rubric_snapshot(rubric)
     run = ConversationEvaluationRun(
         workspace_id=workspace_id,
         conversation_id=conversation_id,
         provider_name=provider_account.provider_name,
         provider_model=model_to_use,
         status="queued",
+        rubric_version_id=rubric.id if rubric else None,
+        rubric_name=snapshot["name"],
+        rubric_version=snapshot["version"],
+        rubric_snapshot_json=json.dumps(snapshot),
+        is_test=is_test,
     )
     db.add(run)
     db.flush()
@@ -151,6 +176,7 @@ def run_evaluation_job(db: Session, payload: dict) -> None:
         "language": conversation.language,
         "outcome": conversation.outcome,
         "provider_agent_id": conversation.provider_agent_id,
+        "rubric": json.loads(run.rubric_snapshot_json) if run.rubric_snapshot_json else rubric_snapshot(None),
     }
 
     try:
