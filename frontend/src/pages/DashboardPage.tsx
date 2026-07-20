@@ -198,6 +198,7 @@ export function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverviewResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showEarlyTrends, setShowEarlyTrends] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -232,6 +233,7 @@ export function DashboardPage() {
   const providerOutcomeCount = Math.max(0, (summary?.conversations ?? 0) - unknownOutcomeCount)
   const sortedMetrics = overview ? [...overview.metric_summaries].sort((a, b) => (a.average_score ?? 101) - (b.average_score ?? 101)) : []
   const hasEnoughTrendData = (summary?.conversations ?? 0) >= 10
+  const shouldShowTrends = hasEnoughTrendData || showEarlyTrends
 
   return (
     <section className="page workspace-page dashboard-page">
@@ -439,10 +441,10 @@ export function DashboardPage() {
               <div className="dashboard-panel-head">
                 <div>
                   <h2>Trends</h2>
-                  <p className="muted">Shown only once the range has enough calls to avoid overstating a small sample.</p>
+                  <p className="muted">Trends become more reliable after 10 calls in the selected range.</p>
                 </div>
               </div>
-              {hasEnoughTrendData ? (
+              {shouldShowTrends ? (
                 <div className="dashboard-chart-grid">
                   <TrendChart points={overview.trend} valueKey="success_rate" label="QA pass rate" color="#0f766e" formatter={(value) => `${value.toFixed(0)}%`} />
                   <TrendChart points={overview.trend} valueKey="average_overall_score" label="Quality score" color="#2563eb" formatter={(value) => value.toFixed(1)} />
@@ -451,7 +453,17 @@ export function DashboardPage() {
               ) : (
                 <div className="dashboard-trend-placeholder">
                   <FontAwesomeIcon icon="chart-line" />
-                  <div><strong>Trends unlock after 10 calls in this range.</strong><span className="muted">There are {summary.conversations} calls here today, so the dashboard keeps the focus on individual fixes.</span></div>
+                  <div>
+                    <strong>Trends become more useful after 10 calls in this range.</strong>
+                    <span className="muted">There are {summary.conversations} calls in this range. Early trends can still help you explore the data, but may change significantly as more calls arrive.</span>
+                    <button
+                      type="button"
+                      className="dashboard-early-trends-button"
+                      onClick={() => setShowEarlyTrends(true)}
+                    >
+                      Show early trends
+                    </button>
+                  </div>
                 </div>
               )}
             </section>

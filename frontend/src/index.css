@@ -1706,6 +1706,24 @@ h3 {
   gap: 3px;
 }
 
+.dashboard-early-trends-button {
+  width: fit-content;
+  margin-top: 8px;
+  padding: 7px 10px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: #ffffff;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-early-trends-button:hover {
+  background: #f1f5f9;
+}
+
 .dashboard-data-coverage-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
