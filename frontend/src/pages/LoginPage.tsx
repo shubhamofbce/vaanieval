@@ -212,7 +212,7 @@ export function LoginPage() {
           </div>
           <div className="login-demo-video">
             <iframe
-              src="https://www.youtube.com/embed/6T0CatDgoEA"
+              src="https://www.youtube.com/embed/VpEAK7jZ5EI"
               title="VaaniEval product demo"
               loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

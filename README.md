@@ -40,9 +40,9 @@ VaaniEval is a full-stack application, not a published Python package or support
 
 ## Product Demo
 
-Watch the [VaaniEval product demo](https://youtu.be/6T0CatDgoEA) for a walkthrough of the conversation review and quality-evaluation workspace.
+Watch the [VaaniEval product demo](https://youtu.be/VpEAK7jZ5EI) for a walkthrough of the conversation review and quality-evaluation workspace.
 
-[![Watch the VaaniEval product demo](https://img.youtube.com/vi/6T0CatDgoEA/hqdefault.jpg)](https://youtu.be/6T0CatDgoEA)
+[![Watch the VaaniEval product demo](https://img.youtube.com/vi/VpEAK7jZ5EI/hqdefault.jpg)](https://youtu.be/VpEAK7jZ5EI)
 
 ## What VaaniEval provides
 
