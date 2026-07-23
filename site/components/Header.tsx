@@ -8,7 +8,7 @@ export function Header() {
   return <header className="site-header"><div className="shell nav-wrap">
     <Link className="brand" href="/"><img className="brand-mark" src={logo.src} alt="VaaniEval" /><span>VaaniEval</span></Link>
     <nav aria-label="Main navigation">
-      <Link href="/voice-ai-evaluation">Product</Link><Link href="/integrations/elevenlabs">Integrations</Link><Link href="/resources/evaluation-metrics">Resources</Link><Link href="/blog">Blog</Link><Link href="/open-source">Source license</Link>
+      <Link href="/voice-ai-evaluation">Product</Link><Link href="/integrations/elevenlabs">Integrations</Link><Link href="/resources/evaluation-metrics">Resources</Link><Link href="/blog">Blog</Link><Link href="/open-source">Open source</Link>
     </nav>
     <div className="header-actions">
       <TrackedLink className="button button-small button-secondary header-try-button" href={siteConfig.appUrl} event="hosted_app_header_click">Try now</TrackedLink>

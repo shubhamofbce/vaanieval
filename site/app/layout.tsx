@@ -21,6 +21,6 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const jsonLd = { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'VaaniEval', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', description: siteConfig.description, url: siteConfig.url, codeRepository: siteConfig.githubUrl, license: 'https://opensource.org/license/mit' }
+  const jsonLd = { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'VaaniEval', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', description: siteConfig.description, url: siteConfig.url, codeRepository: siteConfig.githubUrl, license: 'https://www.gnu.org/licenses/agpl-3.0.html' }
   return <html lang="en"><body><Header /><main>{children}</main><Footer /><Analytics /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /></body></html>
 }

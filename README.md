@@ -5,7 +5,7 @@
 <h1 align="center"><a href="https://www.vaanieval.com/">VaaniEval</a></h1>
 
 <p align="center">
-  Source-available evaluation workspace for production voice AI agents.
+  Open-source evaluation workspace for production voice AI agents.
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-Proprietary-red.svg"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg"></a>
   <a href="backend/requirements.txt"><img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-blue.svg"></a>
   <a href="backend/README.md"><img alt="Backend" src="https://img.shields.io/badge/Backend-FastAPI-009688.svg"></a>
   <a href="frontend/package.json"><img alt="Frontend" src="https://img.shields.io/badge/Frontend-React%20%2B%20Vite-00bcd4.svg"></a>
@@ -171,8 +171,8 @@ safe-posting expectations.
 
 ## License
 
-VaaniEval is proprietary software. The source is available for inspection,
-but commercial and noncommercial use, copying, modification, distribution,
-hosting, deployment, or creation of derivative works requires prior written
-permission from [shubham@vaanieval.com](mailto:shubham@vaanieval.com). See the
-[license](LICENSE) for the complete terms.
+VaaniEval is open-source software licensed under the [GNU Affero General
+Public License v3.0](LICENSE) (AGPL-3.0-only). You may use, modify, and
+distribute it under that license. If you modify and offer the software to users
+over a network, AGPL section 13 requires you to offer those users the
+Corresponding Source of your modified version.
