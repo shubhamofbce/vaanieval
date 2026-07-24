@@ -1,0 +1,32 @@
+{
+  "id": "call-123",
+  "assistantId": "assistant-1",
+  "type": "webCall",
+  "status": "ended",
+  "endedReason": "customer-ended-call",
+  "endedMessage": "Thank you for calling, goodbye.",
+  "startedAt": "2026-07-10T03:05:02.767Z",
+  "endedAt": "2026-07-10T03:05:12.767Z",
+  "createdAt": "2026-07-10T03:05:00.000Z",
+  "assistant": {
+    "name": "Support Bot",
+    "transcriber": {"language": "en"}
+  },
+  "analysis": {
+    "successEvaluation": "true",
+    "summary": "Customer asked about billing and was helped."
+  },
+  "artifact": {
+    "recordingUrl": "https://example.test/recording.mp3",
+    "stereoRecordingUrl": "https://example.test/stereo.mp3",
+    "performanceMetrics": {"numUserInterrupted": 2},
+    "transcript": "AI: Hello\nUser: Hi",
+    "messages": [
+      {"role": "system", "message": "You are a helpful assistant."},
+      {"role": "assistant", "message": "Hello, how can I help?", "secondsFromStart": 1.19, "duration": 9371},
+      {"role": "user", "message": "I have a billing question.", "secondsFromStart": 10.8, "duration": 2.5},
+      {"role": "tool", "result": "lookup ok", "secondsFromStart": 13.0},
+      {"role": "assistant", "message": "", "toolCalls": [{"name": "lookup_account"}], "tool_calls": [{"id": "t1"}], "secondsFromStart": 13.5}
+    ]
+  }
+}
