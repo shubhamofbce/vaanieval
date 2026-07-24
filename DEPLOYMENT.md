@@ -2,21 +2,21 @@
 
 VaaniEval uses three independently deployed services:
 
-| Service | Source | Production |
+| Service | Source | Staging (`develop`) | Production (`main`) |
 | --- | --- | --- |
-| Public site | `site/` | Vercel at `https://www.vaanieval.com` |
-| Product app | `frontend/` | Vercel at `https://app.vaanieval.com` |
-| API and worker | `backend/` | Azure Container Apps, API at `https://api.vaanieval.com` |
+| Public site | `site/` | Vercel preview deployments | Vercel at `https://www.vaanieval.com` |
+| Product app | `frontend/` | Vercel project `app-vaanieval-staging` | Vercel at `https://app.vaanieval.com` |
+| API and worker | `backend/` | Azure Container Apps in `rg-vaanieval-stg-06260116` | Azure Container Apps, API at `https://api.vaanieval.com` |
 
 The API and worker use the same container image, PostgreSQL database, and secrets. Only the API receives public ingress.
 
 ## Continuous integration and deployment
 
-- **CI (`.github/workflows/ci.yml`)**: runs on every pull request targeting `main`. Executes backend `pytest`, frontend lint/test/build (`vitest`), and the `site/` build in parallel jobs.
-- **Frontend and site deploys**: both Vercel projects (`vaanieval` for `site/`, `app-vaanieval` for `frontend/`) are git-connected to this repository with `main` as the production branch. Pushes to `main` that touch each project's root directory trigger an automatic Vercel deployment — no manual `vercel --prod` step is required.
+- **Branch policy**: `develop` is staging; `main` is production. Promote changes through a reviewed merge from `develop` to `main`.
+- **Frontend and site deploys**: both production Vercel projects (`vaanieval` for `site/`, `app-vaanieval` for `frontend/`) use `main`. The separate `app-vaanieval-staging` project uses `develop` and has `VITE_API_BASE_URL` set to the staging API URL.
 - **Backend deploy (`.github/workflows/deploy-backend.yml`)**: runs automatically on every push to `main` that touches `backend/**`. It authenticates to Azure via OIDC (no stored client secret), builds the image with `az acr build`, runs the Alembic migration job and waits for it to succeed, updates the API and worker Container Apps to the new image, then verifies `/health/live` and `/health/ready` return `200`. The workflow fails (and stops) if the migration or health checks fail, but it does **not** automatically roll back a bad image on the API/worker apps — a failed health check after deploy requires manual rollback (`az containerapp update --image <previous-sha>`).
-- The GitHub Actions Azure service principal (`vaanieval-gha-backend-deploy`) is scoped to `Contributor` on the `rg-vaanieval-prod-06260116` resource group only (not subscription-wide), and its federated credential is restricted to `repo:shubhamofbce/vaanieval:ref:refs/heads/main` — other branches/PRs cannot use it.
-- There is no staging environment; every merge to `main` deploys straight to production. Consider adding a manual approval gate on the `production` GitHub Environment if a review step becomes necessary.
+- **Staging backend deploy (`.github/workflows/deploy-backend-staging.yml`)**: runs on every `develop` push that touches `backend/**`, builds a staging-tagged image, migrates only the staging database, deploys the staging API and worker, and verifies health.
+- The GitHub Actions Azure service principal (`vaanieval-gha-backend-deploy`) has separate resource-group-scoped roles and federated credentials for `main` production and `develop` staging. It is not subscription-wide.
 
 ## Public site
 

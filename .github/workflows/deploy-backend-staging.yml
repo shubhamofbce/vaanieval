@@ -1,0 +1,88 @@
+name: Deploy backend staging
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend-staging.yml"
+
+concurrency:
+  group: deploy-backend-staging
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-vaanieval-stg-06260116
+  REGISTRY: acrvaanieval06260116.azurecr.io
+  IMAGE: vaanieval-backend-staging
+  API_APP: ca-vaanieval-api-stg-06260116
+  WORKER_APP: ca-vaanieval-worker-stg-06260116
+  MIGRATE_JOB: job-vaanieval-migrate-stg-06260116
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image
+        run: |
+          az acr build \
+            --registry "${{ env.REGISTRY }}" \
+            --image "${{ env.IMAGE }}:latest" \
+            --image "${{ env.IMAGE }}:${{ github.sha }}" \
+            --file backend/Dockerfile \
+            backend
+
+      - name: Run staging database migration
+        run: |
+          az containerapp job update \
+            --name "${{ env.MIGRATE_JOB }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --image "${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}"
+
+          EXECUTION_NAME=$(az containerapp job start \
+            --name "${{ env.MIGRATE_JOB }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query name -o tsv)
+
+          for i in $(seq 1 30); do
+            STATUS=$(az containerapp job execution list \
+              --name "${{ env.MIGRATE_JOB }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --query "[?name=='$EXECUTION_NAME'].properties.status" -o tsv)
+            if [ "$STATUS" = "Succeeded" ]; then exit 0; fi
+            if [ "$STATUS" = "Failed" ]; then
+              echo "::error::Staging migration failed"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "::error::Staging migration timed out"
+          exit 1
+
+      - name: Deploy API and worker
+        run: |
+          IMAGE_REF="${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}"
+          az containerapp update --name "${{ env.API_APP }}" --resource-group "${{ env.RESOURCE_GROUP }}" --image "$IMAGE_REF"
+          az containerapp update --name "${{ env.WORKER_APP }}" --resource-group "${{ env.RESOURCE_GROUP }}" --image "$IMAGE_REF"
+
+      - name: Verify staging API health
+        run: |
+          FQDN=$(az containerapp show --name "${{ env.API_APP }}" --resource-group "${{ env.RESOURCE_GROUP }}" --query 'properties.configuration.ingress.fqdn' -o tsv)
+          for endpoint in live ready; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://${FQDN}/health/${endpoint}")
+            echo "health/${endpoint}: $CODE"
+            test "$CODE" = "200"
+          done
