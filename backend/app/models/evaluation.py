@@ -39,6 +39,11 @@ class ConversationEvaluationRun(Base):
     )
     provider_name: Mapped[str] = mapped_column(String(50), index=True)
     provider_model: Mapped[str] = mapped_column(String(100))
+    evaluation_engine: Mapped[str] = mapped_column(String(32), default="langchain", nullable=False)
+    is_shadow: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    baseline_run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("conversation_evaluation_runs.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     status: Mapped[str] = mapped_column(String(20), default="queued", index=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     qa_verdict: Mapped[str | None] = mapped_column(String(50), nullable=True)

@@ -280,7 +280,7 @@ def get_latest_evaluation_run(db: Session, conversation_id: str) -> Conversation
     """
     return db.scalar(
         select(ConversationEvaluationRun)
-        .where(ConversationEvaluationRun.conversation_id == conversation_id)
+        .where(ConversationEvaluationRun.conversation_id == conversation_id, ConversationEvaluationRun.is_shadow.is_(False))
         .order_by(ConversationEvaluationRun.created_at.desc())
         .limit(1)
     )
