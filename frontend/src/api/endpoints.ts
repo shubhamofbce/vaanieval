@@ -2,6 +2,9 @@ import { apiRequest } from './client'
 import type {
   AudioAssetResponse,
   AudioWaveformResponse,
+  AgentConfigSyncJobResponse,
+  AgentConfigVersionDetail,
+  AgentConfigVersionPage,
   AuthResponse,
   DashboardOverviewResponse,
   ConversationEvaluationRunResponse,
@@ -87,6 +90,23 @@ export function setDefaultAgent(agentId: string) {
   return apiRequest<ProviderAgentResponse>(`/provider/agents/${agentId}/default`, {
     method: 'POST',
   })
+}
+
+export function syncAgentsFromProvider(providerAccountId?: string) {
+  const query = providerAccountId ? `?provider_account_id=${encodeURIComponent(providerAccountId)}` : ''
+  return apiRequest<AgentConfigSyncJobResponse>(`/provider/agents/sync${query}`, { method: 'POST' })
+}
+
+export function getAgentSyncStatus(syncJobId: string) {
+  return apiRequest<AgentConfigSyncJobResponse>(`/provider/agents/sync/${syncJobId}`)
+}
+
+export function listAgentConfigVersions(agentId: string, offset = 0) {
+  return apiRequest<AgentConfigVersionPage>(`/provider/agents/${agentId}/config-versions?offset=${offset}`)
+}
+
+export function getAgentConfigVersion(agentId: string, versionNumber: number) {
+  return apiRequest<AgentConfigVersionDetail>(`/provider/agents/${agentId}/config-versions/${versionNumber}`)
 }
 
 export function createImport(payload: {

@@ -27,7 +27,31 @@ export type ProviderAgentResponse = {
   provider_agent_id: string
   name: string
   is_default: boolean
+  configuration_checked_at: string | null
+  last_configuration_change_at: string | null
+  configuration_version: number | null
+  configuration_change_categories: string[]
 }
+
+export type AgentConfigSyncJobResponse = {
+  id: string
+  status: string
+  processed_count: number
+  changed_count: number
+  failed_count: number
+  error_message: string | null
+}
+
+export type AgentConfigVersionListItem = {
+  version_number: number
+  captured_at: string
+  provider_updated_at: string | null
+  change_categories: string[]
+  is_baseline: boolean
+}
+
+export type AgentConfigVersionPage = { items: AgentConfigVersionListItem[]; total: number }
+export type AgentConfigVersionDetail = { version_number: number; captured_at: string; change_categories: string[]; changes: Array<{ path: string; category: string; before: unknown; after: unknown }> }
 
 export type ImportJobResponse = {
   id: string

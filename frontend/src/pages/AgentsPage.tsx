@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { createImport, getImportProgress, listAgents, setDefaultAgent } from '../api/endpoints'
-import type { ProviderAgentResponse } from '../api/types'
+import { createImport, getAgentConfigVersion, getAgentSyncStatus, getImportProgress, listAgentConfigVersions, listAgents, setDefaultAgent, syncAgentsFromProvider } from '../api/endpoints'
+import type { AgentConfigVersionDetail, AgentConfigVersionListItem, ProviderAgentResponse } from '../api/types'
 import { EmptyState } from '../components/EmptyState'
 import { StatusPill } from '../components/StatusPill'
 import { usePersistedState } from '../lib/persistence'
@@ -30,6 +30,17 @@ export function AgentsPage() {
   const [importDaysByAgentId, setImportDaysByAgentId] = useState<Record<string, number>>({})
   const [importStateByAgentId, setImportStateByAgentId] = useState<Record<string, AgentImportState>>({})
   const importTimersRef = useRef<Record<string, number>>({})
+  const [syncStatus, setSyncStatus] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<ProviderAgentResponse | null>(null)
+  const [versions, setVersions] = useState<AgentConfigVersionListItem[]>([])
+  const [selectedVersion, setSelectedVersion] = useState<AgentConfigVersionDetail | null>(null)
+
+  const relativeTime = (value: string | null) => {
+    if (!value) return 'Not checked yet'
+    const minutes = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 60000))
+    return minutes < 60 ? `${minutes}m ago` : minutes < 1440 ? `${Math.round(minutes / 60)}h ago` : `${Math.round(minutes / 1440)}d ago`
+  }
 
   const providerOptions = useMemo(() => {
     return Array.from(new Set(agents.map((agent) => agent.provider_name))).sort()
@@ -105,6 +116,43 @@ export function AgentsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set default agent')
     }
+  }
+
+  async function handleSync() {
+    setError('')
+    setSyncing(true)
+    try {
+      const job = await syncAgentsFromProvider()
+      setSyncStatus('Sync queued')
+      const poll = async () => {
+        let progress
+        try {
+          progress = await getAgentSyncStatus(job.id)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to load sync progress')
+          setSyncing(false)
+          return
+        }
+        setSyncStatus(progress.status === 'completed' ? `Synced ${progress.processed_count} agents${progress.changed_count ? ` · ${progress.changed_count} changed` : ''}` : `Sync ${progress.status}…`)
+        if (progress.status === 'queued' || progress.status === 'running') {
+          window.setTimeout(() => void poll(), 2000)
+        } else {
+          await handleLoad(false)
+          setSyncing(false)
+        }
+      }
+      void poll()
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to start agent sync'); setSyncing(false) }
+  }
+
+  async function openHistory(agent: ProviderAgentResponse) {
+    setSelectedAgent(agent); setSelectedVersion(null)
+    try {
+      const page = await listAgentConfigVersions(agent.id)
+      setVersions(page.items)
+      const changed = page.items.find((item) => !item.is_baseline)
+      if (changed) setSelectedVersion(await getAgentConfigVersion(agent.id, changed.version_number))
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to load configuration history') }
   }
 
   function clearImportTimer(agentId: string) {
@@ -206,10 +254,10 @@ export function AgentsPage() {
           <p className="muted">Manage defaults, imports, and review queues without leaving the page.</p>
         </div>
         <div className="agents-control-actions">
-          <button type="button" onClick={() => handleLoad(true)} disabled={loading}>
+          <button type="button" onClick={() => void handleSync()} disabled={loading || syncing}>
             <span className="control-with-icon">
-              <FontAwesomeIcon icon="arrow-rotate-right" />
-              <span>Sync agents from provider</span>
+              <FontAwesomeIcon icon={syncing ? 'spinner' : 'arrow-rotate-right'} spin={syncing} />
+              <span>{syncing ? 'Syncing agents...' : 'Sync agents from provider'}</span>
             </span>
           </button>
           <button type="button" className="secondary" onClick={() => handleLoad(false)} disabled={loading}>
@@ -251,6 +299,7 @@ export function AgentsPage() {
       </div>
 
       {loading && <p className="muted">Loading agents...</p>}
+      {syncStatus && <p className="muted">{syncStatus}</p>}
       {error && <p className="error">{error}</p>}
 
       <div className="panel agents-list-panel">
@@ -292,6 +341,7 @@ export function AgentsPage() {
               <div className="agents-table-row agents-table-row-head" role="row">
                 <span role="columnheader">Agent</span>
                 <span role="columnheader">Provider</span>
+                <span role="columnheader">Last change</span>
                 <span role="columnheader">Default</span>
                 <span role="columnheader">Actions</span>
               </div>
@@ -313,6 +363,9 @@ export function AgentsPage() {
                         </span>
                       </span>
                       <span role="cell">{formatProviderName(agent.provider_name)}</span>
+                      <span role="cell" className="agent-change-cell">
+                        {agent.configuration_version === null ? <span className="muted">Not tracked</span> : agent.configuration_version === 1 ? <span className="muted">Baseline · {relativeTime(agent.configuration_checked_at)}</span> : <button type="button" className="link-button" onClick={() => void openHistory(agent)}>{relativeTime(agent.last_configuration_change_at)} · {agent.configuration_change_categories.join(', ')}</button>}
+                      </span>
                       <span role="cell">
                         {agent.is_default ? <StatusPill icon="check-circle" label="Default" tone="success" /> : <span className="muted">-</span>}
                       </span>
@@ -345,6 +398,7 @@ export function AgentsPage() {
                     {isExpanded ? (
                       <div className="agents-row-detail">
                         <div className="agents-row-detail-actions">
+                          <button type="button" className="secondary" onClick={() => void openHistory(agent)} disabled={!agent.configuration_version}>Configuration history</button>
                           <button
                             type="button"
                             className="secondary"
@@ -403,6 +457,10 @@ export function AgentsPage() {
           </>
         )}
       </div>
+      {selectedAgent ? <aside className="workspace-side-panel agent-config-drawer" aria-label="Configuration history">
+        <div className="workspace-side-panel-header"><h2>{selectedAgent.name} configuration</h2><button type="button" className="secondary" onClick={() => setSelectedAgent(null)}>Close</button></div>
+        {versions.length === 0 ? <p className="muted">No configuration baseline yet. Run a sync to start tracking.</p> : <div className="agent-config-layout"><div>{versions.map((version) => <button key={version.version_number} type="button" className="agent-version-button" onClick={() => void getAgentConfigVersion(selectedAgent.id, version.version_number).then(setSelectedVersion)}>{version.is_baseline ? 'Baseline' : `Version ${version.version_number}`} · {relativeTime(version.captured_at)} {version.change_categories.length ? `· ${version.change_categories.join(', ')}` : ''}</button>)}</div><div>{selectedVersion ? selectedVersion.changes.length ? selectedVersion.changes.map((change, index) => <div className="agent-config-change" key={`${change.path}-${index}`}><strong>{change.category}: {change.path}</strong><p><code>{JSON.stringify(change.before)}</code> → <code>{JSON.stringify(change.after)}</code></p></div>) : <p className="muted">Baseline snapshot. No prior configuration to compare.</p> : <p className="muted">Select a version to view its redacted changes.</p>}</div></div>}
+      </aside> : null}
     </section>
   )
 }

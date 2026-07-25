@@ -4143,7 +4143,7 @@ td {
 
 .agents-table-row {
   display: grid;
-  grid-template-columns: minmax(160px, 2fr) minmax(100px, 1fr) minmax(90px, 0.8fr) minmax(220px, auto);
+  grid-template-columns: minmax(160px, 2fr) minmax(90px, 0.8fr) minmax(160px, 1.3fr) minmax(90px, 0.8fr) minmax(220px, auto);
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
@@ -4189,6 +4189,12 @@ td {
 .agents-table-menu-toggle {
   padding: 8px 10px;
 }
+.link-button { border: 0; background: transparent; color: var(--workspace-accent, #2563eb); padding: 0; text-align: left; cursor: pointer; }
+.agent-config-drawer { padding: 20px; max-width: 760px; }
+.agent-config-layout { display: grid; grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.5fr); gap: 16px; }
+.agent-version-button { display: block; width: 100%; margin-bottom: 8px; text-align: left; font-size: .85rem; }
+.agent-config-change { padding: 10px 0; border-bottom: 1px solid var(--workspace-border); font-size: .86rem; overflow-wrap: anywhere; }
+.agent-config-change p { margin: 6px 0 0; }
 
 .agents-row-detail {
   padding: 12px 14px 14px;
@@ -4212,6 +4218,8 @@ td {
   .agents-table-actions span span {
     display: none;
   }
+  .agents-table-row > :nth-child(3), .agents-table-row-head > :nth-child(3) { display: none; }
+  .agent-config-layout { grid-template-columns: 1fr; }
 }
 
 

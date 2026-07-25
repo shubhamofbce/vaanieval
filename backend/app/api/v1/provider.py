@@ -1,14 +1,22 @@
 from app.api.deps import get_current_workspace_id
 from app.db.session import get_db
-from app.models.provider import ProviderAccount, ProviderAgent
+import json
+
+from app.models.provider import AgentConfigSyncJob, AgentConfigVersion, ProviderAccount, ProviderAgent
 from app.providers.factory import get_provider_adapter
 from app.schemas.provider import (
     ConnectProviderRequest,
     ProviderAgentResponse,
+    AgentConfigSyncJobResponse,
+    AgentConfigVersionDetail,
+    AgentConfigVersionListItem,
+    AgentConfigVersionPage,
     ProviderConnectionListItem,
     ProviderConnectionResponse,
 )
 from app.services.credentials import decrypt_secret, encrypt_secret
+from app.services.agent_config_service import version_diff
+from app.services.agent_config_sync_service import enqueue_agent_config_sync
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -81,6 +89,17 @@ def _upsert_provider_agents(db: Session, *, account: ProviderAccount, agents: li
                     is_default=False,
                 )
             )
+
+
+def _agent_response(row: ProviderAgent, account: ProviderAccount, version: AgentConfigVersion | None = None) -> ProviderAgentResponse:
+    return ProviderAgentResponse(
+        id=row.id, provider_account_id=row.provider_account_id, provider_name=account.provider_name,
+        provider_agent_id=row.provider_agent_id, name=row.name, is_default=row.is_default,
+        configuration_checked_at=row.config_last_checked_at,
+        last_configuration_change_at=version.captured_at if version and version.version_number > 1 else None,
+        configuration_version=version.version_number if version else None,
+        configuration_change_categories=json.loads(version.change_summary_json) if version else [],
+    )
 
 
 @router.post("/connect", response_model=ProviderConnectionResponse)
@@ -222,17 +241,11 @@ def list_agents(
         if not normalized_search or normalized_search in row.name.lower()
     ]
 
-    return [
-        ProviderAgentResponse(
-            id=row.id,
-            provider_account_id=row.provider_account_id,
-            provider_name=account_by_id[row.provider_account_id].provider_name,
-            provider_agent_id=row.provider_agent_id,
-            name=row.name,
-            is_default=row.is_default,
-        )
-        for row in filtered_rows
-    ]
+    versions = db.scalars(select(AgentConfigVersion).where(AgentConfigVersion.provider_agent_id.in_([row.id for row in filtered_rows])).order_by(AgentConfigVersion.provider_agent_id, AgentConfigVersion.version_number.desc())).all() if filtered_rows else []
+    latest_by_agent = {}
+    for version in versions:
+        latest_by_agent.setdefault(version.provider_agent_id, version)
+    return [_agent_response(row, account_by_id[row.provider_account_id], latest_by_agent.get(row.id)) for row in filtered_rows]
 
 
 @router.post("/agents/{agent_id}/default", response_model=ProviderAgentResponse)
@@ -257,11 +270,50 @@ def set_default_agent(
 
     db.commit()
     db.refresh(target)
-    return ProviderAgentResponse(
-        id=target.id,
-        provider_account_id=target.provider_account_id,
-        provider_name=account.provider_name,
-        provider_agent_id=target.provider_agent_id,
-        name=target.name,
-        is_default=True,
-    )
+    return _agent_response(target, account)
+
+
+@router.post("/agents/sync", response_model=AgentConfigSyncJobResponse)
+def sync_agents_from_provider(
+    provider_account_id: str | None = None,
+    workspace_id: str = Depends(get_current_workspace_id),
+    db: Session = Depends(get_db),
+) -> AgentConfigSyncJobResponse:
+    if provider_account_id and not _resolve_account(db, workspace_id=workspace_id, provider_account_id=provider_account_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider account not found")
+    job = enqueue_agent_config_sync(db, workspace_id=workspace_id, provider_account_id=provider_account_id)
+    db.commit()
+    return AgentConfigSyncJobResponse(id=job.id, status=job.status, processed_count=0, changed_count=0, failed_count=0)
+
+
+@router.get("/agents/sync/{sync_job_id}", response_model=AgentConfigSyncJobResponse)
+def get_agent_sync_status(sync_job_id: str, workspace_id: str = Depends(get_current_workspace_id), db: Session = Depends(get_db)) -> AgentConfigSyncJobResponse:
+    job = db.scalar(select(AgentConfigSyncJob).where(AgentConfigSyncJob.id == sync_job_id, AgentConfigSyncJob.workspace_id == workspace_id))
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sync job not found")
+    return AgentConfigSyncJobResponse(id=job.id, status=job.status, processed_count=job.processed_count, changed_count=job.changed_count, failed_count=job.failed_count, error_message=job.error_message)
+
+
+def _owned_agent(db: Session, *, agent_id: str, workspace_id: str) -> ProviderAgent:
+    agent = db.scalar(select(ProviderAgent).join(ProviderAccount).where(ProviderAgent.id == agent_id, ProviderAccount.workspace_id == workspace_id))
+    if not agent:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
+    return agent
+
+
+@router.get("/agents/{agent_id}/config-versions", response_model=AgentConfigVersionPage)
+def list_agent_config_versions(agent_id: str, limit: int = Query(default=20, ge=1, le=100), offset: int = Query(default=0, ge=0), workspace_id: str = Depends(get_current_workspace_id), db: Session = Depends(get_db)) -> AgentConfigVersionPage:
+    agent = _owned_agent(db, agent_id=agent_id, workspace_id=workspace_id)
+    query = select(AgentConfigVersion).where(AgentConfigVersion.provider_agent_id == agent.id).order_by(AgentConfigVersion.version_number.desc())
+    all_versions = db.scalars(query).all()
+    return AgentConfigVersionPage(items=[AgentConfigVersionListItem(version_number=item.version_number, captured_at=item.captured_at, provider_updated_at=item.provider_updated_at, change_categories=json.loads(item.change_summary_json), is_baseline=item.version_number == 1) for item in all_versions[offset:offset + limit]], total=len(all_versions))
+
+
+@router.get("/agents/{agent_id}/config-versions/{version_number}", response_model=AgentConfigVersionDetail)
+def get_agent_config_version(agent_id: str, version_number: int, workspace_id: str = Depends(get_current_workspace_id), db: Session = Depends(get_db)) -> AgentConfigVersionDetail:
+    agent = _owned_agent(db, agent_id=agent_id, workspace_id=workspace_id)
+    version = db.scalar(select(AgentConfigVersion).where(AgentConfigVersion.provider_agent_id == agent.id, AgentConfigVersion.version_number == version_number))
+    if not version:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuration version not found")
+    previous = db.scalar(select(AgentConfigVersion).where(AgentConfigVersion.provider_agent_id == agent.id, AgentConfigVersion.version_number == version_number - 1))
+    return AgentConfigVersionDetail(version_number=version.version_number, captured_at=version.captured_at, change_categories=json.loads(version.change_summary_json), changes=version_diff(previous, version))

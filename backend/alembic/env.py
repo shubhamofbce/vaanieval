@@ -10,6 +10,8 @@ from app.db.base import Base
 from app.models import (  # noqa: F401
     AuthSession,
     AudioAsset,
+    AgentConfigSyncJob,
+    AgentConfigVersion,
     Conversation,
     ConversationTurn,
     DeadLetterJob,
