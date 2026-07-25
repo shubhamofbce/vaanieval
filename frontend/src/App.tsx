@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/AppLayout'
 import { RequireAuth } from './components/RequireAuth'
 import { AgentsPage } from './pages/AgentsPage'
+import { AgentConfigurationPage } from './pages/AgentConfigurationPage'
 import { ConversationDetailPage } from './pages/ConversationDetailPage'
 import { ConversationsPage } from './pages/ConversationsPage'
 import { ImportNewPage } from './pages/ImportNewPage'
@@ -24,6 +25,7 @@ function App() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/settings/provider" element={<ProviderPage />} />
           <Route path="/settings/agents" element={<AgentsPage />} />
+          <Route path="/settings/agents/:agentId/configuration" element={<AgentConfigurationPage />} />
           <Route path="/settings/reporting" element={<ReportingSettingsPage />} />
           <Route path="/rubrics" element={<RubricsPage />} />
           <Route path="/imports/new" element={<ImportNewPage />} />

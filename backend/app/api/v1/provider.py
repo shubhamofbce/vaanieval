@@ -248,6 +248,25 @@ def list_agents(
     return [_agent_response(row, account_by_id[row.provider_account_id], latest_by_agent.get(row.id)) for row in filtered_rows]
 
 
+@router.get("/agents/{agent_id}", response_model=ProviderAgentResponse)
+def get_agent(
+    agent_id: str,
+    workspace_id: str = Depends(get_current_workspace_id),
+    db: Session = Depends(get_db),
+) -> ProviderAgentResponse:
+    """Load one workspace-scoped agent for direct configuration-history routes."""
+    agent = _owned_agent(db, agent_id=agent_id, workspace_id=workspace_id)
+    account = db.scalar(select(ProviderAccount).where(ProviderAccount.id == agent.provider_account_id))
+    if not account:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
+    latest = db.scalar(
+        select(AgentConfigVersion)
+        .where(AgentConfigVersion.provider_agent_id == agent.id)
+        .order_by(AgentConfigVersion.version_number.desc())
+    )
+    return _agent_response(agent, account, latest)
+
+
 @router.post("/agents/{agent_id}/default", response_model=ProviderAgentResponse)
 def set_default_agent(
     agent_id: str,

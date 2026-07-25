@@ -92,6 +92,10 @@ export function setDefaultAgent(agentId: string) {
   })
 }
 
+export function getAgent(agentId: string) {
+  return apiRequest<ProviderAgentResponse>(`/provider/agents/${agentId}`)
+}
+
 export function syncAgentsFromProvider(providerAccountId?: string) {
   const query = providerAccountId ? `?provider_account_id=${encodeURIComponent(providerAccountId)}` : ''
   return apiRequest<AgentConfigSyncJobResponse>(`/provider/agents/sync${query}`, { method: 'POST' })

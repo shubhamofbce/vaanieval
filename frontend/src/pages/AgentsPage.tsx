@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { createImport, getAgentConfigVersion, getAgentSyncStatus, getImportProgress, listAgentConfigVersions, listAgents, setDefaultAgent, syncAgentsFromProvider } from '../api/endpoints'
-import type { AgentConfigVersionDetail, AgentConfigVersionListItem, ProviderAgentResponse } from '../api/types'
+import { createImport, getAgentSyncStatus, getImportProgress, listAgents, setDefaultAgent, syncAgentsFromProvider } from '../api/endpoints'
+import type { ProviderAgentResponse } from '../api/types'
 import { EmptyState } from '../components/EmptyState'
 import { StatusPill } from '../components/StatusPill'
 import { usePersistedState } from '../lib/persistence'
@@ -32,9 +32,6 @@ export function AgentsPage() {
   const importTimersRef = useRef<Record<string, number>>({})
   const [syncStatus, setSyncStatus] = useState('')
   const [syncing, setSyncing] = useState(false)
-  const [selectedAgent, setSelectedAgent] = useState<ProviderAgentResponse | null>(null)
-  const [versions, setVersions] = useState<AgentConfigVersionListItem[]>([])
-  const [selectedVersion, setSelectedVersion] = useState<AgentConfigVersionDetail | null>(null)
 
   const relativeTime = (value: string | null) => {
     if (!value) return 'Not checked yet'
@@ -145,14 +142,8 @@ export function AgentsPage() {
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to start agent sync'); setSyncing(false) }
   }
 
-  async function openHistory(agent: ProviderAgentResponse) {
-    setSelectedAgent(agent); setSelectedVersion(null)
-    try {
-      const page = await listAgentConfigVersions(agent.id)
-      setVersions(page.items)
-      const changed = page.items.find((item) => !item.is_baseline)
-      if (changed) setSelectedVersion(await getAgentConfigVersion(agent.id, changed.version_number))
-    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to load configuration history') }
+  function openHistory(agent: ProviderAgentResponse) {
+    navigate(`/settings/agents/${encodeURIComponent(agent.id)}/configuration`)
   }
 
   function clearImportTimer(agentId: string) {
@@ -457,10 +448,6 @@ export function AgentsPage() {
           </>
         )}
       </div>
-      {selectedAgent ? <aside className="workspace-side-panel agent-config-drawer" aria-label="Configuration history">
-        <div className="workspace-side-panel-header"><h2>{selectedAgent.name} configuration</h2><button type="button" className="secondary" onClick={() => setSelectedAgent(null)}>Close</button></div>
-        {versions.length === 0 ? <p className="muted">No configuration baseline yet. Run a sync to start tracking.</p> : <div className="agent-config-layout"><div>{versions.map((version) => <button key={version.version_number} type="button" className="agent-version-button" onClick={() => void getAgentConfigVersion(selectedAgent.id, version.version_number).then(setSelectedVersion)}>{version.is_baseline ? 'Baseline' : `Version ${version.version_number}`} · {relativeTime(version.captured_at)} {version.change_categories.length ? `· ${version.change_categories.join(', ')}` : ''}</button>)}</div><div>{selectedVersion ? selectedVersion.changes.length ? selectedVersion.changes.map((change, index) => <div className="agent-config-change" key={`${change.path}-${index}`}><strong>{change.category}: {change.path}</strong><p><code>{JSON.stringify(change.before)}</code> → <code>{JSON.stringify(change.after)}</code></p></div>) : <p className="muted">Baseline snapshot. No prior configuration to compare.</p> : <p className="muted">Select a version to view its redacted changes.</p>}</div></div>}
-      </aside> : null}
     </section>
   )
 }
