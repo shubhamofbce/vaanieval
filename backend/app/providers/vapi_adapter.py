@@ -23,6 +23,15 @@ class VapiProviderAdapter(ProviderAdapter):
     def list_agents(self) -> list[ProviderAgentInfo]:
         return [ProviderAgentInfo(agent_id=item.agent_id, name=item.name) for item in self._client.list_agents()]
 
+    def get_agent_configuration(self, agent_id: str) -> dict:
+        assistant = self._client.get_assistant(agent_id)
+        tool_ids = assistant.get("toolIds") if isinstance(assistant.get("toolIds"), list) else []
+        tools = []
+        for tool_id in tool_ids:
+            if isinstance(tool_id, str) and tool_id:
+                tools.append(self._client.get_tool(tool_id))
+        return {"assistant": assistant, "referenced_tools": tools}
+
     def list_conversations(
         self,
         *,

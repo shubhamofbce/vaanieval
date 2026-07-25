@@ -11,6 +11,7 @@ from app.models.evaluation import ConversationEvaluationRun
 from app.models.import_job import ImportJob, ImportJobStatus
 from app.models.job_queue import JobQueue, JobStatus
 from app.services.audio_waveform_service import GENERATE_AUDIO_WAVEFORM, generate_audio_waveform
+from app.services.agent_config_sync_service import SYNC_AGENT_CONFIGURATIONS, run_agent_config_sync
 from app.services.evaluation_service import EVAL_CONVERSATION_SCORES, run_evaluation_job
 from app.services.import_service import (
     BACKFILL_CONVERSATION_DISPLAY_NAME,
@@ -49,6 +50,8 @@ def process_job(db, job: JobQueue) -> None:
         run_evaluation_job(db, payload)
     elif job.type == GENERATE_AUDIO_WAVEFORM:
         generate_audio_waveform(db, payload)
+    elif job.type == SYNC_AGENT_CONFIGURATIONS:
+        run_agent_config_sync(db, payload)
     else:
         raise ValueError(f"Unsupported job type: {job.type}")
 

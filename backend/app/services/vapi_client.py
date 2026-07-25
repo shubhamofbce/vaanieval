@@ -41,6 +41,18 @@ class VapiClient:
                 agents.append(VapiAgent(agent_id=agent_id, name=str(name)))
         return agents
 
+    def get_assistant(self, assistant_id: str) -> dict:
+        response = self._client.get(f"/assistant/{assistant_id}")
+        response.raise_for_status()
+        payload = response.json()
+        return payload if isinstance(payload, dict) else {}
+
+    def get_tool(self, tool_id: str) -> dict:
+        response = self._client.get(f"/tool/{tool_id}")
+        response.raise_for_status()
+        payload = response.json()
+        return payload if isinstance(payload, dict) else {}
+
     def list_calls(
         self,
         *,

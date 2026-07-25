@@ -1,11 +1,12 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, conversations, dashboard, evaluations, imports, media, provider, reporting, worker
+from app.api.v1 import auth, conversations, dashboard, evaluations, imports, ingest, media, provider, reporting, worker
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(provider.router, prefix="/provider", tags=["provider"])
 api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
+api_router.include_router(ingest.router, prefix="/ingest", tags=["ingest"])
 api_router.include_router(conversations.router, prefix="/conversations", tags=["conversations"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(media.router, prefix="/media", tags=["media"])

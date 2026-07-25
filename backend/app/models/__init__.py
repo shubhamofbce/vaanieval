@@ -7,8 +7,9 @@ from app.models.evaluation import (
     EvaluationRubricVersion,
 )
 from app.models.import_job import ImportJob, ImportJobStatus
+from app.models.ingest import WorkspaceIngestKey
 from app.models.job_queue import DeadLetterJob, JobAttempt, JobQueue, JobStatus
-from app.models.provider import ProviderAccount, ProviderAgent
+from app.models.provider import AgentConfigSyncJob, AgentConfigVersion, ProviderAccount, ProviderAgent
 from app.models.reporting import ReportingSettings
 from app.models.user import Membership, User, Workspace
 
@@ -25,12 +26,15 @@ __all__ = [
     "EvaluationRubricVersion",
     "ImportJob",
     "ImportJobStatus",
+    "WorkspaceIngestKey",
     "DeadLetterJob",
     "JobAttempt",
     "JobQueue",
     "JobStatus",
     "ProviderAccount",
     "ProviderAgent",
+    "AgentConfigVersion",
+    "AgentConfigSyncJob",
     "ReportingSettings",
     "Membership",
     "User",
