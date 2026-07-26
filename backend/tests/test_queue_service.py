@@ -83,3 +83,31 @@ def test_recovery_is_idempotent(db: Session) -> None:
 
     assert first == 1
     assert second == 0
+
+
+def test_lease_expiring_exactly_now_is_recovered(
+    db: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A lease whose leased_until is exactly equal to now is recovered.
+
+    This pins the boundary the docstring promises: ``leased_until <= now``
+    includes the exact-equality case. A naive ``<`` predicate would silently
+    leave this lease untouched while still passing the other tests.
+    """
+
+    class _FrozenDatetime:
+        @classmethod
+        def now(cls, tz=None) -> datetime:
+            return frozen_now
+
+    frozen_now = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr("app.services.queue_service.datetime", _FrozenDatetime)
+
+    job = _lease_job(db, leased_until=frozen_now)
+
+    recovered = recover_stale_leases(db)
+
+    assert recovered == 1
+    assert job.status == JobStatus.PENDING.value
+    assert job.lease_owner is None
+    assert job.leased_until is None
