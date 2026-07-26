@@ -91,14 +91,25 @@ def recover_stale_leases(db: Session, *, stale_after_seconds: int = 120) -> int:
     Recover jobs that were leased but never completed (crashed workers).
     Resets their status to PENDING so they can be picked up again.
     Returns count of recovered jobs.
+
+    Lease timing semantics: ``lease_next_job`` stores ``leased_until`` as the
+    absolute instant at which the lease expires. A lease is therefore stale as
+    soon as ``leased_until <= now`` — a lease whose ``leased_until`` is exactly
+    equal to now IS recovered, while one strictly in the future is NOT. The
+    predicate compares against ``leased_until`` directly; subtracting an extra
+    window would defer recovery by a full lease duration past expiry. Recovery
+    clears ``lease_owner`` and ``leased_until`` and is idempotent: a second
+    pass recovers nothing further.
+
+    ``stale_after_seconds`` is retained for API compatibility with existing
+    callers but no longer affects the recovery predicate.
     """
     now = datetime.now(timezone.utc)
-    stale_cutoff = now - timedelta(seconds=stale_after_seconds)
 
     stmt = select(JobQueue).where(
         and_(
             JobQueue.status == JobStatus.LEASED.value,
-            JobQueue.leased_until <= stale_cutoff,
+            JobQueue.leased_until <= now,
         )
     )
 
