@@ -4,88 +4,61 @@ import { GitHubCta } from '@/components/GitHubCta'
 import { WaitlistForm } from '@/components/WaitlistForm'
 
 export const metadata: Metadata = {
-  title: 'Voice AI observability and self-healing evaluations',
-  description: 'VaaniEval helps production Voice AI teams investigate failures and keep evaluation coverage current as agents change.',
+  title: 'Evaluation debt for production Voice AI',
+  description: 'VaaniEval helps Voice AI teams identify when a changing agent has made evaluation coverage stale, redundant, or incomplete.',
   alternates: { canonical: '/' },
-  openGraph: {
-    title: 'VaaniEval | Voice AI observability and evaluations',
-    description: 'Investigate production voice-agent failures and keep evaluation coverage current as your agents change.',
-    url: '/',
-  },
+  openGraph: { title: 'VaaniEval | Evaluation debt for Voice AI', description: 'Your agent changed. Which tests are now wrong?', url: '/' },
 }
 
-const signals = [
-  ['Conversation flow', 'Trace what happened across each turn, tool call, and agent decision.'],
-  ['Voice behavior', 'Investigate latency, interruptions, transcript quality, and handoffs in context.'],
-  ['Customer outcome', 'Connect a technical failure to whether the caller actually reached the intended result.'],
-]
-
-const loop = [
-  ['01', 'A change ships', 'A prompt, model, tool, policy, or conversation path changes.'],
-  ['02', 'A meaningful difference appears', 'Production signals and agent changes reveal where coverage may no longer reflect reality.'],
-  ['03', 'Coverage evolves', 'VaaniEval helps the team decide which tests to add, update, retire, or deprioritize.'],
+const evidence = [
+  ['00:04.8', 'Caller interrupts', 'Barge-in'],
+  ['00:06.1', 'Agent repeats policy', 'Behavior shift'],
+  ['00:08.3', 'Scheduling fallback', 'Tool event'],
+  ['00:10.2', 'Caller drops', 'Outcome'],
 ]
 
 export default function Home() {
-  return <>
-    <div className="voice-home">
-      <section className="voice-hero shell">
-        <div className="voice-hero-copy">
-          <p className="voice-eyebrow"><span className="pulse-dot" /> Early access for production Voice AI teams</p>
-          <h1>Voice AI changes fast.<br /><em>Your evaluations should keep up.</em></h1>
-          <p className="voice-lede">VaaniEval helps teams investigate production voice-agent failures and keep evaluation coverage current as their agents, prompts, tools, and workflows evolve.</p>
-          <div className="voice-hero-actions">
-            <a className="voice-button" href="#design-partner">Apply for design partner access <span aria-hidden="true">→</span></a>
-            <GitHubCta className="voice-text-link" event="github_star_hero_click">Explore the open source project <span aria-hidden="true">↗</span></GitHubCta>
-          </div>
-          <p className="voice-hero-note">Built with production Voice AI teams. Shaped through active design partnerships.</p>
-        </div>
+  return <div className="drift-home">
+    <section className="drift-hero shell">
+      <div className="drift-copy">
+        <p className="drift-kicker"><i /> The quality system for Voice AI</p>
+        <h1>Every voice agent change creates <span>evaluation debt.</span></h1>
+        <p className="drift-lede">VaaniEval shows where production behavior moved, which tests no longer represent your agent, and what coverage to review next.</p>
+        <div className="drift-actions"><a href="#design-partner" className="drift-button">Build with us <span>↗</span></a><GitHubCta className="drift-link" event="github_star_hero_click">View the open source project <span>↗</span></GitHubCta></div>
+        <p className="drift-caption">For technical teams operating Voice AI in production.</p>
+      </div>
+      <CoverageDrift />
+    </section>
 
-        <div className="voice-console" aria-label="Illustration of a Voice AI investigation workspace">
-          <div className="console-grid" />
-          <div className="console-topbar"><span>Production investigation</span><span className="console-live"><i /> Live signal</span></div>
-          <div className="console-call">
-            <div className="call-heading"><span className="call-avatar">V</span><div><strong>Appointment agent</strong><small>Call 8c21 · 04:38</small></div><b>Needs review</b></div>
-            <div className="waveform" aria-hidden="true">{Array.from({ length: 42 }, (_, index) => <i key={index} />)}</div>
-            <div className="call-tags"><span>Interruption</span><span>Tool fallback</span><span>Latency spike</span></div>
-          </div>
-          <div className="console-path"><span>Agent config changed</span><i /><i /><i /><b>Coverage review</b></div>
-          <div className="console-card console-card-left"><small>Observed behavior</small><strong>Fallback path changed</strong><p>New production pattern after the latest release.</p></div>
-          <div className="console-card console-card-right"><small>Suggested next step</small><strong>Review evaluation coverage</strong><p>Check whether the fallback scenario is represented.</p></div>
-          <p className="console-footnote">A voice-native view of what changed, what happened, and what to investigate next.</p>
-        </div>
-      </section>
+    <section className="debt-statement"><div className="shell">
+      <p className="drift-kicker">The failure mode nobody owns</p>
+      <div><h2>A passing suite can still be the wrong suite.</h2><p>Prompts, models, tools, and flows change constantly. The tests that once protected an agent can quietly become stale, redundant, or incomplete. Your dashboard will show a failure. It will not tell you whether your coverage is still valid.</p></div>
+    </div></section>
 
-      <section className="voice-statement"><div className="shell">
-        <p className="voice-eyebrow">The problem</p>
-        <h2>Voice AI is not text AI with audio added.</h2>
-        <p>Production failures can hide in timing, interruptions, speech recognition, tool behavior, conversation flow, and the outcome a caller actually receives. Yet evaluation workflows often become stale as the agent changes.</p>
-      </div></section>
+    <section className="drift-process shell">
+      <div className="process-intro"><p className="drift-kicker">A living evaluation system</p><h2>From changed behavior to a coverage decision.</h2><p>Not another score. A reviewable path from an agent release to the tests that matter now.</p></div>
+      <div className="process-rail"><article><span>01</span><h3>Detect the change</h3><p>Follow the agent changes and production behavior worth investigating.</p></article><article><span>02</span><h3>Classify coverage</h3><p>Surface coverage that may be missing, stale, redundant, or still representative.</p></article><article><span>03</span><h3>Update with context</h3><p>Use the call, trace, and outcome to decide what belongs in the suite.</p></article></div>
+    </section>
 
-      <section className="voice-section shell voice-signals">
-        <div className="section-copy"><p className="voice-eyebrow">Voice-first observability</p><h2>See the call behind the failure.</h2><p>Move from a production signal to the conversation, voice behavior, and system context needed to make a confident decision.</p></div>
-        <div className="signal-list">{signals.map(([title, description], index) => <article key={title}>
-          <span className="signal-index">0{index + 1}</span><div><h3>{title}</h3><p>{description}</p></div><span className="signal-arrow" aria-hidden="true">↗</span>
-        </article>)}</div>
-      </section>
+    <section className="trace-section"><div className="shell trace-layout">
+      <div className="trace-copy"><p className="drift-kicker">Production context</p><h2>Debug the behavior behind the drift.</h2><p>Voice quality does not live in a transcript alone. Investigate the turn, interruption, timing, tool event, and customer outcome that made a coverage decision necessary.</p><p className="trace-note">Production investigation is the evidence layer. Coverage relevance is the decision layer.</p></div>
+      <div className="call-trace" aria-label="Illustrative call trace product preview"><div className="trace-bar"><span>CALL TRACE / PRODUCT PREVIEW</span><b>Review required</b></div><div className="trace-agent"><span>booking-agent</span><small>release v24.9 · fallback branch</small></div><div className="trace-wave">{Array.from({ length: 48 }, (_, index) => <i key={index} />)}</div><div className="trace-events">{evidence.map(([time, event, label]) => <div key={time}><time>{time}</time><span>{event}</span><b>{label}</b></div>)}</div><div className="trace-conclusion"><span>Why this matters</span><strong>Fallback behavior changed after release.</strong><p>Review test coverage for interruption during scheduling recovery.</p></div></div>
+    </div></section>
 
-      <section className="voice-loop-section"><div className="shell">
-        <div className="voice-loop-heading"><div><p className="voice-eyebrow">Self-healing evaluations</p><h2>Keep quality coverage aligned with the agent you actually have.</h2></div><p>Small teams should not have to rebuild their evaluation suite every time the product changes.</p></div>
-        <div className="voice-loop">{loop.map(([number, title, description]) => <article key={number}><span>{number}</span><div className="loop-line" /><h3>{title}</h3><p>{description}</p></article>)}</div>
-        <p className="voice-disclaimer">VaaniEval is being developed with design partners. Recommendations should remain reviewable by the team responsible for the agent.</p>
-      </div></section>
+    <section className="fit-section shell"><p className="drift-kicker">Built for teams where the agent is the product</p><div><h2>Quality infrastructure for teams shipping Voice AI into real workflows.</h2><p>For companies building agents that schedule, support, teach, qualify, advise, or resolve. If an agent change can affect a customer outcome, evaluation coverage is product infrastructure.</p></div></section>
 
-      <section className="voice-section shell voice-fit">
-        <div className="section-copy"><p className="voice-eyebrow">Who this is for</p><h2>For teams where a bad call is a product problem.</h2><p>You are shipping Voice AI into a workflow your customers depend on. You need more than a generic dashboard or a static simulation suite.</p></div>
-        <div className="fit-grid"><article><span>For</span><h3>Production Voice AI products</h3><p>Teams building customer-facing agents for high-consequence workflows.</p></article><article><span>For</span><h3>Fast-moving technical teams</h3><p>Teams changing agents, tools, prompts, and policies without time to maintain brittle coverage by hand.</p></article><article className="fit-muted"><span>Not initially for</span><h3>Simple agent experiments</h3><p>Teams that only need basic call scores or a one-off reporting dashboard.</p></article></div>
-      </section>
+    <section id="design-partner" className="drift-cta"><div className="shell partner-layout"><div><p className="drift-kicker">Design-partner program</p><h2>Stop maintaining yesterday’s evaluation suite.</h2><p>We are building VaaniEval alongside a small number of production Voice AI teams. Bring the release process and call failures that are slowing you down.</p><div className="partner-points"><span>Founder-led implementation</span><span>Shape the product direction</span><span>Built around a real workflow</span></div></div><WaitlistForm /></div></section>
 
-      <section className="design-partner-section" id="design-partner"><div className="shell design-partner-grid">
-        <div><p className="voice-eyebrow">Design partner access</p><h2>Help define the quality layer for production Voice AI.</h2><p>We are working closely with a small group of teams building Voice AI products. Apply if evaluation maintenance or production debugging is slowing your team down.</p><ul><li>Direct access to the founder</li><li>Influence over product direction</li><li>Built around a real production workflow</li></ul></div>
-        <WaitlistForm />
-      </div></section>
+    <section className="drift-footer-call shell"><p>Your agent changed. Your quality system should notice.</p><a href="#design-partner" className="drift-link">Apply to build with us <span>↗</span></a><Link href="/open-source" className="drift-link">Read the architecture <span>↗</span></Link></section>
+  </div>
+}
 
-      <section className="voice-closing shell"><p className="voice-eyebrow">Start with the real problem</p><h2>Build Voice AI with a quality system that evolves with it.</h2><div><a className="voice-button" href="#design-partner">Apply for design partner access <span aria-hidden="true">→</span></a><Link className="voice-text-link" href="/open-source">View the open-source project <span aria-hidden="true">↗</span></Link></div></section>
-    </div>
-  </>
+function CoverageDrift() {
+  return <div className="coverage-drift" aria-label="Product preview showing a release changing evaluation coverage">
+    <div className="coverage-head"><span>coverage drift / product preview</span><b>In development</b></div>
+    <div className="coverage-deploy"><div><small>RELEASE DIFF</small><strong>booking-agent <em>v24.8 → v24.9</em></strong></div><p><span>prompt</span><span>handoff</span><span>scheduling tool</span></p></div>
+    <div className="coverage-map"><span className="map-label">OBSERVED PRODUCTION PATH</span><i className="map-line map-line-a" /><i className="map-line map-line-b" /><i className="map-line map-line-c" /><i className="map-node node-a" /><i className="map-node node-b" /><i className="map-node node-c" /><i className="map-node node-d" /><div className="drift-alert"><small>BEHAVIOR DIVERGENCE</small><strong>Fallback branch appears after release</strong></div></div>
+    <div className="coverage-classify"><div className="classify-head"><span>SUITE RELEVANCE</span><b>Needs review</b></div><p><i className="ok" /> Still representative <strong>✓</strong></p><p><i className="warn" /> Possibly stale <strong>!</strong></p><p><i className="warn" /> Missing coverage <strong>!</strong></p><p><i /> Possibly redundant <strong>·</strong></p></div>
+    <div className="coverage-bottom"><span>CHANGE DETECTED</span><i /><span>BEHAVIOR REVIEWED</span><i /><span>COVERAGE CLASSIFIED</span></div>
+  </div>
 }
