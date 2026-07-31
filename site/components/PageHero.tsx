@@ -1,1 +1,7 @@
-export function PageHero({ eyebrow, title, description }: { eyebrow: string, title: string, description: string }) { return <section className="page-hero shell"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="lede">{description}</p></section> }
+export function PageHero({ eyebrow, title, description }: { eyebrow: string, title: string, description: string }) {
+  return <section className="page-hero shell">
+    <p className="eyebrow"><i /> {eyebrow}</p>
+    <h1>{title}</h1>
+    <p className="lede">{description}</p>
+  </section>
+}

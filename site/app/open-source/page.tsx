@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return <>
-    <PageHero eyebrow="Open source · AGPL-3.0" title="Self-host and extend VaaniEval." description="VaaniEval is open-source software under the GNU Affero General Public License v3.0. You can use, study, modify, and distribute it under that license." />
+    <PageHero eyebrow="Open source · AGPL-3.0" title="Inspect the quality system. Extend it around your agent." description="VaaniEval is source-available software under the GNU Affero General Public License v3.0. Study, modify, and deploy the evaluation workspace in your own environment under that license." />
     <section className="content-shell">
       <h2>What is in the repository</h2>
       <div className="card-grid"><div><h3>Review workspace</h3><p>React interfaces for conversation review, evaluation results, trends, and provider settings.</p></div><div><h3>Evaluation service</h3><p>A FastAPI service, background worker, evaluator-provider modules, tests, and database migrations.</p></div><div><h3>Provider adapters</h3><p>Adapter-based imports for supported voice providers so provider-specific behavior remains isolated.</p></div></div>

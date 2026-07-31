@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return <>
-    <PageHero eyebrow="Production QA" title="Replace random call sampling with a repeatable voice-agent quality loop." description="Review the calls that matter, evaluate a stable set of behaviors, keep evidence visible, and verify whether an agent change improved the next production conversations." />
+    <PageHero eyebrow="Production QA" title="A bad call should lead to a precise next change." description="Build a repeatable Voice AI QA loop around production evidence, stable evaluation criteria, and regression checks that remain relevant as the agent evolves." />
     <section className="content-shell">
       <h2>A practical operating loop</h2>
-      <ol><li>Import representative production conversations.</li><li>Evaluate a stable scorecard of business-critical behaviors.</li><li>Review failed and uncertain cases with transcript, available audio, and rationale evidence.</li><li>Group repeated failures and assign corrective work.</li><li>Evaluate new conversations to check for regression.</li></ol>
+      <ol><li>Start with representative production conversations and the customer outcome that mattered.</li><li>Evaluate a stable scorecard of business-critical behaviors.</li><li>Investigate failed and uncertain cases with transcript, available audio, timing, tool events, and rationale evidence.</li><li>Map repeated failures to the prompt, tool, policy, or workflow that owns the issue.</li><li>Check both new calls and evaluation coverage after the change ships.</li></ol>
       <h2>Keep humans in consequential decisions</h2>
       <p>Automated evaluation helps teams prioritize what to inspect. Human reviewers should validate uncertain, sensitive, or high-impact findings and calibrate the scorecard against representative calls before treating it as an operational gate.</p>
       <p><Link className="button" href="/resources/voice-agent-qa-checklist">Use the production QA checklist</Link></p>
