@@ -115,3 +115,35 @@ def send_waitlist_notification_email(
             smtp.send_message(message)
     except (OSError, smtplib.SMTPException) as exc:
         raise EmailDeliveryError("Failed to send design-partner application notification") from exc
+
+
+def send_portal_signup_notification_email(settings: Settings, recipient: str, user_email: str) -> None:
+    host = _require_smtp_setting(settings.smtp_host, "SMTP_HOST")
+    from_email = _require_smtp_setting(settings.smtp_from_email, "SMTP_FROM_EMAIL")
+    message = EmailMessage()
+    message["Subject"] = f"New VaaniEval portal signup: {user_email}"
+    message["From"] = from_email
+    message["To"] = recipient
+    message["Reply-To"] = user_email
+    message.set_content(
+        "\n".join(
+            [
+                "A new VaaniEval portal account was created.",
+                "",
+                f"Email: {user_email}",
+                "",
+                "This notification is sent only for a new account, not repeat magic-link requests.",
+            ]
+        )
+    )
+    try:
+        with smtplib.SMTP(host, settings.smtp_port, timeout=20) as smtp:
+            if settings.smtp_use_tls:
+                smtp.starttls()
+            if settings.smtp_username or settings.smtp_password:
+                username = _require_smtp_setting(settings.smtp_username, "SMTP_USERNAME")
+                password = _require_smtp_setting(settings.smtp_password, "SMTP_PASSWORD")
+                smtp.login(username, password)
+            smtp.send_message(message)
+    except (OSError, smtplib.SMTPException) as exc:
+        raise EmailDeliveryError("Failed to send portal signup notification") from exc

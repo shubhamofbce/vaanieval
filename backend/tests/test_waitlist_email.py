@@ -1,5 +1,8 @@
 from app.core.config import Settings
-from app.services.email_service import send_waitlist_notification_email
+from app.services.email_service import (
+    send_portal_signup_notification_email,
+    send_waitlist_notification_email,
+)
 
 
 class FakeSMTP:
@@ -59,3 +62,22 @@ def test_waitlist_notification_has_reply_to_and_application_context(monkeypatch)
     assert message["Reply-To"] == "ada@example.com"
     assert "Analytical Engine" in message["Subject"]
     assert "Keeping evaluation coverage current" in message.get_content()
+
+
+def test_portal_signup_notification_replies_to_the_new_user(monkeypatch) -> None:
+    FakeSMTP.sent = []
+    monkeypatch.setattr("app.services.email_service.smtplib.SMTP", FakeSMTP)
+    settings = Settings(
+        smtp_host="smtp.example.com",
+        smtp_username="user",
+        smtp_password="password",
+        smtp_from_email="VaaniEval <hello@vaanieval.com>",
+    )
+
+    send_portal_signup_notification_email(settings, "shubham@example.com", "new-founder@example.com")
+
+    assert len(FakeSMTP.sent) == 1
+    message = FakeSMTP.sent[0]
+    assert message["To"] == "shubham@example.com"
+    assert message["Reply-To"] == "new-founder@example.com"
+    assert "portal signup" in message["Subject"]

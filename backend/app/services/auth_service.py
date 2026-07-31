@@ -10,7 +10,11 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.models.auth import AuthSession, MagicLinkToken
 from app.models.user import Membership, User, Workspace
-from app.services.email_service import EmailDeliveryError, send_magic_link_email
+from app.services.email_service import (
+    EmailDeliveryError,
+    send_magic_link_email,
+    send_portal_signup_notification_email,
+)
 from app.services.security import (
     create_random_token,
     expires_in_hours,
@@ -36,7 +40,7 @@ class MagicLinkRequestResult:
     sent: bool = False
 
 
-def _get_or_create_user_workspace(db: Session, email: str) -> User:
+def _get_or_create_user_workspace(db: Session, email: str) -> tuple[User, bool]:
     user = db.scalar(select(User).where(User.email == email))
     if not user:
         user = User(email=email)
@@ -49,13 +53,14 @@ def _get_or_create_user_workspace(db: Session, email: str) -> User:
 
         membership = Membership(user_id=user.id, workspace_id=workspace.id, role="owner")
         db.add(membership)
+        return user, True
 
-    return user
+    return user, False
 
 
 def request_magic_link(db: Session, email: str) -> MagicLinkRequestResult:
     settings = get_settings()
-    user = _get_or_create_user_workspace(db, email)
+    user, is_new_signup = _get_or_create_user_workspace(db, email)
 
     token = create_random_token()
     token_row = MagicLinkToken(
@@ -72,11 +77,15 @@ def request_magic_link(db: Session, email: str) -> MagicLinkRequestResult:
             db.rollback()
             logger.exception("Production magic-link email delivery failed")
             raise
-        db.commit()
-        return MagicLinkRequestResult(sent=True)
-
     db.commit()
-    return MagicLinkRequestResult(token=token, sent=True)
+
+    if is_new_signup and settings.portal_signup_notification_email:
+        try:
+            send_portal_signup_notification_email(settings, settings.portal_signup_notification_email, user.email)
+        except EmailDeliveryError:
+            logger.exception("Portal signup notification failed after the user was stored")
+
+    return MagicLinkRequestResult(sent=True) if settings.is_production else MagicLinkRequestResult(token=token, sent=True)
 
 
 def verify_magic_link(db: Session, token: str) -> VerifiedSession | None:

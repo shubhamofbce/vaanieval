@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     waitlist_ingest_token: str | None = None
     waitlist_notification_email: str | None = None
+    portal_signup_notification_email: str | None = None
 
     elevenlabs_api_base: str = "https://api.elevenlabs.io"
     vapi_api_base: str = "https://api.vapi.ai"
