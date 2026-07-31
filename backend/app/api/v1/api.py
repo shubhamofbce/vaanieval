@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, conversations, dashboard, evaluations, imports, ingest, media, provider, reporting, worker
+from app.api.v1 import auth, conversations, dashboard, evaluations, imports, ingest, media, provider, reporting, waitlist, worker
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -13,3 +13,4 @@ api_router.include_router(media.router, prefix="/media", tags=["media"])
 api_router.include_router(evaluations.router, prefix="/evaluations", tags=["evaluations"])
 api_router.include_router(reporting.router, prefix="/reporting", tags=["reporting"])
 api_router.include_router(worker.router)
+api_router.include_router(waitlist.router, prefix="/waitlist", tags=["waitlist"])

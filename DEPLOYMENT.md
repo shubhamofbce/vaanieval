@@ -97,6 +97,7 @@ SMTP_USERNAME=<smtp-username>
 SMTP_PASSWORD=<smtp-password>
 SMTP_FROM_EMAIL="VaaniEval <noreply@vaanieval.com>"
 SMTP_USE_TLS=true
+WAITLIST_INGEST_TOKEN=<same-long-random-value-used-by-the-public-site>
 ELEVENLABS_API_BASE=https://api.elevenlabs.io
 VAPI_API_BASE=https://api.vapi.ai
 BOLNA_API_BASE=https://api.bolna.ai
@@ -104,6 +105,23 @@ OPENAI_API_BASE=https://api.openai.com/v1
 ```
 
 Do not reuse development secrets or commit production values.
+
+## Design-partner waitlist
+
+The public website sends applications through a server-side proxy to the API.
+Set these values in the public-site Vercel project:
+
+```env
+VAANIEVAL_API_URL=https://api.vaanieval.com
+WAITLIST_INGEST_TOKEN=<same-long-random-value-used-by-the-API>
+TURNSTILE_SECRET_KEY=<Cloudflare-Turnstile-secret>
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Cloudflare-Turnstile-site-key>
+```
+
+Set the same `WAITLIST_INGEST_TOKEN` on the API Container App. The API persists
+applications in PostgreSQL after migration `0014_waitlist_applications`. The
+browser never receives the ingest token or a database credential. Cloudflare
+Turnstile is required in production, and the form also includes a honeypot.
 
 ## Verification
 

@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from_email: str | None = None
     smtp_use_tls: bool = True
+    waitlist_ingest_token: str | None = None
 
     elevenlabs_api_base: str = "https://api.elevenlabs.io"
     vapi_api_base: str = "https://api.vapi.ai"

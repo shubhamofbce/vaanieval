@@ -12,6 +12,7 @@ from app.models.job_queue import DeadLetterJob, JobAttempt, JobQueue, JobStatus
 from app.models.provider import AgentConfigSyncJob, AgentConfigVersion, ProviderAccount, ProviderAgent
 from app.models.reporting import ReportingSettings
 from app.models.user import Membership, User, Workspace
+from app.models.waitlist import WaitlistApplication
 
 __all__ = [
     "AuthSession",
@@ -39,4 +40,5 @@ __all__ = [
     "Membership",
     "User",
     "Workspace",
+    "WaitlistApplication",
 ]

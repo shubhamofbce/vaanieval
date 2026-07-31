@@ -25,6 +25,7 @@ from app.models import (  # noqa: F401
     ReportingSettings,
     ToolEvent,
     User,
+    WaitlistApplication,
     Workspace,
 )
 

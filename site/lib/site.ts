@@ -8,7 +8,7 @@ import { alternativesPost } from './posts/alternatives-guide'
 
 export const siteConfig = {
   name: 'VaaniEval',
-  description: 'Open-source, self-hosted evaluation workspace for production voice-agent conversations.',
+  description: 'Voice-native observability and evaluation coverage for production Voice AI teams.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vaanieval.com',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',

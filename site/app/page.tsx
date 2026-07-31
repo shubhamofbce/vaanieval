@@ -1,122 +1,91 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Cta } from '@/components/Cta'
-import { BookingButton } from '@/components/BookingButton'
 import { GitHubCta } from '@/components/GitHubCta'
-import { TrackedLink } from '@/components/TrackedLink'
-import { siteConfig } from '@/lib/site'
+import { WaitlistForm } from '@/components/WaitlistForm'
 
 export const metadata: Metadata = {
-  title: 'Self-hosted voice AI evaluation',
-  description: 'Self-host VaaniEval to evaluate production voice-agent calls with conversation evidence, task completion, intent understanding, and quality trends.',
+  title: 'Voice AI observability and self-healing evaluations',
+  description: 'VaaniEval helps production Voice AI teams investigate failures and keep evaluation coverage current as agents change.',
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'VaaniEval — Self-hosted voice AI evaluation',
-    description: 'Evaluate production voice-agent conversations with evidence, scorecards, and quality trends in infrastructure you control.',
+    title: 'VaaniEval | Voice AI observability and evaluations',
+    description: 'Investigate production voice-agent failures and keep evaluation coverage current as your agents change.',
     url: '/',
   },
 }
 
-const dashboardScreenshot = 'https://raw.githubusercontent.com/shubhamofbce/vaanieval/main/docs/assets/screenshots/dashboard-analytics.png'
-const conversationScreenshot = 'https://raw.githubusercontent.com/shubhamofbce/vaanieval/main/docs/assets/screenshots/conversation-detail.png'
+const signals = [
+  ['Conversation flow', 'Trace what happened across each turn, tool call, and agent decision.'],
+  ['Voice behavior', 'Investigate latency, interruptions, transcript quality, and handoffs in context.'],
+  ['Customer outcome', 'Connect a technical failure to whether the caller actually reached the intended result.'],
+]
 
-const scorecard = [
-  ['Task completion', 'Did the customer reach the intended outcome?', '82'],
-  ['Intent understanding', 'Did the agent understand what the caller needed?', '76'],
-  ['Required information', 'Did it capture what the workflow required?', '91'],
-  ['Human-like delivery', 'Did the conversation feel clear and natural?', '88'],
+const loop = [
+  ['01', 'A change ships', 'A prompt, model, tool, policy, or conversation path changes.'],
+  ['02', 'A meaningful difference appears', 'Production signals and agent changes reveal where coverage may no longer reflect reality.'],
+  ['03', 'Coverage evolves', 'VaaniEval helps the team decide which tests to add, update, retire, or deprioritize.'],
 ]
 
 export default function Home() {
   return <>
-    <section className="hero hero-repositioned shell">
-      <div className="hero-copy">
-        <p className="eyebrow">Open source · Voice-agent evaluation</p>
-        <h1>Know how your voice agents perform—on infrastructure you control.</h1>
-        <p className="lede">Import real production calls, evaluate the outcomes platform dashboards miss, and keep every score connected to the conversation evidence behind it.</p>
-        <div className="hero-actions">
-          <div className="hero-primary-actions">
-            <BookingButton event="calendar_booking_hero_open">Book a demo</BookingButton>
-            <TrackedLink className="button button-secondary" href={siteConfig.appUrl} event="hosted_app_hero_click">Try the app</TrackedLink>
+    <div className="voice-home">
+      <section className="voice-hero shell">
+        <div className="voice-hero-copy">
+          <p className="voice-eyebrow"><span className="pulse-dot" /> Early access for production Voice AI teams</p>
+          <h1>Voice AI changes fast.<br /><em>Your evaluations should keep up.</em></h1>
+          <p className="voice-lede">VaaniEval helps teams investigate production voice-agent failures and keep evaluation coverage current as their agents, prompts, tools, and workflows evolve.</p>
+          <div className="voice-hero-actions">
+            <a className="voice-button" href="#design-partner">Apply for design partner access <span aria-hidden="true">→</span></a>
+            <GitHubCta className="voice-text-link" event="github_star_hero_click">Explore the open source project <span aria-hidden="true">↗</span></GitHubCta>
           </div>
-          <GitHubCta className="text-link hero-star-link" event="github_star_hero_click">Star <span aria-hidden="true">→</span></GitHubCta>
+          <p className="voice-hero-note">Built with production Voice AI teams. Shaped through active design partnerships.</p>
         </div>
-        <p className="microcopy">AGPL-3.0 · Self-hostable · ElevenLabs, Vapi, and Bolna imports</p>
-      </div>
-      <div className="hero-illustration-gif">
-        <img
-          src="https://raw.githubusercontent.com/shubhamofbce/vaanieval/main/docs/assets/screenshots/vaanieval-scores.gif"
-          alt="VaaniEval voice AI evaluation workspace showcasing overall score ring gauge, evaluation metrics, and audio transcript review"
-        />
-      </div>
-    </section>
 
-    <section className="demo-section shell" aria-labelledby="demo-title">
-      <div className="section-intro">
-        <p className="eyebrow">Product walkthrough</p>
-        <h2 id="demo-title">See the VaaniEval review workflow in action.</h2>
-        <p className="lede-small">Watch a short product demo to see how conversations, quality scores, and supporting evidence come together in one review workspace.</p>
-      </div>
-      <div className="demo-video-frame">
-        <iframe
-          src="https://www.youtube.com/embed/VpEAK7jZ5EI"
-          title="VaaniEval product demo"
-          loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-        />
-      </div>
-    </section>
-
-    <section className="metric-contrast"><div className="shell contrast-grid">
-      <div><p className="eyebrow">The reporting gap</p><h2>Your voice platform tells you what happened. VaaniEval tells you whether it worked.</h2></div>
-      <div className="contrast-cards">
-        <article><span className="card-label">Platform metrics</span><ul><li>Call volume</li><li>Call duration</li><li>Completed calls</li></ul><p>Helpful operational signals, but they cannot show whether the customer got the right result.</p></article>
-        <article className="contrast-primary"><span className="card-label">Conversation quality</span><ul><li>Task completion</li><li>Intent understanding</li><li>Evidence behind every score</li></ul><p>Score meaningful behaviors, then inspect the exact call and evaluator rationale behind a result.</p></article>
-      </div>
-    </div></section>
-
-    <section className="section shell score-section">
-      <div className="section-intro"><p className="eyebrow">A practical production scorecard</p><h2>Measure the behaviors that decide whether a call was actually good.</h2><p className="lede-small">VaaniEval starts with a focused evaluator-backed scorecard. Each result is paired with a rationale and conversation evidence, so it is a starting point for review—not an unexplained number.</p><Link className="text-link" href="/resources/evaluation-metrics">Explore evaluation metrics <span aria-hidden="true">→</span></Link></div>
-      <div className="score-grid">{scorecard.map(([title, question, score]) => <article key={title}><div><span className="score-ring">{score}</span><span className="score-out-of">/100</span></div><h3>{title}</h3><p>{question}</p></article>)}</div>
-      <aside className="roadmap-card"><span>Design-partner roadmap</span><p><strong>Bring your own criteria</strong> or let an evaluator suggest a first rubric for your workflow.</p><Link href="/design-partners">Help shape it <span aria-hidden="true">→</span></Link></aside>
-    </section>
-
-    <section className="section shell run-options">
-      <div className="section-intro"><p className="eyebrow">Choose your path</p><h2>Choose how to run VaaniEval.</h2><p className="lede-small">Start in the hosted workspace or self-host the open-source project in infrastructure your team manages.</p></div>
-      <div className="run-options-grid">
-        <article>
-          <p className="card-kicker">Hosted app</p>
-          <h3>Try the managed workspace.</h3>
-          <p>Begin in the VaaniEval app at app.vaanieval.com and follow the sign-in flow to get started.</p>
-          <TrackedLink className="button" href={siteConfig.appUrl} event="hosted_app_run_choice_click">Try the app</TrackedLink>
-        </article>
-        <article>
-          <p className="card-kicker">Self-hosted</p>
-          <h3>Deploy it in your own infrastructure.</h3>
-          <p>Inspect, deploy, and modify the project under AGPL-3.0 in infrastructure your team manages.</p>
-          <div className="inline-links">
-            <Link className="text-link" href="/open-source">Review the AGPL-3.0 terms <span aria-hidden="true">→</span></Link>
-            <GitHubCta className="text-link" event="github_star_run_choice_click">View the repository <span aria-hidden="true">→</span></GitHubCta>
-            <a className="text-link" href="https://github.com/shubhamofbce/vaanieval/blob/main/DEPLOYMENT.md" target="_blank" rel="noreferrer">Read deployment guidance <span aria-hidden="true">→</span></a>
+        <div className="voice-console" aria-label="Illustration of a Voice AI investigation workspace">
+          <div className="console-grid" />
+          <div className="console-topbar"><span>Production investigation</span><span className="console-live"><i /> Live signal</span></div>
+          <div className="console-call">
+            <div className="call-heading"><span className="call-avatar">V</span><div><strong>Appointment agent</strong><small>Call 8c21 · 04:38</small></div><b>Needs review</b></div>
+            <div className="waveform" aria-hidden="true">{Array.from({ length: 42 }, (_, index) => <i key={index} />)}</div>
+            <div className="call-tags"><span>Interruption</span><span>Tool fallback</span><span>Latency spike</span></div>
           </div>
-        </article>
-      </div>
-    </section>
+          <div className="console-path"><span>Agent config changed</span><i /><i /><i /><b>Coverage review</b></div>
+          <div className="console-card console-card-left"><small>Observed behavior</small><strong>Fallback path changed</strong><p>New production pattern after the latest release.</p></div>
+          <div className="console-card console-card-right"><small>Suggested next step</small><strong>Review evaluation coverage</strong><p>Check whether the fallback scenario is represented.</p></div>
+          <p className="console-footnote">A voice-native view of what changed, what happened, and what to investigate next.</p>
+        </div>
+      </section>
 
-    <section className="section split deployment-section shell">
-      <div><p className="eyebrow">Deploy where you work</p><h2>Run the evaluation loop in infrastructure you control.</h2><p className="lede-small">VaaniEval can be self-hosted under AGPL-3.0. Choose the environment, database, voice-provider connection, and evaluator provider that fit your team’s workflow.</p><div className="inline-links"><Link className="text-link" href="/open-source">Review the AGPL-3.0 terms <span aria-hidden="true">→</span></Link><GitHubCta className="text-link" event="github_star_deployment_click">View the source <span aria-hidden="true">→</span></GitHubCta></div></div>
-      <ol className="steps steps-four"><li><span>1</span><div><b>Import real calls</b><p>Bring in production conversations from supported providers.</p></div></li><li><span>2</span><div><b>Evaluate behavior</b><p>Score the parts of a call that define its quality.</p></div></li><li><span>3</span><div><b>Inspect evidence</b><p>Review transcript, available audio, and evaluator rationale together.</p></div></li><li><span>4</span><div><b>Improve and verify</b><p>Check new conversations after an agent change.</p></div></li></ol>
-    </section>
+      <section className="voice-statement"><div className="shell">
+        <p className="voice-eyebrow">The problem</p>
+        <h2>Voice AI is not text AI with audio added.</h2>
+        <p>Production failures can hide in timing, interruptions, speech recognition, tool behavior, conversation flow, and the outcome a caller actually receives. Yet evaluation workflows often become stale as the agent changes.</p>
+      </div></section>
 
-    <section className="section proof-section"><div className="shell">
-      <div className="section-intro proof-intro"><p className="eyebrow">Evidence, not just dashboards</p><h2>Move from a trend to the call that explains it.</h2><p className="lede-small">Find weak quality signals across an agent, then open the conversation, scores, and supporting evidence needed to decide what to fix.</p></div>
-      <div className="proof-grid">
-        <article className="proof-card"><div className="screenshot-frame dashboard-frame"><img src={dashboardScreenshot} alt="VaaniEval dashboard showing evaluation health, metric scores, and quality trends" /></div><h3>Find the weakest behavior first</h3><p>Review quality trends across agents and time ranges instead of relying only on call counts.</p></article>
-        <article className="proof-card proof-card-offset"><div className="screenshot-frame conversation-frame"><img src={conversationScreenshot} alt="VaaniEval conversation detail with an evaluation score, metric results, rationale, and transcript" /></div><h3>Keep the evidence attached</h3><p>Move directly from an aggregate score to the transcript, available audio, and evaluator rationale behind it.</p></article>
-      </div>
-    </div></section>
-    <Cta />
+      <section className="voice-section shell voice-signals">
+        <div className="section-copy"><p className="voice-eyebrow">Voice-first observability</p><h2>See the call behind the failure.</h2><p>Move from a production signal to the conversation, voice behavior, and system context needed to make a confident decision.</p></div>
+        <div className="signal-list">{signals.map(([title, description], index) => <article key={title}>
+          <span className="signal-index">0{index + 1}</span><div><h3>{title}</h3><p>{description}</p></div><span className="signal-arrow" aria-hidden="true">↗</span>
+        </article>)}</div>
+      </section>
+
+      <section className="voice-loop-section"><div className="shell">
+        <div className="voice-loop-heading"><div><p className="voice-eyebrow">Self-healing evaluations</p><h2>Keep quality coverage aligned with the agent you actually have.</h2></div><p>Small teams should not have to rebuild their evaluation suite every time the product changes.</p></div>
+        <div className="voice-loop">{loop.map(([number, title, description]) => <article key={number}><span>{number}</span><div className="loop-line" /><h3>{title}</h3><p>{description}</p></article>)}</div>
+        <p className="voice-disclaimer">VaaniEval is being developed with design partners. Recommendations should remain reviewable by the team responsible for the agent.</p>
+      </div></section>
+
+      <section className="voice-section shell voice-fit">
+        <div className="section-copy"><p className="voice-eyebrow">Who this is for</p><h2>For teams where a bad call is a product problem.</h2><p>You are shipping Voice AI into a workflow your customers depend on. You need more than a generic dashboard or a static simulation suite.</p></div>
+        <div className="fit-grid"><article><span>For</span><h3>Production Voice AI products</h3><p>Teams building customer-facing agents for high-consequence workflows.</p></article><article><span>For</span><h3>Fast-moving technical teams</h3><p>Teams changing agents, tools, prompts, and policies without time to maintain brittle coverage by hand.</p></article><article className="fit-muted"><span>Not initially for</span><h3>Simple agent experiments</h3><p>Teams that only need basic call scores or a one-off reporting dashboard.</p></article></div>
+      </section>
+
+      <section className="design-partner-section" id="design-partner"><div className="shell design-partner-grid">
+        <div><p className="voice-eyebrow">Design partner access</p><h2>Help define the quality layer for production Voice AI.</h2><p>We are working closely with a small group of teams building Voice AI products. Apply if evaluation maintenance or production debugging is slowing your team down.</p><ul><li>Direct access to the founder</li><li>Influence over product direction</li><li>Built around a real production workflow</li></ul></div>
+        <WaitlistForm />
+      </div></section>
+
+      <section className="voice-closing shell"><p className="voice-eyebrow">Start with the real problem</p><h2>Build Voice AI with a quality system that evolves with it.</h2><div><a className="voice-button" href="#design-partner">Apply for design partner access <span aria-hidden="true">→</span></a><Link className="voice-text-link" href="/open-source">View the open-source project <span aria-hidden="true">↗</span></Link></div></section>
+    </div>
   </>
 }

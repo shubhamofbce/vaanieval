@@ -8,11 +8,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: { default: 'VaaniEval — Self-hosted voice-agent evaluation', template: '%s | VaaniEval' },
+  title: { default: 'VaaniEval | Voice AI observability and evaluations', template: '%s | VaaniEval' },
   description: siteConfig.description,
   alternates: { canonical: '/' },
-  openGraph: { type: 'website', siteName: 'VaaniEval', title: 'VaaniEval — Self-hosted voice-agent evaluation', description: siteConfig.description, url: '/' },
-  twitter: { card: 'summary_large_image', title: 'VaaniEval — Self-hosted voice-agent evaluation', description: siteConfig.description },
+  openGraph: { type: 'website', siteName: 'VaaniEval', title: 'VaaniEval | Voice AI observability and evaluations', description: siteConfig.description, url: '/' },
+  twitter: { card: 'summary_large_image', title: 'VaaniEval | Voice AI observability and evaluations', description: siteConfig.description },
   icons: { icon: logo.src },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION?.startsWith('replace-') ? undefined : process.env.GOOGLE_SITE_VERIFICATION,
