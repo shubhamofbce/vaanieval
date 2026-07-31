@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { BookingButton } from '@/components/BookingButton'
 import { GitHubCta } from '@/components/GitHubCta'
 import { WaitlistForm } from '@/components/WaitlistForm'
 
@@ -24,8 +25,8 @@ export default function Home() {
         <p className="drift-kicker"><i /> The quality system for Voice AI</p>
         <h1>Every voice agent change creates <span>evaluation debt.</span></h1>
         <p className="drift-lede">VaaniEval shows where production behavior moved, which tests no longer represent your agent, and what coverage to review next.</p>
-        <div className="drift-actions"><a href="#design-partner" className="drift-button">Build with us <span>↗</span></a><GitHubCta className="drift-link" event="github_star_hero_click">View the open source project <span>↗</span></GitHubCta></div>
-        <p className="drift-caption">For technical teams operating Voice AI in production.</p>
+        <div className="drift-actions"><a href="#design-partner" className="drift-button">Build with us <span>↗</span></a><BookingButton className="drift-link drift-call-link" event="calendar_booking_home_hero_open">Book a founder call <span>↗</span></BookingButton></div>
+        <p className="drift-caption">For technical teams operating Voice AI in production. <GitHubCta className="drift-caption-link" event="github_star_hero_click">Inspect the open source project ↗</GitHubCta></p>
       </div>
       <CoverageDrift />
     </section>

@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { TrackedLink } from './TrackedLink'
-import { siteConfig } from '@/lib/site'
+import { BookingButton } from './BookingButton'
 import logo from '../../frontend/src/assets/vaanievallogo.jpg'
 
 export function Header() {
@@ -10,7 +9,7 @@ export function Header() {
       <Link href="/voice-ai-evaluation">Product</Link><Link href="/integrations/elevenlabs">Integrations</Link><Link href="/resources/evaluation-metrics">Resources</Link><Link href="/blog">Blog</Link><Link href="/open-source">Open source</Link>
     </nav>
     <div className="header-actions">
-      <TrackedLink className="button button-small button-secondary header-try-button" href={siteConfig.appUrl} event="hosted_app_header_click">Try now</TrackedLink>
+      <BookingButton className="header-call-button" event="calendar_booking_header_open">Book a founder call <span aria-hidden="true">↗</span></BookingButton>
       <Link className="button button-small header-booking-button" href="/#design-partner">Apply for access</Link>
     </div>
   </div></header>

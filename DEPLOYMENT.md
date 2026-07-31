@@ -98,6 +98,7 @@ SMTP_PASSWORD=<smtp-password>
 SMTP_FROM_EMAIL="VaaniEval <noreply@vaanieval.com>"
 SMTP_USE_TLS=true
 WAITLIST_INGEST_TOKEN=<same-long-random-value-used-by-the-public-site>
+WAITLIST_NOTIFICATION_EMAIL=<your-inbox@example.com>
 ELEVENLABS_API_BASE=https://api.elevenlabs.io
 VAPI_API_BASE=https://api.vapi.ai
 BOLNA_API_BASE=https://api.bolna.ai
@@ -119,9 +120,12 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Cloudflare-Turnstile-site-key>
 ```
 
 Set the same `WAITLIST_INGEST_TOKEN` on the API Container App. The API persists
-applications in PostgreSQL after migration `0014_waitlist_applications`. The
-browser never receives the ingest token or a database credential. Cloudflare
-Turnstile is required in production, and the form also includes a honeypot.
+applications in PostgreSQL after migration `0014_waitlist_applications`. When
+`WAITLIST_NOTIFICATION_EMAIL` and the SMTP settings are present, it sends one
+email notification for each new application, with the applicant set as the
+reply-to address. The browser never receives the ingest token or a database
+credential. Cloudflare Turnstile is required in production, and the form also
+includes a honeypot.
 
 ## Verification
 
