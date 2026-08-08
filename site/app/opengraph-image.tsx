@@ -1,5 +1,22 @@
 import { ImageResponse } from 'next/og'
-export const alt='VaaniEval — Self-hosted voice AI evaluation'
-export const size={width:1200,height:630}
-export const contentType='image/png'
-export default function Image(){return new ImageResponse(<div style={{width:'100%',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',padding:'72px',background:'#f7f8f3',color:'#102a2a',fontFamily:'sans-serif'}}><div style={{display:'flex',alignItems:'center',gap:'18px',fontSize:'30px',fontWeight:800}}><div style={{display:'flex',alignItems:'center',justifyContent:'center',width:'58px',height:'58px',borderRadius:'16px',background:'#0c706b',color:'white'}}>V</div>VaaniEval</div><div style={{display:'flex',flexDirection:'column'}}><div style={{display:'flex',fontSize:'68px',lineHeight:1.05,fontWeight:800,letterSpacing:'-3px',maxWidth:'980px'}}>Know how your voice agents perform.</div><div style={{display:'flex',fontSize:'26px',color:'#5c7070',marginTop:'28px'}}>Self-hosted evaluation for production voice-agent calls</div></div></div>,size)}
+
+export const alt = 'VaaniEval — Private voice AI evaluation infrastructure'
+export const size = { width: 1200, height: 630 }
+export const contentType = 'image/png'
+
+export default function Image() {
+  return new ImageResponse(
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '72px', background: 'linear-gradient(135deg,#05100f 0%,#0b201d 60%,#0e2b26 100%)', color: '#eef6f3', fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '18px', fontSize: '30px', fontWeight: 800 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '58px', height: '58px', borderRadius: '16px', background: '#37e0b8', color: '#04211c' }}>V</div>
+        VaaniEval
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', fontSize: '32px', color: '#37e0b8', letterSpacing: '4px', fontWeight: 700 }}>PRIVATE VOICE AI EVALUATION</div>
+        <div style={{ display: 'flex', fontSize: '66px', lineHeight: 1.05, fontWeight: 800, letterSpacing: '-3px', maxWidth: '1000px', marginTop: '22px' }}>Benchmark voice models on your calls.</div>
+        <div style={{ display: 'flex', fontSize: '27px', color: '#9db4b0', marginTop: '26px' }}>STT, LLM, and TTS evaluation that runs inside your environment</div>
+      </div>
+    </div>,
+    size,
+  )
+}

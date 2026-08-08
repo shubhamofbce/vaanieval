@@ -32,7 +32,7 @@ export async function generateMetadata({
 
 function VPCDiagram() {
   return (
-    <div style={{
+    <div className="light-diagram" style={{
       margin: '40px 0',
       padding: '28px',
       background: 'white',

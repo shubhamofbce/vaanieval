@@ -2,23 +2,36 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BookingButton } from '@/components/BookingButton'
 import { PageHero } from '@/components/PageHero'
-import { siteConfig } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Voice AI design partner program',
-  description: 'Work with VaaniEval on a living evaluation system for production Voice AI agents.',
+  description: 'Work with VaaniEval to build a private voice model benchmark from your own production calls, deployed inside your environment.',
   alternates: { canonical: '/design-partners' },
 }
 
 export default function Page() {
   return <>
-    <PageHero eyebrow="Design-partner program" title="Build the quality layer your Voice AI product is missing." description="VaaniEval is working with a small number of production Voice AI teams where agent releases, real calls, and evaluation coverage need to stay aligned." />
+    <PageHero eyebrow="Design-partner program" title="Build your private voice model benchmark with us." description="We work with a small number of enterprise voice teams that run real call volume and cannot send customer conversations to a hosted evaluation vendor." />
     <section className="content-shell">
-      <h2>We are a fit when the agent is the product.</h2>
-      <div className="card-grid"><div><span className="card-kicker">Your reality</span><h3>You ship often</h3><p>Prompts, tools, models, policies, and conversation paths change faster than a small team can maintain a static test suite.</p></div><div><span className="card-kicker">Your risk</span><h3>A call can change an outcome</h3><p>The agent schedules, supports, teaches, qualifies, advises, or resolves work that matters to a customer.</p></div><div><span className="card-kicker">Your need</span><h3>Coverage must stay useful</h3><p>You need to understand whether tests still represent your production agent, not simply whether a dashboard score moved.</p></div></div>
-      <h2>What working together looks like</h2>
-      <p>We start from a real release process and a real failure mode. You help define which changes, production signals, and coverage decisions need to be visible. We build the workflow with you and keep recommendations reviewable by the team responsible for the agent.</p>
-      <div className="callout"><strong>Start with the workflow, not a pitch deck.</strong><p>Tell us what your agent does, what has changed recently, and where evaluation or production debugging is slowing the team down.</p><div className="inline-links"><Link className="button" href="/#design-partner">Apply to build with us <span aria-hidden="true">↗</span></Link><BookingButton className="text-link" event="calendar_booking_design_partner_open">Talk to the founder <span aria-hidden="true">↗</span></BookingButton><a className="text-link" href={siteConfig.githubUrl}>Inspect the repository <span aria-hidden="true">↗</span></a></div></div>
+      <h2>We are a fit when the model decision is expensive</h2>
+      <div className="card-grid">
+        <div><span className="card-kicker">Your traffic</span><h3>Real production volume</h3><p>You already run voice agents at scale, across languages, accents, and noisy telephony conditions.</p></div>
+        <div><span className="card-kicker">Your constraint</span><h3>Data residency is non-negotiable</h3><p>Security, legal, or regulation prevents you from uploading production calls to a third-party evaluation platform.</p></div>
+        <div><span className="card-kicker">Your decision</span><h3>A model choice with consequences</h3><p>Switching STT, LLM, or TTS providers changes cost, latency, and customer outcomes, and you need evidence before you commit.</p></div>
+      </div>
+
+      <h2>What you get</h2>
+      <ul>
+        <li>A deployment design for on-premises or customer-controlled cloud, reviewed with your infrastructure and security teams.</li>
+        <li>Hands-on help building your first representative benchmark set from your own calls.</li>
+        <li>A model-comparison report covering quality, latency, cost, and downstream impact.</li>
+        <li>Direct influence over the roadmap, integrations, and evaluation templates we build next.</li>
+      </ul>
+
+      <h2>What we ask</h2>
+      <p>Time from someone who owns the model decision, access to a representative slice of calls inside your environment, and honest feedback when the product is wrong. We are early: this is a working relationship, not a purchase.</p>
+
+      <div className="callout"><strong>Start with the decision you are stuck on.</strong><p>Tell us which model you are evaluating, what your calls look like, and what your security team requires. We will show you how the same evaluation would run inside your environment.</p><div className="inline-links"><BookingButton className="button" event="calendar_booking_design_partner_open">Book a demo <span aria-hidden="true">↗</span></BookingButton><Link className="text-link" href="/deployment">Review deployment architecture <span aria-hidden="true">↗</span></Link></div></div>
     </section>
   </>
 }

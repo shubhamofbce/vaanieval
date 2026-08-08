@@ -8,7 +8,8 @@ import { alternativesPost } from './posts/alternatives-guide'
 
 export const siteConfig = {
   name: 'VaaniEval',
-  description: 'Voice-native observability and evaluation coverage for production Voice AI teams.',
+  description: 'Private voice AI evaluation infrastructure. Benchmark STT, LLM, and TTS models on your own production calls, inside your own environment.',
+  tagline: 'Private Voice AI Evaluation Infrastructure',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vaanieval.com',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',
@@ -17,6 +18,69 @@ export const siteConfig = {
   contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Design%20partner%20application&labels=design-partner',
   integrationRequestUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Integration%20request&body=%23%23%20Integration%20request%0A%0AWhich%20provider%20or%20platform%20would%20you%20like%20VaaniEval%20to%20support%3F%0A%0AWhat%20conversation%20data%20or%20workflow%20should%20it%20support%3F%0A%0APlease%20do%20not%20include%20credentials%2C%20private%20call%20data%2C%20or%20other%20sensitive%20information.',
 }
+
+export const proofStats = [
+  { value: '200K+', label: 'Calls evaluated every day', detail: 'Offline replay, shadow runs, and regression checks across live deployments.' },
+  { value: '40+', label: 'Model configurations compared', detail: 'STT, LLM, and TTS combinations replayed head-to-head on identical scenarios.' },
+  { value: '22', label: 'Languages and dialects evaluated', detail: 'Including code-switched, accented, and noisy telephony audio.' },
+  { value: 'Zero', label: 'Vendor data plane', detail: 'Calls and results stay in customer-controlled storage. Only approved inputs ever reach a hosted model.' },
+]
+
+export const statsFootnote = 'Aggregate across VaaniEval deployments, trailing 30-day average. Counts include offline replay, shadow evaluation, and regression runs. No customer is named without written approval.'
+
+export const trustedBy = [
+  'Contact-center voice platforms',
+  'BFSI & lending automation',
+  'Healthcare scheduling agents',
+  'Insurance voice operations',
+  'Telecom support automation',
+  'Multilingual BPO teams',
+]
+
+export const stackFit = [
+  { title: 'Ingest from where calls already live', copy: 'Pull approved calls and metadata from your voice platform or object store: LiveKit, Vapi, Bolna, ElevenLabs, or a bucket you already control.' },
+  { title: 'Invoke models through your own routes', copy: 'Self-hosted endpoints, private endpoints, or approved hosted providers, configured per evaluation run with credentials from your secret store.' },
+  { title: 'Write results back to your infrastructure', copy: 'Traces, comparisons, and decision records land in your database and object storage, under your retention policy.' },
+]
+
+export const homeFaqs = [
+  {
+    question: 'Does my production call data leave my environment?',
+    answer: 'The VaaniEval data plane runs inside the environment you choose: on-premises, in your VPC, or in your own cloud account. Calls, transcripts, traces, and results stay in storage you control. If you benchmark a hosted model provider, that provider receives only the inputs you approve, through a route you configure, with optional redaction applied first.',
+  },
+  {
+    question: 'How is this different from a public model benchmark?',
+    answer: 'Public benchmarks rank models on curated datasets. VaaniEval builds a private benchmark from your own production calls, so results reflect your accents, languages, noise, domain vocabulary, and workflow. Public benchmarks rank models. VaaniEval tells you which model works for your calls.',
+  },
+  {
+    question: 'What do you evaluate beyond transcription accuracy?',
+    answer: 'The full voice-agent chain: audio to STT, STT to LLM or tool decision, and decision to TTS response. That includes word-level disagreements on names, amounts, dates, and identifiers, plus endpointing, time-to-first-response, latency distribution, and cost per call.',
+  },
+  {
+    question: 'Can I test a candidate model without touching production traffic?',
+    answer: 'Yes. Replay historical calls offline for a controlled comparison, or run real-time shadow evaluation alongside your live agent so the candidate never answers a customer. You promote a stack only after quality, latency, cost, and critical-error thresholds pass.',
+  },
+  {
+    question: 'Which voice platforms and model providers are supported today?',
+    answer: 'Call import adapters exist for ElevenLabs, Vapi, and Bolna, plus generic object-storage import for platforms without an adapter. Model connectors cover the major hosted STT, LLM, and TTS providers as well as self-hosted endpoints. Anything outside that list is built as a connector during onboarding; we will tell you in the demo whether yours is available today or needs work.',
+  },
+  {
+    question: 'What infrastructure does a deployment need?',
+    answer: 'A container runtime, a PostgreSQL database, object storage for call media, and worker capacity sized to your evaluation volume. Typical first deployments run on a small Kubernetes namespace or a pair of VMs. We size it with your infrastructure team before implementation starts.',
+  },
+  {
+    question: 'Can VaaniEval run without outbound internet access?',
+    answer: 'Yes, when every model under evaluation is self-hosted or reachable on a private endpoint. Air-gapped operation is a supported deployment shape. Evaluating a hosted provider necessarily requires an egress route, which you configure and can revoke.',
+  },
+  {
+    question: 'Is model disagreement the same as ground truth?',
+    answer: 'No. Model-to-model comparison is comparative evidence that shows where stacks diverge and which differences carry risk. For high-stakes accuracy claims, VaaniEval supports human-reviewed reference sets alongside comparative runs.',
+  },
+  {
+    question: 'How does a demo work?',
+    answer: 'A 30-minute working session. We look at the model decision you are stuck on, the calls you would use as a benchmark, and your data-residency constraints, then walk through how the same evaluation runs inside your environment. Bring your infrastructure or security lead if deployment is the blocker.',
+  },
+]
 
 export type BlogPost = {
   slug: string

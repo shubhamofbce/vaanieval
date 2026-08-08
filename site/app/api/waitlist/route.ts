@@ -26,13 +26,19 @@ export async function POST(request: NextRequest) {
     if (!result.success) return NextResponse.json({ detail: 'Verification failed. Please try again.' }, { status: 400 })
   }
 
+  const withDefaults = {
+    ...body,
+    role: typeof body.role === 'string' && body.role.trim() ? body.role.trim() : 'Not specified',
+    stack: typeof body.stack === 'string' && body.stack.trim() ? body.stack.trim() : 'Not specified',
+  }
+
   const response = await fetch(`${apiUrl.replace(/\/$/, '')}/api/v1/waitlist`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Waitlist-Ingest-Token': ingestToken,
     },
-    body: JSON.stringify({ ...body, turnstileToken: undefined, companySite: undefined }),
+    body: JSON.stringify({ ...withDefaults, turnstileToken: undefined, companySite: undefined }),
     cache: 'no-store',
   })
   const payload = await response.json().catch(() => ({ detail: 'Unable to submit your application right now.' }))
