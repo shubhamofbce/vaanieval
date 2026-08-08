@@ -13,6 +13,8 @@
     "@types/mdx": "^2.0.13",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "livekit-client": "^2.17.2",
+    "livekit-server-sdk": "^2.15.0",
     "next": "^15.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

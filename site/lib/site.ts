@@ -20,13 +20,13 @@ export const siteConfig = {
 }
 
 export const proofStats = [
-  { value: '200K+', label: 'Calls evaluated every day', detail: 'Offline replay, shadow runs, and regression checks across live deployments.' },
-  { value: '40+', label: 'Model configurations compared', detail: 'STT, LLM, and TTS combinations replayed head-to-head on identical scenarios.' },
-  { value: '22', label: 'Languages and dialects evaluated', detail: 'Including code-switched, accented, and noisy telephony audio.' },
-  { value: 'Zero', label: 'Vendor data plane', detail: 'Calls and results stay in customer-controlled storage. Only approved inputs ever reach a hosted model.' },
+  { value: '200K+', label: 'Evaluation runs per day' },
+  { value: '40+', label: 'Model configurations compared' },
+  { value: '22', label: 'Languages and dialects' },
+  { value: 'Zero', label: 'Vendor data plane' },
 ]
 
-export const statsFootnote = 'Aggregate across VaaniEval deployments, trailing 30-day average. Counts include offline replay, shadow evaluation, and regression runs. No customer is named without written approval.'
+export const statsFootnote = 'Trailing 30-day average across active deployments; calls may be rerun across candidate stacks. References available under NDA.'
 
 export const trustedBy = [
   'Contact-center voice platforms',
@@ -35,22 +35,25 @@ export const trustedBy = [
   'Insurance voice operations',
   'Telecom support automation',
   'Multilingual BPO teams',
-]
+] as const
 
-export const stackFit = [
-  { title: 'Ingest from where calls already live', copy: 'Pull approved calls and metadata from your voice platform or object store: LiveKit, Vapi, Bolna, ElevenLabs, or a bucket you already control.' },
-  { title: 'Invoke models through your own routes', copy: 'Self-hosted endpoints, private endpoints, or approved hosted providers, configured per evaluation run with credentials from your secret store.' },
-  { title: 'Write results back to your infrastructure', copy: 'Traces, comparisons, and decision records land in your database and object storage, under your retention policy.' },
+export const supportedStack = [
+  { name: 'LiveKit', status: 'Available today' },
+  { name: 'Vapi', status: 'Available today' },
+  { name: 'Bolna', status: 'Available today' },
+  { name: 'ElevenLabs', status: 'Available today' },
+  { name: 'S3-compatible object storage', status: 'Available today' },
+  { name: 'Private model endpoints', status: 'Configured during onboarding' },
 ]
 
 export const homeFaqs = [
   {
     question: 'Does my production call data leave my environment?',
-    answer: 'The VaaniEval data plane runs inside the environment you choose: on-premises, in your VPC, or in your own cloud account. Calls, transcripts, traces, and results stay in storage you control. If you benchmark a hosted model provider, that provider receives only the inputs you approve, through a route you configure, with optional redaction applied first.',
+    answer: 'The data plane runs on-premises, in your VPC, or in your own cloud account. Calls, transcripts, traces, and results stay in storage you control. Hosted models receive only approved inputs through an egress route you configure, with optional redaction applied first.',
   },
   {
     question: 'How is this different from a public model benchmark?',
-    answer: 'Public benchmarks rank models on curated datasets. VaaniEval builds a private benchmark from your own production calls, so results reflect your accents, languages, noise, domain vocabulary, and workflow. Public benchmarks rank models. VaaniEval tells you which model works for your calls.',
+    answer: 'Public benchmarks rank models on curated datasets. VaaniEval builds a private benchmark from your own production calls, so results reflect your accents, languages, noise, domain vocabulary, and workflow \u2014 telling you which model wins on your calls, not which model wins in the abstract.',
   },
   {
     question: 'What do you evaluate beyond transcription accuracy?',
@@ -66,19 +69,11 @@ export const homeFaqs = [
   },
   {
     question: 'What infrastructure does a deployment need?',
-    answer: 'A container runtime, a PostgreSQL database, object storage for call media, and worker capacity sized to your evaluation volume. Typical first deployments run on a small Kubernetes namespace or a pair of VMs. We size it with your infrastructure team before implementation starts.',
-  },
-  {
-    question: 'Can VaaniEval run without outbound internet access?',
-    answer: 'Yes, when every model under evaluation is self-hosted or reachable on a private endpoint. Air-gapped operation is a supported deployment shape. Evaluating a hosted provider necessarily requires an egress route, which you configure and can revoke.',
+    answer: 'A container runtime, PostgreSQL, object storage, and evaluation workers. Initial deployments typically use a small Kubernetes namespace or two VMs. We size it with your infrastructure team before implementation starts.',
   },
   {
     question: 'Is model disagreement the same as ground truth?',
     answer: 'No. Model-to-model comparison is comparative evidence that shows where stacks diverge and which differences carry risk. For high-stakes accuracy claims, VaaniEval supports human-reviewed reference sets alongside comparative runs.',
-  },
-  {
-    question: 'How does a demo work?',
-    answer: 'A 30-minute working session. We look at the model decision you are stuck on, the calls you would use as a benchmark, and your data-residency constraints, then walk through how the same evaluation runs inside your environment. Bring your infrastructure or security lead if deployment is the blocker.',
   },
 ]
 

@@ -26,10 +26,24 @@ export async function POST(request: NextRequest) {
     if (!result.success) return NextResponse.json({ detail: 'Verification failed. Please try again.' }, { status: 400 })
   }
 
+  // The short demo form only collects email, company, and an optional platform.
+  // The backend schema still requires these fields, so fill them server-side.
+  const text = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : '')
+  const clamp = (value: string, max: number) => value.slice(0, max)
+  const email = text(body.email)
   const withDefaults = {
     ...body,
-    role: typeof body.role === 'string' && body.role.trim() ? body.role.trim() : 'Not specified',
-    stack: typeof body.stack === 'string' && body.stack.trim() ? body.stack.trim() : 'Not specified',
+    name: clamp(text(body.name) || email.split('@')[0] || 'Not provided', 120),
+    email,
+    company: clamp(text(body.company), 160),
+    role: clamp(text(body.role) || 'Not provided', 120),
+    website: text(body.website) ? clamp(text(body.website), 2048) : undefined,
+    stack: clamp(text(body.stack) || 'Not provided', 1000),
+    challenge: clamp(text(body.challenge) || 'Requested a benchmark review from the website.', 4000),
+    source_page: text(body.source_page) ? clamp(text(body.source_page), 512) : undefined,
+    utm_source: text(body.utm_source) ? clamp(text(body.utm_source), 512) : undefined,
+    utm_medium: text(body.utm_medium) ? clamp(text(body.utm_medium), 512) : undefined,
+    utm_campaign: text(body.utm_campaign) ? clamp(text(body.utm_campaign), 512) : undefined,
   }
 
   const response = await fetch(`${apiUrl.replace(/\/$/, '')}/api/v1/waitlist`, {

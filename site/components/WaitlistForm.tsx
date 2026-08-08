@@ -6,7 +6,7 @@ import { track } from '@vercel/analytics'
 type FormState = 'idle' | 'submitting' | 'success' | 'error'
 declare global { interface Window { turnstile?: { render: (target: HTMLElement, options: { sitekey: string, callback: (token: string) => void, 'error-callback': () => void }) => string, reset: (widgetId?: string) => void } } }
 
-const initialValues = { name: '', email: '', company: '', role: '', website: '', stack: '', challenge: '', companySite: '' }
+const initialValues = { email: '', company: '', stack: '', companySite: '' }
 
 export function WaitlistForm() {
   const [values, setValues] = useState(initialValues)
@@ -81,18 +81,16 @@ export function WaitlistForm() {
     }
   }
 
-  if (state === 'success') return <div className="waitlist-success" role="status"><span>✓</span><h3>Demo request received.</h3><p>{message}</p></div>
+  if (state === 'success') return <div className="waitlist-success" role="status"><span>✓</span><h3>Request received.</h3><p>{message}</p></div>
 
   return <form className="waitlist-form" onSubmit={submit} onFocusCapture={trackStart}>
-    <div className="waitlist-form-heading"><h3>Request an architecture session</h3><p>Tell us which model or production change you need to evaluate.</p></div>
-    <div className="waitlist-two-up"><label>Name<input required value={values.name} onChange={event => update('name', event.target.value)} autoComplete="name" /></label><label>Work email<input required type="email" value={values.email} onChange={event => update('email', event.target.value)} autoComplete="email" /></label></div>
-    <div className="waitlist-two-up"><label>Company<input required value={values.company} onChange={event => update('company', event.target.value)} autoComplete="organization" /></label><label>Role <span>Optional</span><input value={values.role} onChange={event => update('role', event.target.value)} /></label></div>
-    <label>Voice AI stack <span>Optional</span><input value={values.stack} onChange={event => update('stack', event.target.value)} placeholder="For example: LiveKit, Deepgram, ElevenLabs, Vapi" /></label>
-    <label>What are you evaluating?<textarea required rows={3} value={values.challenge} onChange={event => update('challenge', event.target.value)} /></label>
+    <div className="waitlist-form-heading"><h3>Send us another time</h3><p>Two fields. We reply with slots within one business day.</p></div>
+    <div className="waitlist-two-up"><label>Work email<input required type="email" maxLength={120} value={values.email} onChange={event => update('email', event.target.value)} autoComplete="email" /></label><label>Company<input required maxLength={160} value={values.company} onChange={event => update('company', event.target.value)} autoComplete="organization" /></label></div>
+    <label>Voice platform <span>Optional</span><input maxLength={200} value={values.stack} onChange={event => update('stack', event.target.value)} placeholder="For example: LiveKit, Vapi, ElevenLabs" /></label>
     <label className="website-trap" aria-hidden="true">Company website<input tabIndex={-1} autoComplete="off" value={values.companySite} onChange={event => update('companySite', event.target.value)} /></label>
     {turnstileSiteKey && <div className="turnstile" ref={turnstileRef} />}
     {message && <p className="waitlist-error" role="alert">{message}</p>}
-    <button className="voice-button" disabled={state === 'submitting'}>{state === 'submitting' ? 'Sending request...' : 'Request a session'} <span aria-hidden="true">→</span></button>
+    <button className="voice-button" disabled={state === 'submitting'}>{state === 'submitting' ? 'Sending...' : 'Send me another time'} <span aria-hidden="true">→</span></button>
     <p className="waitlist-privacy">Please do not include customer call data or credentials.</p>
   </form>
 }

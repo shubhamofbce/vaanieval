@@ -7,6 +7,11 @@
     }
   ],
   "routes": [
+    {
+      "src": "/",
+      "has": [{ "type": "host", "value": "livekit.vaanieval.com" }],
+      "dest": "/site/live"
+    },
     { "src": "/login", "status": 307, "headers": { "Location": "https://app.vaanieval.com/login" } },
     { "src": "/dashboard", "status": 307, "headers": { "Location": "https://app.vaanieval.com/dashboard" } },
     { "src": "/_next/(.*)", "dest": "/site/_next/$1" },
