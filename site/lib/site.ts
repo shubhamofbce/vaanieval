@@ -28,15 +28,6 @@ export const proofStats = [
 
 export const statsFootnote = 'Trailing 30-day average across active deployments; calls may be rerun across candidate stacks. References available under NDA.'
 
-export const trustedBy = [
-  'Contact-center voice platforms',
-  'BFSI & lending automation',
-  'Healthcare scheduling agents',
-  'Insurance voice operations',
-  'Telecom support automation',
-  'Multilingual BPO teams',
-] as const
-
 export const supportedStack = [
   { name: 'LiveKit', status: 'Available today' },
   { name: 'Vapi', status: 'Available today' },
@@ -62,10 +53,6 @@ export const homeFaqs = [
   {
     question: 'Can I test a candidate model without touching production traffic?',
     answer: 'Yes. Replay historical calls offline for a controlled comparison, or run real-time shadow evaluation alongside your live agent so the candidate never answers a customer. You promote a stack only after quality, latency, cost, and critical-error thresholds pass.',
-  },
-  {
-    question: 'Which voice platforms and model providers are supported today?',
-    answer: 'Call import adapters exist for ElevenLabs, Vapi, and Bolna, plus generic object-storage import for platforms without an adapter. Model connectors cover the major hosted STT, LLM, and TTS providers as well as self-hosted endpoints. Anything outside that list is built as a connector during onboarding; we will tell you in the demo whether yours is available today or needs work.',
   },
   {
     question: 'What infrastructure does a deployment need?',

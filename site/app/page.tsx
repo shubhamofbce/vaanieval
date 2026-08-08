@@ -58,7 +58,7 @@ export default function Home() {
           <div className="actions">
             <BookingButton className="button" event="calendar_booking_home_hero_open">Book a benchmark review <span aria-hidden="true">↗</span></BookingButton>
           </div>
-          <p className="hero-assure-line">Your VPC or on-prem · Your storage · No VaaniEval data plane</p>
+          <p className="hero-assure-line">Your VPC or on-prem · Your storage · No vendor-hosted data plane</p>
         </div>
         <LiveBenchmark />
       </div>
