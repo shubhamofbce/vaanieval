@@ -1,42 +1,69 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BookingButton } from '@/components/BookingButton'
-import { LiveBenchmark } from '@/components/LiveBenchmark'
+import { ProductionOverview } from '@/components/ProductionOverview'
 import { Reveal } from '@/components/Motion'
 import { FailureChain } from '@/components/FailureChain'
 import { WaitlistForm } from '@/components/WaitlistForm'
-import { homeFaqs, proofStats, siteConfig, statsFootnote, supportedStack } from '@/lib/site'
+import { homeFaqs, supportedStack } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'Private voice AI evaluation infrastructure',
-  description: 'Choose the voice stack that wins on your calls. Replay production calls across STT, LLM, and TTS models inside your own VPC, and catch critical errors before rollout.',
+  title: { absolute: 'Voice AI Observability and Evaluation | VaaniEval' },
+  description: 'Monitor, review, replay, and evaluate voice agents across production conversations. Deploy VaaniEval inside your VPC, cloud account, or on-premises environment.',
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'VaaniEval | Choose the voice stack that wins on your calls',
-    description: 'Private voice AI evaluation infrastructure. Benchmark STT, LLM, and TTS models on real production calls without handing customer conversations to another SaaS platform.',
+    title: 'Voice AI Observability and Evaluation | VaaniEval',
+    description: 'Find weak voice-agent calls, review the evidence, and evaluate changes inside infrastructure you control.',
     url: '/',
   },
 }
 
-const steps = [
-  { n: '1', title: 'Select representative calls', copy: 'Sample by language, accent, noise, and risk. They stay in storage you control.' },
-  { n: '2', title: 'Replay each candidate', copy: 'Run identical calls through your current stack and every candidate stack.' },
-  { n: '3', title: 'Promote on evidence', copy: 'Gate rollout on critical errors, latency, cost, and task success.' },
-]
-
-const metrics = [
-  { k: 'Critical errors', v: 'Names, amounts, dates, and IDs — separated from harmless word-error noise.' },
-  { k: 'Latency people feel', v: 'Endpointing, time-to-first-audio, and the P95 tail, not the average.' },
-  { k: 'Task & tool success', v: 'Whether the agent reached the right decision and called the right tool.' },
-  { k: 'Cost per resolved call', v: 'Provider spend measured against outcomes on the same scenarios.' },
-  { k: 'Regression by cohort', v: 'Movement per language, accent, and channel. Averages hide the cohort that breaks.' },
-]
-
-const residency = [
-  ['Deployment', 'On-premises, your VPC, or your own cloud account. The data plane runs where your calls already live.'],
-  ['Storage & retention', 'Calls, transcripts, traces, and results stay in your object store, under your deletion policy.'],
-  ['Access & credentials', 'Your network policy, your identity controls, your secret manager.'],
-  ['Provider routing', 'External model calls only through egress routes you approve, with optional redaction.'],
+const capabilities = [
+  {
+    id: 'observe',
+    number: '01',
+    eyebrow: 'Call observability',
+    title: 'Review every conversation in context.',
+    copy: 'Bring production recordings, transcripts, outcomes, and available provider metadata into one review workspace. Move from a weak aggregate score to the exact call and evidence behind it.',
+    items: ['Synchronized recording and waveform when available', 'Turn-by-turn transcript review', 'Provider outcomes and call metadata', 'Evaluation rationale linked to the conversation'],
+    href: '/voice-agent-qa',
+    link: 'Explore production QA',
+    status: 'Available today',
+  },
+  {
+    id: 'monitoring',
+    number: '02',
+    eyebrow: 'Production monitoring',
+    title: 'See where quality is moving.',
+    copy: 'Track QA coverage, pass rate, quality scores, review queues, and agent-level trends. Daily summaries can reach email or Slack, while missing provider outcomes remain visible instead of being counted as success.',
+    items: ['Priority review queue', 'Score and pass-rate trends', 'Agent-level quality breakdown', 'Daily email and Slack summaries'],
+    href: '/resources/voice-agent-qa-checklist',
+    link: 'Use the production QA checklist',
+    status: 'Available today',
+    note: 'Continuous ingestion alerts and richer turn-level latency reporting are still being developed.',
+  },
+  {
+    id: 'evaluation',
+    number: '03',
+    eyebrow: 'Evaluation and experiments',
+    title: 'Evaluate the next change before it spreads.',
+    copy: 'Turn production failures into stable evaluation criteria. Test versioned rubrics on real conversations, compare candidate stacks through offline replay or shadow runs, and keep human review for disputed or high-impact cases.',
+    items: ['Versioned evaluation rubrics', 'Evidence-backed scorecards', 'Offline replay and shadow comparison', 'Human review for uncertain results'],
+    href: '/voice-ai-evaluation',
+    link: 'Explore evaluation workflows',
+    status: 'Available today',
+  },
+  {
+    id: 'security',
+    number: '04',
+    eyebrow: 'Customer-controlled data plane',
+    title: 'Keep voice data under your control.',
+    copy: 'Run VaaniEval on-premises, in your VPC, or in your cloud account. You choose storage, retention, network policy, credentials, and the approved routes used when an external model provider must receive evaluation inputs.',
+    items: ['Customer-controlled deployment and storage', 'Retention and deletion policies you operate', 'Encrypted provider credentials', 'Explicit provider routing and optional redaction'],
+    href: '/deployment',
+    link: 'Review security architecture',
+    status: 'Deployment-specific',
+  },
 ]
 
 export default function Home() {
@@ -52,66 +79,69 @@ export default function Home() {
       <div className="hero-grid-lines" aria-hidden="true" />
       <div className="shell hero-grid">
         <div className="hero-copy">
-          <p className="eyebrow"><i /> {siteConfig.tagline}</p>
-          <h1>Public benchmarks rank models. <span>See which stack wins on your calls.</span></h1>
-          <p className="lede">Replay production calls across STT, LLM, and TTS candidates &mdash; in your VPC or on-prem. Catch the critical errors before rollout.</p>
+          <p className="eyebrow"><i /> The reliability platform for Voice AI</p>
+          <h1>Know what happened in every voice-agent call. <span>Improve what happens next.</span></h1>
+          <p className="lede">Review production conversations, find failures, monitor quality trends, and evaluate model, prompt, or rubric changes before broader rollout, inside infrastructure you control.</p>
           <div className="actions">
-            <BookingButton className="button" event="calendar_booking_home_hero_open">Book a benchmark review <span aria-hidden="true">↗</span></BookingButton>
+            <Link className="button" href="#platform">Explore the platform <span aria-hidden="true">↓</span></Link>
+            <BookingButton className="button button-secondary" event="calendar_booking_home_hero_open">Book a demo <span aria-hidden="true">↗</span></BookingButton>
           </div>
-          <p className="hero-assure-line">Your VPC or on-prem · Your storage · No vendor-hosted data plane</p>
+          <p className="hero-assure-line">Your environment · Your storage · Customer-controlled data plane</p>
         </div>
-        <LiveBenchmark />
+        <ProductionOverview />
       </div>
     </section>
 
-    <section className="trust-strip">
-      <div className="shell trust-inner">
-        <p className="trust-title">Trusted by voice agent providers</p>
-        <div className="stat-row">
-          {proofStats.map(stat => <div key={stat.label}>
-            <strong>{stat.value}</strong>
-            <span>{stat.label}</span>
-          </div>)}
-        </div>
-        <p className="stat-footnote">{statsFootnote}</p>
+    <section className="workflow-strip" aria-label="VaaniEval workflow">
+      <div className="shell">
+        <p>From production failure to verified improvement</p>
+        <ol><li>Detect</li><li>Investigate</li><li>Evaluate</li><li>Improve</li><li>Monitor</li></ol>
       </div>
     </section>
 
-    <section className="compare-section">
+    <section className="capability-section" id="platform">
+      <div className="shell">
+        <div className="section-intro capability-intro">
+          <p className="eyebrow"><i /> One production QA loop</p>
+          <h2>See the problem, understand the evidence, and verify the fix.</h2>
+          <p>VaaniEval connects conversation review, production quality monitoring, and evaluation without asking you to move sensitive call data into another vendor-hosted data plane.</p>
+        </div>
+        <div className="capability-list">
+          {capabilities.map((capability, index) => <Reveal as="article" key={capability.id} delay={index * 50}>
+            <div className="capability-number">{capability.number}</div>
+            <div className="capability-copy">
+              <div className="capability-heading">
+                <p>{capability.eyebrow}</p>
+                <span data-status={capability.status}>{capability.status}</span>
+              </div>
+              <h3>{capability.title}</h3>
+              <p>{capability.copy}</p>
+              <Link className="text-link" href={capability.href}>{capability.link} <span aria-hidden="true">→</span></Link>
+            </div>
+            <div className="capability-details">
+              <ul>{capability.items.map(item => <li key={item}>{item}</li>)}</ul>
+              {capability.note && <p className="capability-note">Roadmap boundary: {capability.note}</p>}
+            </div>
+          </Reveal>)}
+        </div>
+      </div>
+    </section>
+
+    <section className="compare-section" id="investigate">
       <div className="shell compare-layout">
         <div className="compare-copy">
-          <p className="eyebrow"><i /> Beyond word error rate</p>
-          <h2>One wrong digit becomes a wrong customer outcome.</h2>
-          <p>Trace a failure from audio to transcription, tool call, and spoken response &mdash; before it reaches production.</p>
-          <dl className="metric-rows">{metrics.map((item, index) => <Reveal key={item.k} delay={index * 50}>
-            <dt>{item.k}</dt>
-            <dd>{item.v}</dd>
-          </Reveal>)}</dl>
+          <p className="eyebrow"><i /> Evidence before averages</p>
+          <h2>Trace a weak outcome back to the conversation.</h2>
+          <p>Aggregate trends tell you where quality moved. The call recording, transcript, provider metadata, and evaluator rationale help explain what to fix next.</p>
+          <div className="evidence-steps">
+            <div><span>01</span><p><strong>Find the call</strong> from the priority review queue.</p></div>
+            <div><span>02</span><p><strong>Review the evidence</strong> next to the available recording and transcript.</p></div>
+            <div><span>03</span><p><strong>Test the change</strong> against the same success criteria.</p></div>
+          </div>
         </div>
         <div className="compare-visual">
           <FailureChain />
-          <div className="inline-cta">
-            <p>See this comparison on your own call data.</p>
-            <BookingButton className="button button-small" event="calendar_booking_compare_open">Book a benchmark review <span aria-hidden="true">↗</span></BookingButton>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section className="process">
-      <div className="shell">
-        <div className="section-intro">
-          <p className="eyebrow"><i /> How it works</p>
-          <h2>Turn production calls into a private benchmark.</h2>
-        </div>
-        <div className="process-rail">{steps.map((step, index) => <Reveal as="article" key={step.n} delay={index * 70}>
-          <span>{step.n}</span>
-          <h3>{step.title}</h3>
-          <p>{step.copy}</p>
-        </Reveal>)}</div>
-        <div className="mode-split">
-          <Reveal as="article"><h3>Offline replay</h3><p>Compare candidates on historical calls after every model or prompt change.</p></Reveal>
-          <Reveal as="article" delay={80}><h3>Real-time shadow</h3><p>Test on live conditions without letting candidates answer customers.</p></Reveal>
+          <p className="visual-boundary">This trace illustrates a full voice-agent failure path. The depth of timing and provider metadata available in production depends on what each connected provider exposes.</p>
         </div>
       </div>
     </section>
@@ -119,28 +149,33 @@ export default function Home() {
     <section className="residency" id="deployment">
       <div className="shell residency-layout">
         <div>
-          <p className="eyebrow"><i /> Private deployment</p>
-          <h2>Benchmark production calls without uploading them to another eval SaaS.</h2>
-          <p>Deploy on-premises, in your VPC, or in your own cloud account. Calls and results stay in your storage. Hosted model evaluation uses only the egress routes you approve.</p>
-          <BookingButton className="button button-light" event="calendar_booking_residency_open">Review your deployment fit <span aria-hidden="true">↗</span></BookingButton>
-          <p className="section-note">Prefer to read first? <Link className="text-link" href="/deployment">See the deployment architecture</Link>.</p>
+          <p className="eyebrow"><i /> Security through architecture</p>
+          <h2>Run evaluation where your conversations already live.</h2>
+          <p>Deploy on-premises, in your VPC, or in your cloud account. Calls and results stay in storage you control. Hosted model evaluation uses only the egress routes and inputs you approve.</p>
+          <Link className="button button-light" href="/deployment">Review security architecture <span aria-hidden="true">→</span></Link>
+          <p className="section-note">Self-hosting gives you control, but it also makes your team responsible for capacity, upgrades, backups, access policy, and incident response.</p>
         </div>
         <div className="residency-visual">
-          <figure className="topology" aria-label="Deployment topology: production calls and VaaniEval workers run inside your environment, with a single approved egress route to model endpoints.">
-            <figcaption>Your environment</figcaption>
+          <figure className="topology" aria-label="Deployment topology: production calls and VaaniEval services run inside your environment, with an approved egress route to model endpoints when required.">
+            <figcaption>Customer-controlled data plane</figcaption>
             <div className="topo-boundary">
               <div className="topo-row">
                 <span className="topo-node">Production calls</span>
                 <span className="topo-link" aria-hidden="true"><i /></span>
-                <span className="topo-node accent">VaaniEval workers</span>
+                <span className="topo-node accent">VaaniEval services</span>
                 <span className="topo-link" aria-hidden="true"><i /></span>
                 <span className="topo-node">Your storage</span>
               </div>
             </div>
             <span className="topo-egress" aria-hidden="true"><i /></span>
-            <p className="topo-out">Approved model endpoints <em>egress you control</em></p>
+            <p className="topo-out">Approved model endpoints <em>egress you configure</em></p>
           </figure>
-          <dl className="residency-list">{residency.map(([term, copy]) => <div key={term}><dt>{term}</dt><dd>{copy}</dd></div>)}</dl>
+          <div className="security-proof-grid">
+            <div><strong>Storage</strong><span>Your database and object store</span></div>
+            <div><strong>Retention</strong><span>Your deletion policy</span></div>
+            <div><strong>Credentials</strong><span>Encrypted at rest</span></div>
+            <div><strong>Provider egress</strong><span>Explicit and reviewable</span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -149,17 +184,14 @@ export default function Home() {
       <div className="shell">
         <div className="section-intro">
           <p className="eyebrow"><i /> Connect what you already run</p>
-          <h2>Works with the stack already handling your calls.</h2>
+          <h2>Start with the platforms already handling your calls.</h2>
+          <p>Connector depth varies because providers expose different recordings, transcripts, timestamps, and outcome fields. We confirm the available evidence before implementation.</p>
         </div>
         <ul className="stack-list">{supportedStack.map(item => <li key={item.name}>
           <strong>{item.name}</strong>
           <em className={item.status === 'Available today' ? 'now' : ''}>{item.status}</em>
         </li>)}</ul>
-        <p className="section-note">Anything else is built as a connector during onboarding, and we tell you which case you are in before you commit. <Link className="text-link" href="/integrations/elevenlabs">See integrations</Link>.</p>
-        <div className="inline-cta">
-          <p>Not sure your platform is covered? We&rsquo;ll confirm in the first 10 minutes.</p>
-          <BookingButton className="button button-small" event="calendar_booking_stackfit_open">Book a benchmark review <span aria-hidden="true">↗</span></BookingButton>
-        </div>
+        <p className="section-note"><Link className="text-link" href="/integrations/elevenlabs">Review current integrations</Link>, or request another connector during onboarding.</p>
       </div>
     </section>
 
@@ -167,8 +199,8 @@ export default function Home() {
       <div className="shell faq-layout">
         <div>
           <p className="eyebrow"><i /> Questions</p>
-          <h2>What teams ask before the first benchmark.</h2>
-          <p className="lede-small">If your question is not here, it is a good first question for the review.</p>
+          <h2>What production Voice AI teams ask first.</h2>
+          <p className="lede-small">Clear boundaries make a better security and product review.</p>
         </div>
         <div className="faq-list">{homeFaqs.map(faq => <details key={faq.question}>
           <summary>{faq.question}</summary>
@@ -180,12 +212,12 @@ export default function Home() {
     <section className="closing-cta" id="demo">
       <div className="shell partner-layout">
         <div>
-          <p className="eyebrow"><i /> 30-minute benchmark review</p>
-          <h2>Bring one model decision. Leave with the benchmark plan to resolve it.</h2>
-          <p>In 30 minutes we map the calls, metrics, and deployment needed to compare your candidates. No call upload required.</p>
-          <div className="partner-points"><span>Founder-led</span><span>Architecture review</span><span>No call upload required</span></div>
-          <BookingButton className="button button-light" event="calendar_booking_home_footer_open">Book the benchmark review <span aria-hidden="true">↗</span></BookingButton>
-          <p className="closing-note">No slide deck. We will tell you if VaaniEval is the wrong fit.</p>
+          <p className="eyebrow"><i /> Design-partner review</p>
+          <h2>Bring one recurring production failure. Map the path to a verified fix.</h2>
+          <p>In 30 minutes, we review your current call evidence, evaluation criteria, and deployment constraints. No call upload is required.</p>
+          <div className="partner-points"><span>Founder-led</span><span>Product and architecture review</span><span>No call upload required</span></div>
+          <BookingButton className="button button-light" event="calendar_booking_home_footer_open">Book a demo <span aria-hidden="true">↗</span></BookingButton>
+          <p className="closing-note">VaaniEval is early. We will tell you where the current product fits and where it does not.</p>
         </div>
         <div className="form-alt">
           <details className="form-alt-disclosure">

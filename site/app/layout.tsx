@@ -11,11 +11,11 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: { default: 'VaaniEval | Private voice AI evaluation infrastructure', template: '%s | VaaniEval' },
+  title: { default: 'Voice AI Observability and Evaluation | VaaniEval', template: '%s | VaaniEval' },
   description: siteConfig.description,
   alternates: { canonical: '/' },
-  openGraph: { type: 'website', siteName: 'VaaniEval', title: 'VaaniEval | Private voice AI evaluation infrastructure', description: siteConfig.description, url: '/' },
-  twitter: { card: 'summary_large_image', title: 'VaaniEval | Private voice AI evaluation infrastructure', description: siteConfig.description },
+  openGraph: { type: 'website', siteName: 'VaaniEval', title: 'Voice AI Observability and Evaluation | VaaniEval', description: siteConfig.description, url: '/' },
+  twitter: { card: 'summary_large_image', title: 'Voice AI Observability and Evaluation | VaaniEval', description: siteConfig.description },
   icons: { icon: logo.src },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION?.startsWith('replace-') ? undefined : process.env.GOOGLE_SITE_VERIFICATION,

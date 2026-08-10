@@ -8,8 +8,8 @@ import { alternativesPost } from './posts/alternatives-guide'
 
 export const siteConfig = {
   name: 'VaaniEval',
-  description: 'Private voice AI evaluation infrastructure. Benchmark STT, LLM, and TTS models on your own production calls, inside your own environment.',
-  tagline: 'Private Voice AI Evaluation Infrastructure',
+  description: 'Production observability and evaluation for voice agents, deployed inside infrastructure you control.',
+  tagline: 'The reliability platform for Voice AI',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vaanieval.com',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',
@@ -18,15 +18,6 @@ export const siteConfig = {
   contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Design%20partner%20application&labels=design-partner',
   integrationRequestUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Integration%20request&body=%23%23%20Integration%20request%0A%0AWhich%20provider%20or%20platform%20would%20you%20like%20VaaniEval%20to%20support%3F%0A%0AWhat%20conversation%20data%20or%20workflow%20should%20it%20support%3F%0A%0APlease%20do%20not%20include%20credentials%2C%20private%20call%20data%2C%20or%20other%20sensitive%20information.',
 }
-
-export const proofStats = [
-  { value: '200K+', label: 'Evaluation runs per day' },
-  { value: '40+', label: 'Model configurations compared' },
-  { value: '22', label: 'Languages and dialects' },
-  { value: 'Zero', label: 'Vendor data plane' },
-]
-
-export const statsFootnote = 'Trailing 30-day average across active deployments; calls may be rerun across candidate stacks. References available under NDA.'
 
 export const supportedStack = [
   { name: 'LiveKit', status: 'Available today' },
@@ -39,28 +30,28 @@ export const supportedStack = [
 
 export const homeFaqs = [
   {
+    question: 'What can I review for each production call?',
+    answer: 'VaaniEval brings available recordings, transcripts, call metadata, provider outcomes, evaluation scores, rationales, and recommended next steps into one workspace. Exact fields and turn timing depend on what each connected voice provider exposes.',
+  },
+  {
     question: 'Does my production call data leave my environment?',
-    answer: 'The data plane runs on-premises, in your VPC, or in your own cloud account. Calls, transcripts, traces, and results stay in storage you control. Hosted models receive only approved inputs through an egress route you configure, with optional redaction applied first.',
+    answer: 'The data plane runs on-premises, in your VPC, or in your own cloud account. Calls, transcripts, and evaluation results stay in storage you control. If you select a hosted voice or evaluator provider, that provider receives the inputs you approve through an egress route you configure. Optional redaction is deployment-specific.',
   },
   {
-    question: 'How is this different from a public model benchmark?',
-    answer: 'Public benchmarks rank models on curated datasets. VaaniEval builds a private benchmark from your own production calls, so results reflect your accents, languages, noise, domain vocabulary, and workflow \u2014 telling you which model wins on your calls, not which model wins in the abstract.',
+    question: 'What does production monitoring include today?',
+    answer: 'The current workspace reports QA coverage, pass rate, average quality, calls needing attention, score trends, data coverage, and agent-level performance. Daily summaries can be delivered through email or Slack. Continuous ingestion alerts and richer turn-level latency reporting are still being developed.',
   },
   {
-    question: 'What do you evaluate beyond transcription accuracy?',
-    answer: 'The full voice-agent chain: audio to STT, STT to LLM or tool decision, and decision to TTS response. That includes word-level disagreements on names, amounts, dates, and identifiers, plus endpointing, time-to-first-response, latency distribution, and cost per call.',
+    question: 'How do evaluations lead to an actual fix?',
+    answer: 'Each evaluation uses a versioned rubric and returns scores with rationales tied to the conversation. Reviewers can identify the weakest behavior, change the prompt, tool, workflow, or policy, then test the same criteria on representative historical and new calls.',
   },
   {
-    question: 'Can I test a candidate model without touching production traffic?',
-    answer: 'Yes. Replay historical calls offline for a controlled comparison, or run real-time shadow evaluation alongside your live agent so the candidate never answers a customer. You promote a stack only after quality, latency, cost, and critical-error thresholds pass.',
+    question: 'Can I compare a change without letting it answer customers?',
+    answer: 'Yes. Historical conversations can be replayed offline, and shadow evaluation metadata is supported for candidate comparisons. Available replay depth depends on the connected voice stack and the model endpoints configured in your deployment.',
   },
   {
     question: 'What infrastructure does a deployment need?',
-    answer: 'A container runtime, PostgreSQL, object storage, and evaluation workers. Initial deployments typically use a small Kubernetes namespace or two VMs. We size it with your infrastructure team before implementation starts.',
-  },
-  {
-    question: 'Is model disagreement the same as ground truth?',
-    answer: 'No. Model-to-model comparison is comparative evidence that shows where stacks diverge and which differences carry risk. For high-stakes accuracy claims, VaaniEval supports human-reviewed reference sets alongside comparative runs.',
+    answer: 'A container runtime, PostgreSQL, object storage, and evaluation workers. A small deployment can begin with a Kubernetes namespace or a pair of VMs. As volume grows, plan for database growth, queue depth, media storage, evaluator rate limits, backups, and worker concurrency.',
   },
 ]
 
