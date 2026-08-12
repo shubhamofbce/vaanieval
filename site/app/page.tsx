@@ -4,6 +4,7 @@ import { BookingButton } from '@/components/BookingButton'
 import { ProductionOverview } from '@/components/ProductionOverview'
 import { Reveal } from '@/components/Motion'
 import { FailureChain } from '@/components/FailureChain'
+import { TrackedLink } from '@/components/TrackedLink'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { homeFaqs, supportedStack } from '@/lib/site'
 
@@ -84,7 +85,7 @@ export default function Home() {
           <p className="lede">Review production conversations, find failures, monitor quality trends, and evaluate model, prompt, or rubric changes before broader rollout, inside infrastructure you control.</p>
           <div className="actions">
             <Link className="button" href="#platform">Explore the platform <span aria-hidden="true">↓</span></Link>
-            <BookingButton className="button button-secondary" event="calendar_booking_home_hero_open">Book a demo <span aria-hidden="true">↗</span></BookingButton>
+            <TrackedLink className="button button-secondary" href="/design-partners" event="design_partner_application_home_hero_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
           </div>
           <p className="hero-assure-line">Your environment · Your storage · Customer-controlled data plane</p>
         </div>
@@ -96,6 +97,26 @@ export default function Home() {
       <div className="shell">
         <p>From production failure to verified improvement</p>
         <ol><li>Detect</li><li>Investigate</li><li>Evaluate</li><li>Improve</li><li>Monitor</li></ol>
+      </div>
+    </section>
+
+    <section className="product-demo" aria-labelledby="product-demo-title">
+      <div className="shell product-demo-layout">
+        <div className="product-demo-copy">
+          <p className="eyebrow"><i /> See the workflow</p>
+          <h2 id="product-demo-title">Watch the product walkthrough.</h2>
+          <p>See how a production call moves from evidence to a reviewable score and next action.</p>
+          <div className="product-demo-actions">
+            <TrackedLink className="button" href="/design-partners" event="design_partner_application_home_video_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
+            <TrackedLink className="text-link" href="https://youtu.be/IaTRkQmM2VU" event="video_product_walkthrough_open" target="_blank" rel="noreferrer">Watch the product walkthrough <span aria-hidden="true">↗</span></TrackedLink>
+          </div>
+          <p className="product-demo-note">Bring one recurring voice-agent failure. We will map the evidence and the next evaluation step together.</p>
+        </div>
+        <TrackedLink className="product-demo-video" href="https://youtu.be/IaTRkQmM2VU" event="video_product_walkthrough_preview_open" target="_blank" rel="noreferrer">
+          <img src="https://img.youtube.com/vi/IaTRkQmM2VU/hqdefault.jpg" alt="Watch the VaaniEval product walkthrough on YouTube" />
+          <span className="product-demo-play" aria-hidden="true">▶</span>
+          <span className="product-demo-caption">Play product walkthrough <i aria-hidden="true">↗</i></span>
+        </TrackedLink>
       </div>
     </section>
 

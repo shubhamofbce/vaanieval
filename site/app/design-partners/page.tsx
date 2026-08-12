@@ -31,7 +31,7 @@ export default function Page() {
       <h2>What we ask</h2>
       <p>Time from someone who owns the model decision, access to a representative slice of calls inside your environment, and honest feedback when the product is wrong. We are early: this is a working relationship, not a purchase.</p>
 
-      <div className="callout"><strong>Start with the decision you are stuck on.</strong><p>Tell us which model you are evaluating, what your calls look like, and what your security team requires. We will show you how the same evaluation would run inside your environment.</p><div className="inline-links"><BookingButton className="button" event="calendar_booking_design_partner_open">Book a demo <span aria-hidden="true">↗</span></BookingButton><Link className="text-link" href="/deployment">Review deployment architecture <span aria-hidden="true">↗</span></Link></div></div>
+      <div className="callout"><strong>Start with the decision you are stuck on.</strong><p>Tell us which model you are evaluating, what your calls look like, and what your security team requires. We will show you how the same evaluation would run inside your environment.</p><div className="inline-links"><BookingButton className="button" event="calendar_booking_design_partner_open">Apply as a design partner <span aria-hidden="true">↗</span></BookingButton><Link className="text-link" href="/deployment">Review deployment architecture <span aria-hidden="true">↗</span></Link></div></div>
     </section>
   </>
 }
