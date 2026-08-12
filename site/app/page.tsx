@@ -4,6 +4,7 @@ import { BookingButton } from '@/components/BookingButton'
 import { ProductionOverview } from '@/components/ProductionOverview'
 import { Reveal } from '@/components/Motion'
 import { FailureChain } from '@/components/FailureChain'
+import { ProductDemoVideo } from '@/components/ProductDemoVideo'
 import { TrackedLink } from '@/components/TrackedLink'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { homeFaqs, supportedStack } from '@/lib/site'
@@ -108,15 +109,10 @@ export default function Home() {
           <p>See how a production call moves from evidence to a reviewable score and next action.</p>
           <div className="product-demo-actions">
             <TrackedLink className="button" href="/design-partners" event="design_partner_application_home_video_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
-            <TrackedLink className="text-link" href="https://youtu.be/IaTRkQmM2VU" event="video_product_walkthrough_open" target="_blank" rel="noreferrer">Watch the product walkthrough <span aria-hidden="true">↗</span></TrackedLink>
           </div>
           <p className="product-demo-note">Bring one recurring voice-agent failure. We will map the evidence and the next evaluation step together.</p>
         </div>
-        <TrackedLink className="product-demo-video" href="https://youtu.be/IaTRkQmM2VU" event="video_product_walkthrough_preview_open" target="_blank" rel="noreferrer">
-          <img src="https://img.youtube.com/vi/IaTRkQmM2VU/hqdefault.jpg" alt="Watch the VaaniEval product walkthrough on YouTube" />
-          <span className="product-demo-play" aria-hidden="true">▶</span>
-          <span className="product-demo-caption">Play product walkthrough <i aria-hidden="true">↗</i></span>
-        </TrackedLink>
+        <ProductDemoVideo videoId="IaTRkQmM2VU" />
       </div>
     </section>
 

@@ -36,6 +36,11 @@ export function BookingButton({
     setIsOpen(false)
   }
 
+  function openProductWalkthrough() {
+    track('video_product_walkthrough_booking_dialog_open', { link_url: siteConfig.productDemoUrl })
+    window.gtag?.('event', 'video_product_walkthrough_booking_dialog_open', { link_url: siteConfig.productDemoUrl })
+  }
+
   function handleBackdropClick(event: MouseEvent<HTMLDialogElement>) {
     if (event.target === event.currentTarget) {
       closeBooking()
@@ -66,6 +71,9 @@ export function BookingButton({
       </div>
       <p className="booking-fallback">
         Calendar not loading? <a href={siteConfig.bookingUrl} target="_blank" rel="noreferrer">Open the booking page</a>.
+      </p>
+      <p className="booking-video-option">
+        Want a quick overview first? <a href={siteConfig.productDemoUrl} target="_blank" rel="noreferrer" onClick={openProductWalkthrough}>Watch the product walkthrough in a new tab</a>.
       </p>
     </dialog>
   </>

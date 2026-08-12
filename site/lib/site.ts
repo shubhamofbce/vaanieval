@@ -13,6 +13,7 @@ export const siteConfig = {
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vaanieval.com',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',
+  productDemoUrl: 'https://youtu.be/IaTRkQmM2VU',
   bookingUrl: 'https://calendar.app.google/5cNH8hB13LoC39Qk7',
   bookingEmbedUrl: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ09AykNKTGy837qj-lPF91WJRGj7HnV-EYy_sK9iSDwuPFQCoJiR_JsONSysO4_9BdP6_eq40rb?gv=true',
   contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Design%20partner%20application&labels=design-partner',
