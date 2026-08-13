@@ -16,7 +16,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
   openGraph: { type: 'website', siteName: 'VaaniEval', title: 'Voice AI Observability and Evaluation | VaaniEval', description: siteConfig.description, url: '/' },
   twitter: { card: 'summary_large_image', title: 'Voice AI Observability and Evaluation | VaaniEval', description: siteConfig.description },
-  icons: { icon: logo.src },
+  icons: {
+    icon: [{ url: '/favicon.ico', type: 'image/png', sizes: '48x48' }],
+    shortcut: ['/favicon.ico'],
+    apple: [{ url: logo.src, type: 'image/jpeg', sizes: '1024x1024' }],
+  },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION?.startsWith('replace-') ? undefined : process.env.GOOGLE_SITE_VERIFICATION,
     other: process.env.BING_SITE_VERIFICATION?.startsWith('replace-') ? {} : { 'msvalidate.01': process.env.BING_SITE_VERIFICATION || '' },

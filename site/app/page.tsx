@@ -7,7 +7,7 @@ import { FailureChain } from '@/components/FailureChain'
 import { ProductDemoVideo } from '@/components/ProductDemoVideo'
 import { TrackedLink } from '@/components/TrackedLink'
 import { WaitlistForm } from '@/components/WaitlistForm'
-import { homeFaqs, supportedStack } from '@/lib/site'
+import { homeFaqs, siteConfig, supportedStack } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: { absolute: 'Voice AI Observability and Evaluation | VaaniEval' },
@@ -19,6 +19,12 @@ export const metadata: Metadata = {
     url: '/',
   },
 }
+
+// The demo root opens straight into a single call, which drops a first-time
+// visitor onto latency percentiles with nothing framing them. /dashboard is the
+// oriented entry point: it carries the one-line explanation of what they are
+// looking at, and the call view is one click from there.
+const LIVE_DEMO_URL = new URL('/dashboard', siteConfig.liveDemoUrl).toString()
 
 const capabilities = [
   {
@@ -85,10 +91,11 @@ export default function Home() {
           <h1>Know what happened in every voice-agent call. <span>Improve what happens next.</span></h1>
           <p className="lede">Review production conversations, find failures, monitor quality trends, and evaluate model, prompt, or rubric changes before broader rollout, inside infrastructure you control.</p>
           <div className="actions">
-            <Link className="button" href="#platform">Explore the platform <span aria-hidden="true">↓</span></Link>
+            <TrackedLink className="button" href={LIVE_DEMO_URL} event="live_demo_home_hero" target="_blank" rel="noopener">Open the live demo <span aria-hidden="true">→</span></TrackedLink>
             <TrackedLink className="button button-secondary" href="/design-partners" event="design_partner_application_home_hero_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
+            <Link className="quiet-link" href="#platform">Explore the platform <span aria-hidden="true">↓</span></Link>
           </div>
-          <p className="hero-assure-line">Your environment · Your storage · Customer-controlled data plane</p>
+          <p className="hero-assure-line">Real captured calls · No signup · Nothing to install</p>
         </div>
         <ProductionOverview />
       </div>
@@ -108,7 +115,8 @@ export default function Home() {
           <h2 id="product-demo-title">Watch the product walkthrough.</h2>
           <p>See how a production call moves from evidence to a reviewable score and next action.</p>
           <div className="product-demo-actions">
-            <TrackedLink className="button" href="/design-partners" event="design_partner_application_home_video_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
+            <TrackedLink className="button" href={LIVE_DEMO_URL} event="live_demo_home_video" target="_blank" rel="noopener">Open the live demo <span aria-hidden="true">→</span></TrackedLink>
+            <TrackedLink className="button button-secondary" href="/design-partners" event="design_partner_application_home_video_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
           </div>
           <p className="product-demo-note">Bring one recurring voice-agent failure. We will map the evidence and the next evaluation step together.</p>
         </div>
