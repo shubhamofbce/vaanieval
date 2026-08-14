@@ -14,9 +14,10 @@ export const siteConfig = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com',
   githubUrl: 'https://github.com/shubhamofbce/vaanieval',
   productDemoUrl: 'https://youtu.be/IaTRkQmM2VU',
-  /* Public, read-only demo console. Env-overridable so the branded domain can
-     replace the Vercel host without a code change once DNS is delegated. */
-  liveDemoUrl: process.env.NEXT_PUBLIC_LIVE_DEMO_URL || 'https://vaanieval-demo-web.vercel.app/',
+  /* Public, read-only demo console. Must stay on the vaanieval.com registrable
+     domain: the attribution cookie is scoped to it, so a *.vercel.app host
+     would silently drop campaign attribution on the way to the demo. */
+  liveDemoUrl: process.env.NEXT_PUBLIC_LIVE_DEMO_URL || 'https://demo.vaanieval.com/',
   bookingUrl: 'https://calendar.app.google/5cNH8hB13LoC39Qk7',
   bookingEmbedUrl: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ09AykNKTGy837qj-lPF91WJRGj7HnV-EYy_sK9iSDwuPFQCoJiR_JsONSysO4_9BdP6_eq40rb?gv=true',
   contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Design%20partner%20application&labels=design-partner',
