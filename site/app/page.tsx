@@ -20,11 +20,12 @@ export const metadata: Metadata = {
   },
 }
 
-// The demo root opens straight into a single call, which drops a first-time
-// visitor onto latency percentiles with nothing framing them. /dashboard is the
-// oriented entry point: it carries the one-line explanation of what they are
-// looking at, and the call view is one click from there.
-const LIVE_DEMO_URL = new URL('/dashboard', siteConfig.liveDemoUrl).toString()
+// The demo root is the calls view: the call list on the left with one call
+// already open, so a first-time visitor lands on the concrete artefact — audio,
+// transcript and the turn that failed — rather than on fleet aggregates that
+// mean little before they have seen a single call. The dashboard is one click
+// away in the sidebar.
+const LIVE_DEMO_URL = new URL('/', siteConfig.liveDemoUrl).toString()
 
 const capabilities = [
   {
