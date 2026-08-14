@@ -29,6 +29,6 @@ export const hammingPost: BlogPost = {
     'Choose **VaaniEval** if you manage production voice agents, need a dedicated QA workspace for real calls, and want an open-source self-hosted deployment.',
     '[Explore the self-hosted VaaniEval architecture](/open-source)',
     '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-    '[Apply for the free 60-day design-partner pilot](/design-partners)',
+    '[Open the live demo](https://demo.vaanieval.com/)',
   ]
 }

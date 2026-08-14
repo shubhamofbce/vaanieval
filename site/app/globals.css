@@ -261,27 +261,22 @@ h2{font-size:clamp(30px,3.6vw,46px)}
 .article-body p,.article-body li{color:var(--muted);font-size:17px;line-height:1.7}
 .article-body a{color:var(--accent)}
 
-/* ---------- forms ---------- */
-.waitlist-form{padding:28px;border:1px solid var(--line-strong);border-radius:20px;background:var(--surface);box-shadow:0 40px 90px rgb(var(--scrim-rgb) / 18%)}
-.waitlist-form-heading h3{font-size:22px;margin-bottom:6px}
-.waitlist-form-heading p{color:var(--muted-2);font-size:14px;margin-bottom:20px}
-.waitlist-form label{display:block;margin-bottom:14px;color:var(--muted);font-size:13px;font-weight:700;letter-spacing:.02em}
-.waitlist-form label span{color:var(--muted-2);font-weight:600;text-transform:none}
-.waitlist-form input,.waitlist-form textarea{
-  display:block;width:100%;margin-top:7px;padding:12px 14px;
-  border:1px solid var(--line-strong);border-radius:10px;background:var(--bg-inset);
-  color:var(--ink);font:inherit;font-size:15px;font-weight:500;
-}
-.waitlist-form input:focus,.waitlist-form textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgb(var(--accent-rgb) / 12%)}
-.waitlist-form textarea{resize:vertical}
-.waitlist-two-up{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.waitlist-form .voice-button{width:100%;margin-top:8px}
-.waitlist-privacy{margin:12px 0 0;color:var(--muted-2);font-size:13px;text-align:center}
-.waitlist-error{margin:0 0 12px;padding:11px 14px;border-radius:10px;background:rgb(var(--bad-rgb) / 12%);color:var(--bad);font-size:14px}
-.waitlist-success{padding:44px 32px;border:1px solid var(--line-strong);border-radius:20px;background:var(--surface);text-align:center}
-.waitlist-success span{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 16px;border-radius:50%;background:rgb(var(--ok-rgb) / 14%);color:var(--ok);font-size:22px;font-weight:800}
-.waitlist-success h3{font-size:22px;margin-bottom:8px}
-.waitlist-success p{margin:0;color:var(--muted)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .website-trap{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .turnstile{margin-bottom:14px}
 
@@ -346,7 +341,7 @@ footer{border-top:1px solid var(--line);background:var(--bg-inset)}
   .lede{font-size:17px}
   .actions{flex-direction:column;align-items:stretch}
   .actions .button{width:100%}
-  .process-rail,.waitlist-two-up,.footer-grid{grid-template-columns:1fr}
+  
   .benchmark-table th,.benchmark-table td{padding:11px 12px;font-size:13px}
   .cta{padding:28px}
   .content-shell{width:calc(100% - 32px)}
@@ -378,7 +373,7 @@ footer{border-top:1px solid var(--line);background:var(--bg-inset)}
 .stackfit{padding-block:clamp(64px,8vw,104px);border-top:1px solid var(--line)}
 
 
-.form-alt-label{margin:0 0 12px;color:var(--muted-2);font-size:13px;font-weight:650}
+
 .closing-note{margin:16px 0 0;color:var(--muted-2);font-size:14px}
 
 /* mobile nav */
@@ -776,14 +771,13 @@ footer{border-top:1px solid var(--line);background:var(--bg-inset)}
   .topo-link i{width:100%;height:8px;animation:none;top:5px}
 }
 
-/* closing form demoted to a disclosure so one CTA leads */
-.form-alt-disclosure{border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-inset)}
-.form-alt-disclosure > summary{padding:16px 20px;color:var(--muted);font-size:14px;font-weight:650;cursor:pointer;list-style:none}
-.form-alt-disclosure > summary::-webkit-details-marker{display:none}
-.form-alt-disclosure > summary::after{content:'+';float:right;color:var(--accent);font-weight:800}
-.form-alt-disclosure[open] > summary::after{content:'–'}
-.form-alt-disclosure[open] > summary{border-bottom:1px solid var(--line)}
-.form-alt-disclosure .waitlist-form{padding:20px}
+
+
+
+
+
+
+
 
 /* ---------- product walkthrough ---------- */
 .product-demo{padding-block:clamp(56px,7vw,88px);border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(135deg,rgb(var(--accent-rgb) / 8%),var(--bg-inset) 54%,rgb(var(--accent-rgb) / 8%))}
@@ -812,8 +806,8 @@ footer{border-top:1px solid var(--line);background:var(--bg-inset)}
 .closing-cta .partner-layout{grid-template-columns:1fr;justify-items:center;gap:34px;text-align:center;max-width:760px;margin:0 auto}
 .closing-cta .partner-layout p{max-width:56ch}
 .closing-cta .partner-points{justify-content:center}
-.closing-cta .form-alt{width:100%;max-width:560px}
-.closing-cta .form-alt-disclosure > summary{text-align:left}
+
+
 
 /* ================= v4: production observability homepage ================= */
 

@@ -20,7 +20,7 @@ export const siteConfig = {
   liveDemoUrl: process.env.NEXT_PUBLIC_LIVE_DEMO_URL || 'https://demo.vaanieval.com/',
   bookingUrl: 'https://calendar.app.google/5cNH8hB13LoC39Qk7',
   bookingEmbedUrl: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ09AykNKTGy837qj-lPF91WJRGj7HnV-EYy_sK9iSDwuPFQCoJiR_JsONSysO4_9BdP6_eq40rb?gv=true',
-  contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Design%20partner%20application&labels=design-partner',
+  contactUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Question%20about%20VaaniEval&labels=question',
   integrationRequestUrl: 'https://github.com/shubhamofbce/vaanieval/issues/new?title=Integration%20request&body=%23%23%20Integration%20request%0A%0AWhich%20provider%20or%20platform%20would%20you%20like%20VaaniEval%20to%20support%3F%0A%0AWhat%20conversation%20data%20or%20workflow%20should%20it%20support%3F%0A%0APlease%20do%20not%20include%20credentials%2C%20private%20call%20data%2C%20or%20other%20sensitive%20information.',
 }
 
@@ -111,7 +111,7 @@ export const posts: BlogPost[] = [
       'Because VaaniEval is self-hosted, the imported transcripts, recordings, and evaluation results stay in your own database rather than a third-party dashboard, and the same review workflow already used for other providers applies to Bolna calls without a separate tool.',
       '[Set up the Bolna integration](/integrations/bolna)',
       '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-      '[Help shape the Bolna workflow as a design partner](/design-partners)',
+      '[Open the live demo](https://demo.vaanieval.com/)',
     ],
   },
   {
@@ -128,7 +128,7 @@ export const posts: BlogPost[] = [
       'Treat scores as prioritization signals rather than absolute truth. Evaluator rationales should point reviewers to evidence, and uncertain or high-impact cases should remain subject to human review.',
       'Close the loop by grouping repeated failures, assigning an owner, changing the agent, and checking new production calls for regression. The outcome is not a larger dashboard; it is a shorter path from a bad call to a verified fix.',
       '[Use the production voice-agent QA checklist](/resources/voice-agent-qa-checklist)',
-      '[Help shape VaaniEval as a design partner](/design-partners)',
+      '[Open the live demo](https://demo.vaanieval.com/)',
     ],
   },
   {
@@ -186,7 +186,7 @@ export const posts: BlogPost[] = [
       '- Evaluate representative and new production calls with the same definitions.',
       '- Keep human review for uncertain, high-impact, or disputed results.',
       '[Explore the broader voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-      '[Help shape VaaniEval as a design partner](/design-partners)',
+      '[Open the live demo](https://demo.vaanieval.com/)',
     ],
   },
   {
@@ -239,7 +239,7 @@ export const posts: BlogPost[] = [
       'VaaniEval is open source under the GNU Affero General Public License v3.0 (AGPL-3.0-only). You may use, modify, and deploy it under that license; if you modify it and offer it to users over a network, you must offer those users the corresponding source for your version.',
       '[Explore the open-source VaaniEval architecture](/open-source)',
       '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-      '[Help shape the self-hosted workflow as a design partner](/design-partners)',
+      '[Open the live demo](https://demo.vaanieval.com/)',
     ],
   },
 ]

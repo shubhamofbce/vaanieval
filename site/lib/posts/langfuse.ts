@@ -27,6 +27,6 @@ export const langfusePost: BlogPost = {
     'Choose **VaaniEval** if you are deploying voice agents (via ElevenLabs, Vapi, or Bolna), need an integrated workspace to listen to call recordings next to transcripts, and want to evaluate voice-specific outcomes in an open-source system.',
     '[Explore the self-hosted VaaniEval architecture](/open-source)',
     '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-    '[Apply for the free 60-day design-partner pilot](/design-partners)',
+    '[Open the live demo](https://demo.vaanieval.com/)',
   ]
 }

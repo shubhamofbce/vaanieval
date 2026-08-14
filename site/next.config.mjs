@@ -13,6 +13,10 @@ export default withMDX({
     return [
       { source: '/login', destination: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com/login', permanent: false },
       { source: '/dashboard', destination: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com/dashboard', permanent: false },
+      /* The design-partner program is retired. The page was indexed and linked
+         from published posts, so this is permanent rather than a 404: the
+         booking section on the home page is where that intent now lands. */
+      { source: '/design-partners', destination: '/#demo', permanent: true },
     ]
   },
 })

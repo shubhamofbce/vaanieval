@@ -34,6 +34,6 @@ export const alternativesPost: BlogPost = {
     'A self-hosted voice AI evaluation deployment gives engineering and QA teams more control over their infrastructure and evaluation parameters, while also transferring maintenance, security, reliability, and scaling responsibilities to the operator.',
     '[Explore the self-hosted VaaniEval architecture](/open-source)',
     '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-    '[Apply for the free 60-day design-partner pilot](/design-partners)',
+    '[Open the live demo](https://demo.vaanieval.com/)',
   ]
 }

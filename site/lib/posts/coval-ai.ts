@@ -29,6 +29,6 @@ export const covalPost: BlogPost = {
     'Choose **VaaniEval** if you want to inspect real production calls, need a dedicated audio-transcript QA workspace, and want an open-source self-hosted setup.',
     '[Explore the self-hosted VaaniEval architecture](/open-source)',
     '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-    '[Apply for the free 60-day design-partner pilot](/design-partners)',
+    '[Open the live demo](https://demo.vaanieval.com/)',
   ]
 }

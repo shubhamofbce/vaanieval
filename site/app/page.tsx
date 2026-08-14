@@ -6,7 +6,6 @@ import { Reveal } from '@/components/Motion'
 import { FailureChain } from '@/components/FailureChain'
 import { ProductDemoVideo } from '@/components/ProductDemoVideo'
 import { TrackedLink } from '@/components/TrackedLink'
-import { WaitlistForm } from '@/components/WaitlistForm'
 import { homeFaqs, siteConfig, supportedStack } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -93,7 +92,7 @@ export default function Home() {
           <p className="lede">Review production conversations, find failures, monitor quality trends, and evaluate model, prompt, or rubric changes before broader rollout, inside infrastructure you control.</p>
           <div className="actions">
             <TrackedLink className="button" href={LIVE_DEMO_URL} event="live_demo_home_hero" target="_blank" rel="noopener">Open the live demo <span aria-hidden="true">→</span></TrackedLink>
-            <TrackedLink className="button button-secondary" href="/design-partners" event="design_partner_application_home_hero_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
+            <BookingButton className="button button-secondary" event="calendar_booking_home_hero_open">Book a call <span aria-hidden="true">↗</span></BookingButton>
             <Link className="quiet-link" href="#platform">Explore the platform <span aria-hidden="true">↓</span></Link>
           </div>
           <p className="hero-assure-line">Real captured calls · No signup · Nothing to install</p>
@@ -117,7 +116,7 @@ export default function Home() {
           <p>See how a production call moves from evidence to a reviewable score and next action.</p>
           <div className="product-demo-actions">
             <TrackedLink className="button" href={LIVE_DEMO_URL} event="live_demo_home_video" target="_blank" rel="noopener">Open the live demo <span aria-hidden="true">→</span></TrackedLink>
-            <TrackedLink className="button button-secondary" href="/design-partners" event="design_partner_application_home_video_start">Apply as a design partner <span aria-hidden="true">→</span></TrackedLink>
+            <BookingButton className="button button-secondary" event="calendar_booking_home_video_open">Book a call <span aria-hidden="true">↗</span></BookingButton>
           </div>
           <p className="product-demo-note">Bring one recurring voice-agent failure. We will map the evidence and the next evaluation step together.</p>
         </div>
@@ -238,18 +237,12 @@ export default function Home() {
     <section className="closing-cta" id="demo">
       <div className="shell partner-layout">
         <div>
-          <p className="eyebrow"><i /> Design-partner review</p>
+          <p className="eyebrow"><i /> Talk to us</p>
           <h2>Bring one recurring production failure. Map the path to a verified fix.</h2>
           <p>In 30 minutes, we review your current call evidence, evaluation criteria, and deployment constraints. No call upload is required.</p>
           <div className="partner-points"><span>Founder-led</span><span>Product and architecture review</span><span>No call upload required</span></div>
-          <BookingButton className="button button-light" event="calendar_booking_home_footer_open">Book a demo <span aria-hidden="true">↗</span></BookingButton>
+          <BookingButton className="button button-light" event="calendar_booking_home_footer_open">Book a call <span aria-hidden="true">↗</span></BookingButton>
           <p className="closing-note">VaaniEval is early. We will tell you where the current product fits and where it does not.</p>
-        </div>
-        <div className="form-alt">
-          <details className="form-alt-disclosure">
-            <summary>Can&rsquo;t find a suitable time?</summary>
-            <WaitlistForm />
-          </details>
         </div>
       </div>
     </section>

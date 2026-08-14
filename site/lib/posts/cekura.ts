@@ -42,6 +42,6 @@ export const cekuraPost: BlogPost = {
     'If your team wants to explore VaaniEval\'s post-call workflow, inspect the repository and deploy it under AGPL-3.0. If you modify a version that users access over a network, offer them the corresponding source code.',
     '[Explore the self-hosted VaaniEval architecture](/open-source)',
     '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-    '[Apply for the 60-day design-partner pilot](/design-partners)',
+    '[Open the live demo](https://demo.vaanieval.com/)',
   ]
 }

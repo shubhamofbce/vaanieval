@@ -19,7 +19,7 @@ export default function Page() {
       <p>Scores are prioritization signals, not an automatic truth. Review the evaluator rationale and supporting conversation evidence, especially for uncertain or high-impact calls. Keep human review in the loop when the outcome matters.</p>
       <h2>Additional quality signals to define for your workflow</h2>
       <ul><li>Resolution quality: was the outcome correct, complete, and communicated clearly?</li><li>Fallback behavior: did the agent recover safely when it could not proceed?</li><li>Unsupported claims: did it make a statement not grounded in available policy, tools, or context?</li><li>Operational context: latency, interruptions, silence, repeated turns, and premature termination where provider data makes them available.</li></ul>
-      <div className="callout"><strong>Custom criteria are a design-partner roadmap.</strong><p>VaaniEval currently starts with a focused evaluator scorecard. Teams helping shape the product can influence future custom-rubric and criteria-suggestion capabilities.</p><Link className="text-link" href="/design-partners">Help shape the roadmap <span aria-hidden="true">→</span></Link></div>
+      <div className="callout"><strong>Custom criteria are on the roadmap.</strong><p>VaaniEval currently starts with a focused evaluator scorecard. Teams working with us can influence future custom-rubric and criteria-suggestion capabilities.</p><Link className="text-link" href="/#demo">Talk to us about your criteria <span aria-hidden="true">→</span></Link></div>
     </section>
     <Cta />
   </>

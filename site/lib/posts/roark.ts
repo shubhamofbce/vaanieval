@@ -29,6 +29,6 @@ export const roarkPost: BlogPost = {
     'Choose **VaaniEval** if you want to verify qualitative business outcomes (Task Completion, Info Capture) and want an open-source self-hosted workflow.',
     '[Explore the self-hosted VaaniEval architecture](/open-source)',
     '[Review the voice-agent evaluation metrics guide](/resources/evaluation-metrics)',
-    '[Apply for the free 60-day design-partner pilot](/design-partners)',
+    '[Open the live demo](https://demo.vaanieval.com/)',
   ]
 }

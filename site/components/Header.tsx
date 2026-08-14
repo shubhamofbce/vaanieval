@@ -27,7 +27,6 @@ const mobileLinks = [
   { href: '/resources/evaluation-metrics', label: 'Resources' },
   { href: '/blog', label: 'Blog' },
   { href: 'https://github.com/shubhamofbce/vaanieval#readme', label: 'Docs', external: true },
-  { href: '/design-partners', label: 'Design partners' },
 ]
 
 export function Header() {
@@ -76,7 +75,7 @@ export function Header() {
             : <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}</Link>)}
         </div>}
       </div>
-      <BookingButton className="button button-small" event="calendar_booking_header_open">Book a demo <span aria-hidden="true">↗</span></BookingButton>
+      <BookingButton className="button button-small" event="calendar_booking_header_open">Book a call <span aria-hidden="true">↗</span></BookingButton>
     </div>
   </div></header>
 }

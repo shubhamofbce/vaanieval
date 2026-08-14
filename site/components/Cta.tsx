@@ -8,7 +8,7 @@ export function Cta() {
       <p>See how a private benchmark runs inside your environment, on your production scenarios, across the models you are considering.</p>
     </div>
     <div className="cta-actions">
-      <BookingButton className="button button-light" event="calendar_booking_final_cta_open">Book a demo <span aria-hidden="true">↗</span></BookingButton>
+      <BookingButton className="button button-light" event="calendar_booking_final_cta_open">Book a call <span aria-hidden="true">↗</span></BookingButton>
       <p className="cta-note">30 minutes. Bring your model-selection question.</p>
     </div>
   </section>

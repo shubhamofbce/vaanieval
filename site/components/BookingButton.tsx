@@ -11,7 +11,7 @@ type BookingButtonProps = {
 }
 
 export function BookingButton({
-  children = 'Book a demo',
+  children = 'Book a call',
   className = 'button',
   event = 'calendar_booking_open',
 }: BookingButtonProps) {
