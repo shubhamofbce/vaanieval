@@ -5,10 +5,15 @@ import { useEffect, useState } from 'react'
 /* The same control the Observer console carries, down to the storage key and
  * the `d` shortcut, so the switch behaves identically on both surfaces.
  *
- * The button names the theme you get by clicking, not the one you are in: a sun
- * never sits next to the word "Dark". The stored choice is applied by an inline
- * snippet in <head> before first paint, so this file owns only the control and
- * the persistence — applying it from here would flash the wrong theme on load.
+ * It is a switch, so it reports *state*: knob left is light, knob right is
+ * dark, and both icons stay on the track the whole time. A control that
+ * renamed itself as you used it could not be read at a glance, and there is
+ * no honest resting label for a two-state switch anyway. `role="switch"` plus
+ * `aria-checked` gives assistive tech the same reading the knob gives the eye.
+ *
+ * The stored choice is applied by an inline snippet in <head> before first
+ * paint, so this file owns only the control and the persistence — applying it
+ * from here would flash the wrong theme on load.
  */
 const KEY = 'vaani.theme'
 
@@ -41,18 +46,21 @@ export function ThemeToggle() {
   }
 
   const dark = theme === 'dark'
-  const label = dark ? 'Switch to light theme' : 'Switch to dark theme'
 
   return <button
     type="button"
-    className="theme-toggle"
+    className="theme-switch"
+    role="switch"
+    aria-checked={dark}
+    aria-label="Dark theme"
+    title="Dark theme  ·  d"
     data-mode={theme}
-    aria-label={label}
-    title={`${label}  ·  d`}
     onClick={() => apply(dark ? 'light' : 'dark')}
   >
-    <svg className="theme-icon theme-icon--sun" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d={SUN} /></svg>
-    <svg className="theme-icon theme-icon--moon" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d={MOON} /></svg>
-    <span className="theme-toggle-label">{dark ? 'Light' : 'Dark'}</span>
+    <span className="theme-switch-track" aria-hidden="true">
+      <span className="theme-switch-knob" />
+      <svg className="theme-switch-icon theme-switch-icon--sun" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d={SUN} /></svg>
+      <svg className="theme-switch-icon theme-switch-icon--moon" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d={MOON} /></svg>
+    </span>
   </button>
 }

@@ -128,6 +128,9 @@ section{position:relative}
 .nav-wrap nav a{transition:color .15s ease}
 .nav-wrap nav a:hover{color:var(--ink)}
 .header-actions{display:flex;align-items:center;gap:12px}
+/* The switch is a setting, not an action, so it should not read as part of
+   the CTA pair sitting beside it. The extra room is what separates them. */
+.header-actions .theme-switch{margin-right:10px}
 
 /* ---------- buttons ---------- */
 .button,.voice-button{
@@ -943,19 +946,65 @@ footer{border-top:1px solid var(--line);background:var(--bg-inset)}
   .workflow-strip ol{flex-wrap:wrap;justify-content:flex-start;row-gap:8px}
 }
 
-/* ---------- theme toggle (matches the console control exactly) ---------- */
-.theme-toggle{
-  display:inline-flex;align-items:center;gap:6px;
-  height:34px;padding:0 11px;
-  border:1px solid var(--line);border-radius:9px;
-  background:transparent;color:var(--muted);
-  font:600 13px/1 var(--font-sans),system-ui,sans-serif;cursor:pointer;
-  transition:background .15s ease,color .15s ease,border-color .15s ease;
+/* ---------- theme switch (matches the console control exactly) ---------- */
+/* A switch, not a button: the knob's side is the state, and both icons stay
+   visible so the two destinations are legible at rest. The icons sit above
+   the knob, so whichever one the knob is under reads as active without a
+   second colour rule fighting the surface underneath. */
+/* One size lives in these four tokens so the compact variants below only have
+   to restate the size, not re-derive the knob travel and icon positions. */
+.theme-switch{
+  --sw-w:48px;--sw-h:26px;--sw-k:20px;
+  --sw-travel:calc(var(--sw-w) - var(--sw-k) - 6px);
+  display:inline-flex;align-items:center;
+  padding:0;border:0;background:none;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
-.theme-toggle:hover{background:var(--bg-hover);color:var(--ink);border-color:var(--line-strong)}
-.theme-icon{flex:none}
-/* The icon and the label both name the theme a click delivers. */
-.theme-icon--sun{display:none}
-.theme-toggle[data-mode="dark"] .theme-icon--sun{display:block}
-.theme-toggle[data-mode="dark"] .theme-icon--moon{display:none}
-@media (max-width:520px){.theme-toggle-label{display:none}.theme-toggle{padding:0 9px}}
+.theme-switch-track{
+  position:relative;display:block;
+  width:var(--sw-w);height:var(--sw-h);border-radius:999px;
+  /* The track is a tint of the line colour, which inverts with the theme, so
+     it separates from whatever header sits behind it in both. A fixed surface
+     token does not: in dark it landed within three points of the knob and the
+     knob read as a hole rather than a knob. */
+  border:1px solid var(--line);background:rgb(var(--line-rgb) / 12%);
+  transition:border-color .15s ease,background .15s ease;
+}
+.theme-switch:hover .theme-switch-track{border-color:var(--line-strong)}
+.theme-switch:focus-visible{outline:none}
+.theme-switch:focus-visible .theme-switch-track{outline:2px solid var(--accent);outline-offset:2px}
+.theme-switch-knob{
+  position:absolute;top:2px;left:2px;width:var(--sw-k);height:var(--sw-k);border-radius:50%;
+  /* Light in both themes, the way a physical switch keeps one bright face.
+     That also fixes the active icon's contrast problem: the icon under the
+     knob always sits on a light disc, so it takes one dark ink and never has
+     to guess what it is standing on. */
+  background:var(--switch-knob,#ffffff);
+  box-shadow:0 1px 2px rgb(15 27 42 / 30%),0 0 0 1px rgb(15 27 42 / 8%);
+  transition:transform .22s cubic-bezier(.32,.72,0,1);
+}
+[data-theme="dark"] .theme-switch-knob{--switch-knob:#dbe5f4}
+.theme-switch[data-mode="dark"] .theme-switch-knob{transform:translateX(var(--sw-travel))}
+.theme-switch-icon{
+  position:absolute;top:50%;margin-top:-6px;
+  color:var(--muted-2);opacity:.55;
+  transition:color .15s ease,opacity .15s ease;
+}
+.theme-switch-icon--sun{left:calc(var(--sw-k) / 2 - 3px)}
+.theme-switch-icon--moon{left:calc(var(--sw-w) - var(--sw-k) / 2 - 9px)}
+/* The active icon is the one the knob has arrived under, so it is inked
+   against the knob, not against the theme. */
+.theme-switch[data-mode="light"] .theme-switch-icon--sun,
+.theme-switch[data-mode="dark"] .theme-switch-icon--moon{color:#0f1b2a;opacity:1}
+@media (max-width:520px){
+  .theme-switch{--sw-w:40px;--sw-h:24px;--sw-k:18px}
+  .header-actions .theme-switch{margin-right:6px}
+}
+/* Below 380px the header row is already at capacity with the wordmark, the menu
+   and the CTA, so the switch gives back the room the old icon-only toggle used
+   rather than pushing the row into a horizontal scroll. */
+@media (max-width:380px){
+  .theme-switch{--sw-w:36px;--sw-h:22px;--sw-k:16px}
+  .header-actions .theme-switch{margin-right:0}
+}
+@media (prefers-reduced-motion:reduce){.theme-switch-knob{transition:none}}
