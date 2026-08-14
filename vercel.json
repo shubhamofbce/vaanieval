@@ -14,6 +14,7 @@
     },
     { "src": "/login", "status": 307, "headers": { "Location": "https://app.vaanieval.com/login" } },
     { "src": "/dashboard", "status": 307, "headers": { "Location": "https://app.vaanieval.com/dashboard" } },
+    { "src": "/design-partners", "status": 308, "headers": { "Location": "https://www.vaanieval.com/#demo" } },
     { "src": "/_next/(.*)", "dest": "/site/_next/$1" },
     { "src": "/(.*)", "dest": "/site/$1" }
   ]

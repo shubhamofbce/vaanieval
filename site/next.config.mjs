@@ -15,7 +15,10 @@ export default withMDX({
       { source: '/dashboard', destination: process.env.NEXT_PUBLIC_APP_URL || 'https://app.vaanieval.com/dashboard', permanent: false },
       /* The design-partner program is retired. The page was indexed and linked
          from published posts, so this is permanent rather than a 404: the
-         booking section on the home page is where that intent now lands. */
+         booking section on the home page is where that intent now lands.
+         Production does NOT use this entry - the root vercel.json still uses
+         legacy `builds` + `routes`, which bypasses redirects() entirely, so
+         the live rule lives there too. Keep the two in step. */
       { source: '/design-partners', destination: '/#demo', permanent: true },
     ]
   },
