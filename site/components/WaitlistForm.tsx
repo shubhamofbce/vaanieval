@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { track } from '@vercel/analytics'
+import { current as currentAttribution } from '@/lib/attribution'
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error'
 declare global { interface Window { turnstile?: { render: (target: HTMLElement, options: { sitekey: string, callback: (token: string) => void, 'error-callback': () => void }) => string, reset: (widgetId?: string) => void } } }
@@ -52,16 +53,21 @@ export function WaitlistForm() {
     setState('submitting')
     setMessage('')
     try {
-      const params = new URLSearchParams(window.location.search)
+      /* Read from stored attribution, not from the current URL: a visitor who
+         arrives on a campaign link and submits two pages later still carries
+         the source that earned them. First touch wins, because that is the
+         link that was actually shared. */
+      const { first, last } = currentAttribution()
+      const attributed = first || last
       const response = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...values,
           source_page: window.location.pathname,
-          utm_source: params.get('utm_source'),
-          utm_medium: params.get('utm_medium'),
-          utm_campaign: params.get('utm_campaign'),
+          utm_source: attributed?.source || attributed?.ref || attributed?.referrer || null,
+          utm_medium: attributed?.medium || (attributed?.ref ? 'share' : null),
+          utm_campaign: attributed?.campaign || null,
           form_started_at: startedAt,
           turnstileToken,
         }),

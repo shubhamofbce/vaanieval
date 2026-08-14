@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { BookingButton } from './BookingButton'
 import { Brand } from './Brand'
+import { ThemeToggle } from './ThemeToggle'
 
 const productLinks = [
   { href: '/voice-agent-qa', label: 'Call observability', copy: 'Review recordings, transcripts, outcomes, and evidence.' },
@@ -64,6 +65,7 @@ export function Header() {
       <a href="https://github.com/shubhamofbce/vaanieval#readme" target="_blank" rel="noreferrer">Docs</a>
     </nav>
     <div className="header-actions">
+      <ThemeToggle />
       <div className="mobile-nav" ref={menuRef}>
         <button type="button" className="mobile-nav-toggle" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen(value => !value)}>
           <span aria-hidden="true" />

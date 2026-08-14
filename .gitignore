@@ -38,3 +38,6 @@ node_modules/
 # Private agent skills and marketing strategy
 .agents/skills/trend-tweeter/
 .agents/skills/marketing-operator/
+
+# TS incremental build info
+*.tsbuildinfo
