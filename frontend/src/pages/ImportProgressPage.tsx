@@ -6,75 +6,138 @@ import type { ImportProgressResponse } from '../api/types'
 import { PageHeader } from '../components/PageHeader'
 
 const IMPORT_PROGRESS_POLL_INTERVAL_MS = 3000
-const TERMINAL_IMPORT_STATUSES = new Set(['completed', 'failed', 'cancelled'])
 
-function isTerminalImportStatus(status: string) {
-  return TERMINAL_IMPORT_STATUSES.has(status)
+// Allow-list of the statuses an import job holds while it is still doing work, matching
+// ImportJobStatus in the backend and the sibling pollers on ConversationsPage,
+// ConversationDetailPage and RubricsPage. An allow-list fails safe: a status this page has
+// never heard of stops the poller and leaves manual refresh, rather than polling forever.
+const ACTIVE_IMPORT_STATUSES = ['queued', 'running', 'paused']
+
+function isActiveImportStatus(status: string) {
+  return ACTIVE_IMPORT_STATUSES.includes(status)
+}
+
+type ImportProgressState = {
+  jobId: string
+  progress: ImportProgressResponse | null
+  pollError: string
+  actionError: string
+}
+
+const EMPTY_IMPORT_PROGRESS_STATE: ImportProgressState = {
+  jobId: '',
+  progress: null,
+  pollError: '',
+  actionError: '',
 }
 
 export function ImportProgressPage() {
   const { importJobId = '' } = useParams()
-  const [progress, setProgress] = useState<ImportProgressResponse | null>(null)
-  const [error, setError] = useState('')
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const mountedRef = useRef(false)
+  const [state, setState] = useState<ImportProgressState>(EMPTY_IMPORT_PROGRESS_STATE)
+  // Bumped when the displayed job changes or the page unmounts, so a response belonging to
+  // an abandoned job cannot write state or stop the poller that replaced it.
+  const jobGenerationRef = useRef(0)
+  // Response ordering: a request only wins if no newer request has already been applied.
+  const requestSeqRef = useRef(0)
+  const appliedSeqRef = useRef(0)
+
+  const patchState = useCallback((jobId: string, patch: Partial<ImportProgressState>) => {
+    setState((current) => ({
+      ...(current.jobId === jobId ? current : EMPTY_IMPORT_PROGRESS_STATE),
+      ...patch,
+      jobId,
+    }))
+  }, [])
 
   const loadProgress = useCallback(async () => {
     if (!importJobId) {
       return
     }
 
+    const jobId = importJobId
+    const generation = jobGenerationRef.current
+    const sequence = ++requestSeqRef.current
+    const isStale = () =>
+      generation !== jobGenerationRef.current || sequence <= appliedSeqRef.current
+
     try {
-      const data = await getImportProgress(importJobId)
-      if (!mountedRef.current) {
+      const data = await getImportProgress(jobId)
+      if (isStale()) {
         return
       }
-      setProgress(data)
-      setError('')
-      if (isTerminalImportStatus(data.status) && timerRef.current !== null) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
-      }
+      appliedSeqRef.current = sequence
+      patchState(jobId, { progress: data, pollError: '' })
     } catch (err) {
-      if (mountedRef.current) {
-        setError(err instanceof Error ? err.message : 'Failed to load import progress')
+      if (isStale()) {
+        return
       }
+      appliedSeqRef.current = sequence
+      patchState(jobId, {
+        pollError: err instanceof Error ? err.message : 'Failed to load import progress',
+      })
     }
-  }, [importJobId])
+  }, [importJobId, patchState])
 
+  const view = state.jobId === importJobId ? state : EMPTY_IMPORT_PROGRESS_STATE
+  const progress = view.progress
+  const isActive = progress !== null && isActiveImportStatus(progress.status)
+  const hasProgress = progress !== null
+  const status = progress?.status ?? ''
+
+  // Start tracking a job: read it once immediately, and retire the generation on the way
+  // out so responses still in flight for the old job are discarded.
   useEffect(() => {
-    if (!importJobId) {
-      return
+    const startTracking = async () => {
+      if (!importJobId) {
+        return
+      }
+      await loadProgress()
     }
 
-    mountedRef.current = true
-    void loadProgress()
-    timerRef.current = setInterval(() => {
-      void loadProgress()
-    }, IMPORT_PROGRESS_POLL_INTERVAL_MS)
+    void startTracking()
 
     return () => {
-      mountedRef.current = false
-      if (timerRef.current !== null) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
-      }
+      jobGenerationRef.current += 1
     }
   }, [importJobId, loadProgress])
 
-  async function handleCancel() {
-    if (!importJobId || !progress || isTerminalImportStatus(progress.status)) {
+  useEffect(() => {
+    if (!importJobId || (hasProgress && !isActiveImportStatus(status))) {
       return
     }
+
+    const timer = window.setInterval(() => {
+      void loadProgress()
+    }, IMPORT_PROGRESS_POLL_INTERVAL_MS)
+
+    return () => window.clearInterval(timer)
+  }, [importJobId, hasProgress, status, loadProgress])
+
+  async function handleCancel() {
+    if (!importJobId || !isActive) {
+      return
+    }
+
+    const jobId = importJobId
+    const generation = jobGenerationRef.current
     try {
-      await cancelImport(importJobId)
+      await cancelImport(jobId)
+      if (generation !== jobGenerationRef.current) {
+        return
+      }
+      patchState(jobId, { actionError: '' })
       await loadProgress()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel import')
+      if (generation !== jobGenerationRef.current) {
+        return
+      }
+      patchState(jobId, {
+        actionError: err instanceof Error ? err.message : 'Failed to cancel import',
+      })
     }
   }
 
-  const isTerminal = progress !== null && isTerminalImportStatus(progress.status)
+  const refreshLabel = view.pollError ? 'Retry import progress' : 'Refresh import progress'
 
   return (
     <section className="page">
@@ -105,12 +168,10 @@ export function ImportProgressPage() {
               <FontAwesomeIcon icon="spinner" /> Queue leased: {progress.queue_leased}
             </p>
             <div className="inline">
-              {!isTerminal && (
-                <button type="button" className="secondary" onClick={() => void loadProgress()}>
-                  <span> {error ? 'Retry import progress' : 'Refresh import progress'}</span>
-                </button>
-              )}
-              {!isTerminal && (
+              <button type="button" className="secondary" onClick={() => void loadProgress()}>
+                <span>{refreshLabel}</span>
+              </button>
+              {isActive && (
                 <button type="button" className="secondary" onClick={handleCancel}>
                   <span className="control-with-icon">
                     <FontAwesomeIcon icon="xmark-circle" />
@@ -128,11 +189,12 @@ export function ImportProgressPage() {
           <>
             <p className="muted">Loading import progress...</p>
             <button type="button" className="secondary" onClick={() => void loadProgress()}>
-              {error ? 'Retry import progress' : 'Refresh import progress'}
+              {refreshLabel}
             </button>
           </>
         )}
-        {error && <p className="error">{error}</p>}
+        {view.pollError && <p className="error">{view.pollError}</p>}
+        {view.actionError && <p className="error">{view.actionError}</p>}
       </div>
     </section>
   )
