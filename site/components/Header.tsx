@@ -26,7 +26,7 @@ const mobileLinks = [
   { href: '/deployment', label: 'Security' },
   { href: '/resources/evaluation-metrics', label: 'Resources' },
   { href: '/blog', label: 'Blog' },
-  { href: 'https://github.com/shubhamofbce/vaanieval#readme', label: 'Docs', external: true },
+  { href: 'https://demo.vaanieval.com', label: 'Docs', external: true },
 ]
 
 export function Header() {
@@ -61,7 +61,7 @@ export function Header() {
           {resourceLinks.map(link => <Link key={link.href} href={link.href}>{link.label}</Link>)}
         </div>
       </details>
-      <a href="https://github.com/shubhamofbce/vaanieval#readme" target="_blank" rel="noreferrer">Docs</a>
+      <a href="https://demo.vaanieval.com" target="_blank" rel="noreferrer">Docs</a>
     </nav>
     <div className="header-actions">
       <ThemeToggle />
